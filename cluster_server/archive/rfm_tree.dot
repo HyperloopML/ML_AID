@@ -1,0 +1,33 @@
+digraph Tree {
+node [shape=box, style="filled, rounded", color="black", fontname=helvetica] ;
+edge [fontname=helvetica] ;
+0 [label=<M_Score &le; 0.7369<br/>gini = 0.641<br/>samples = 15606<br/>value = [6710, 701, 6139, 2056]>, fillcolor="#e581390f"] ;
+1 [label=<R_Score &le; 0.815<br/>gini = 0.4506<br/>samples = 8442<br/>value = [254, 664, 6036, 1488]>, fillcolor="#399de5a7"] ;
+0 -> 1 [labeldistance=2.5, labelangle=45, headlabel="True"] ;
+2 [label=<R_Score &le; 0.4817<br/>gini = 0.4569<br/>samples = 2200<br/>value = [0, 664, 58, 1478]>, fillcolor="#d739e587"] ;
+1 -> 2 ;
+3 [label=<gini = 0.0213<br/>samples = 651<br/>value = [0, 644, 0, 7]>, fillcolor="#47e539fc"] ;
+2 -> 3 ;
+4 [label=<gini = 0.0966<br/>samples = 1549<br/>value = [0, 20, 58, 1471]>, fillcolor="#d739e5f2"] ;
+2 -> 4 ;
+5 [label=<F_Score &le; 0.0551<br/>gini = 0.0811<br/>samples = 6242<br/>value = [254, 0, 5978, 10]>, fillcolor="#399de5f4"] ;
+1 -> 5 ;
+6 [label=<gini = 0.0431<br/>samples = 6003<br/>value = [123, 0, 5871, 9]>, fillcolor="#399de5f9"] ;
+5 -> 6 ;
+7 [label=<gini = 0.4991<br/>samples = 239<br/>value = [131, 0, 107, 1]>, fillcolor="#e581392e"] ;
+5 -> 7 ;
+8 [label=<R_Score &le; 0.804<br/>gini = 0.1814<br/>samples = 7164<br/>value = [6456, 37, 103, 568]>, fillcolor="#e58139e4"] ;
+0 -> 8 [labeldistance=2.5, labelangle=-45, headlabel="False"] ;
+9 [label=<R_Score &le; 0.4652<br/>gini = 0.2324<br/>samples = 622<br/>value = [43, 37, 0, 542]>, fillcolor="#d739e5dc"] ;
+8 -> 9 ;
+10 [label=<gini = 0.0973<br/>samples = 39<br/>value = [0, 37, 0, 2]>, fillcolor="#47e539f1"] ;
+9 -> 10 ;
+11 [label=<gini = 0.1366<br/>samples = 583<br/>value = [43, 0, 0, 540]>, fillcolor="#d739e5eb"] ;
+9 -> 11 ;
+12 [label=<M_Score &le; 0.7425<br/>gini = 0.0388<br/>samples = 6542<br/>value = [6413, 0, 103, 26]>, fillcolor="#e58139fa"] ;
+8 -> 12 ;
+13 [label=<gini = 0.4261<br/>samples = 334<br/>value = [236, 0, 91, 7]>, fillcolor="#e5813998"] ;
+12 -> 13 ;
+14 [label=<gini = 0.0099<br/>samples = 6208<br/>value = [6177, 0, 12, 19]>, fillcolor="#e58139fe"] ;
+12 -> 14 ;
+}

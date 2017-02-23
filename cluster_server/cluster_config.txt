@@ -1,0 +1,51 @@
+{
+	"1":{
+		"Name" : "Segmentation of Prahova county based on Recency, Frequency, Monetary Value",
+		"Fields" : ["MaxDateIndex","TranCount","TotalAmount","",""],
+		"ID" : "PartnerId",
+		"StartDate": "20160101",
+		"EndDate": "20161231",
+		"DistrictID": "1048608",
+		"Description": "Clusterizare RFM 2016 pentru judetul 1048608",
+		"SQL": "exec [uspGetPartnerAmountsByPeriod] '20160101','20161230',1048608",
+		"Algorithm" : "kMeans"
+		},
+
+	"20":{
+		"Name" : "Segmentation based on Revenue & Margin",
+		"Fields" : ["TotalAmount","NetMargin", "","",""],
+		"ID" : "PartnerId",
+		"StartDate": "20160101",
+		"EndDate": "20161231",
+		"DistrictID": "-1",
+		"Prahova": "1048608",
+		"Description": "Clusterizare 2016 Revenue&Margin la nivelul Romaniei",
+		"SQL" : "exec [uspGetPartnerAmountsByPeriod] '20160101','20161230',-1",
+		"Algorithm" : "kMeans"
+		},
+
+	"30":{
+		"Name" : "Segmentation based on Recency, Frequency, Monetary Value",
+		"Fields" : ["MaxDateIndex","TranCount","TotalAmount","",""],
+		"ID" : "PartnerId",
+		"StartDate": "20160101",
+		"EndDate": "20161231",
+		"DistrictID": "-1",
+		"Description": "Clusterizare RFM 2016 la nivelul Romaniei",
+		"SQL": "exec [uspGetPartnerAmountsByPeriod] '20160101','20161230',-1",
+		"Algorithm" : "kMeans"
+		},
+
+	"40":{
+		"Name" : "Segmentation of Prahova county based on Revenue & Margin",
+		"Fields" : ["TotalAmount","NetMargin", "","",""],
+		"ID" : "PartnerId",
+		"StartDate": "20160101",
+		"EndDate": "20161231",
+		"DistrictID": "1048608",
+		"Description": "Clusterizare 2016 Revenue&Margin pentru judetul Prahova",
+		"SQL" : "exec [uspGetPartnerAmountsByPeriod] '20160101','20161230',1048608",
+		"Algorithm" : "kMeans"
+		}
+	
+}

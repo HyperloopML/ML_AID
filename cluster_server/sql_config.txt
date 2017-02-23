@@ -1,0 +1,7 @@
+{
+	"server" : "10.168.0.19",
+	"database" : "HyperloopCluster",
+	"username" : "andreidi",
+	"password" : "HypML2017",
+	"driver" : "{ODBC Driver 13 for SQL Server}"
+}
