@@ -16,7 +16,7 @@ __author__     = "Andrei Ionut DAMIAN"
 __copyright__  = "Copyright 2007, HTSS"
 __credits__    = ["Ionut Canavea","Ionut Muraru"]
 __license__    = "GPL"
-__version__    = "0.5"
+__version__    = "1.0.1"
 __maintainer__ = "Andrei Ionut DAMIAN"
 __email__      = "ionut.damian@htss.ro"
 __status__     = "Production"
@@ -39,7 +39,7 @@ def print_progress(str_text):
 class MSSQLHelper:
     def __init__(self, config_file = "sql_config.txt"):
         self.MODULE = '[{} v{}]'.format(__library__,__version__)
-        self._logger("__init__ "+self.MODULE)
+        self._logger("INIT "+self.MODULE)
         cfg_file = open(config_file)
         config_data = json.load(cfg_file)
         self.driver   = config_data["driver"]
@@ -136,7 +136,7 @@ class MSSQLHelper:
         if not hasattr(self, 'log'):        
             self.log = list()
         nowtime = datetime.datetime.now()
-        strnowtime = nowtime.strftime("[SQLHelper][%Y-%m-%d %H:%M:%S] ")
+        strnowtime = nowtime.strftime("[SQLhe][%Y-%m-%d %H:%M:%S] ")
         logstr = strnowtime + logstr
         self.log.append(logstr)
         if show:

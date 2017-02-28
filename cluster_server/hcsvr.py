@@ -5,6 +5,7 @@ Created on Wed Dec  7 12:01:34 2016
 @credits after imports
 
 """
+
 import pandas as pd
 import numpy as np
 from sklearn.cluster import KMeans
@@ -22,7 +23,6 @@ from bokeh.models import CategoricalColorMapper
 from bokeh.palettes import Set1_8 as pal
 from datetime import datetime as dt
 import matplotlib.image as mat_Image
-import pydotplus 
 import os
 from sql_helper import MSSQLHelper
 from cluster_repository import ClusterRepository
@@ -31,20 +31,24 @@ import time as tm
 
 
 __author__     = "Andrei Ionut DAMIAN"
-__copyright__  = "Copyright 2007, HTSS"
+__copyright__  = "Copyright 2017, HTSS"
 __credits__    = ["Ionut Canavea","Ionut Muraru"]
 __license__    = "GPL"
-__version__    = "0.5"
+__version__    = "1.0.3"
 __maintainer__ = "Andrei Ionut DAMIAN"
 __email__      = "ionut.damian@htss.ro"
 __status__     = "Production"
 __library__    = "HYPERLOOP CLUSTERING MAIN"
 __created__    = "2016-12-07"
-__modified__   = "2017-02-23"
+__modified__   = "2017-02-27"
 
 class HyperloopClusteringServer:
     
     def __init__(self):
+
+        self.MODULE = "{} v{}".format(__library__,__version__)
+        self._logger("INIT "+self.MODULE)
+
         pd.options.display.float_format = '{:,.3f}'.format
         pd.set_option('expand_frame_repr', False)
         
@@ -65,8 +69,9 @@ class HyperloopClusteringServer:
         self.text_ClusterDesc = None
         self.cds_select = None
         
+        
         self.dot_alpha = 0.5
-        self.dot_size  = 8
+        self.dot_size  = 4
         self.nr_downsample = 1000
                 
         self.TableViewText = None
@@ -83,6 +88,15 @@ class HyperloopClusteringServer:
         self.initialize_data()
         self.initialize_layout()
         return
+    
+    def upper_config_str(self, mydict):
+        
+        newdict = dict()
+        
+        for k,v in mydict.items():
+            newdict[k.upper()] = v
+        
+        return newdict
 
     def _logger(self, logstr, show = True):
         if not hasattr(self, 'log'):        
@@ -99,35 +113,44 @@ class HyperloopClusteringServer:
                            label_field, 
                            cluster_fields,
                            nr_samples):
-        t0=tm.time()
-        self._logger("DOWNSAMPLING ...")
-        labels = list(source_df[label_field].unique())
-        if label_field in cluster_fields:
-            cluster_fields.remove(label_field)
-        all_fields = list(cluster_fields) 
-        all_fields.append(label_field)
-        downsampled = pd.DataFrame()
-        for label in labels:
-            cluster_df = pd.DataFrame(source_df[source_df[label_field] == label])
-            self._logger("Downsampling {} in {} points".format(label,nr_samples))
-            clf = KMeans(n_clusters = nr_samples,
-                         n_jobs = -1,
-                         n_init = 5)
-            clf.fit(np.array(cluster_df[cluster_fields]))
-            cluster_df['DownCluster'] = clf.labels_
-            down_df = pd.DataFrame()
-            i=0
-            for fld in cluster_fields:
-                down_df[fld] = clf.cluster_centers_[:,i]
-                i += 1
-            down_df[label_field] = label
-            self._logger("Downsampled data {}\n{}".format(down_df.shape,down_df.head(3)))
-            downsampled = downsampled.append(down_df)
-        t1 = tm.time()
-        self._logger('Done in {:.1f}s downsampling {}\n{}'.format(t1-t0,
-                                                         downsampled.shape,
-                                                         downsampled.head(3)))    
-        return downsampled
+        if self.DownSample:
+            t0=tm.time()
+            self._logger("DOWNSAMPLING ...")
+            labels = list(source_df[label_field].unique())
+            if label_field in cluster_fields:
+                cluster_fields.remove(label_field)
+            all_fields = list(cluster_fields) 
+            all_fields.append(label_field)
+            downsampled = pd.DataFrame()
+            for label in labels:
+                cluster_df = pd.DataFrame(source_df[source_df[label_field] == label])
+                if cluster_df.shape[0]>nr_samples:
+                    nr_cl = nr_samples
+                else:
+                    nr_cl = cluster_df.shape[0]
+                self._logger("Downsampling {} in {} points".format(label,nr_samples))
+                clf = KMeans(n_clusters = nr_cl,
+                             n_jobs = -1,
+                             n_init = 5)
+                clf.fit(np.array(cluster_df[cluster_fields]))
+                cluster_df['DownCluster'] = clf.labels_
+                down_df = pd.DataFrame()
+                i=0
+                for fld in cluster_fields:
+                    down_df[fld] = clf.cluster_centers_[:,i]
+                    i += 1
+                down_df[label_field] = label
+                self._logger("Downsampled data {}\n{}".format(down_df.shape,down_df.head(3)))
+                downsampled = downsampled.append(down_df)
+            t1 = tm.time()
+            self._logger('Done in {:.1f}s downsampling {}\n{}'.format(t1-t0,
+                                                             downsampled.shape,
+                                                             downsampled.head(3)))  
+            df_result = downsampled
+        else:
+            self._logger("NO DOWNSAMPLE !!!")
+            df_result = source_df
+        return df_result
         
     
     def UploadCluster(self,df, cluster_dict):
@@ -171,11 +194,12 @@ class HyperloopClusteringServer:
             cluster_def = self.config_data[cluster_key]
             cluster_fields = cluster_def["Fields"]
             cluster_ID = cluster_def["ID"]
-            cluster_name = cluster_def["Name"]            
-            self._logger("Loading definition for cluster: {}".format(cluster_key))
-            self._logger("  ID: {} / Name: {} / Fields: {}".format(cluster_ID,
-                                                                   cluster_name,
-                                                                   cluster_fields))
+            cluster_name = cluster_def["Name"] 
+            if self.FULL_DEBUG:
+                self._logger("Loading definition for cluster: {}".format(cluster_key))
+                self._logger("  ID: {} / Name: {} / Fields: {}".format(cluster_ID,
+                                                                       cluster_name,
+                                                                       cluster_fields))
             cluster_def["DATA"] = None
             self.cluster_config_list.append(cluster_def)
             
@@ -195,14 +219,20 @@ class HyperloopClusteringServer:
         
         self.nr_fields = len(self.cf)
         if self.nr_fields == 3:
-            self.scale_cf = [2]  #[0,1,2] #log-scale fields by nr
+            self.scale_cf = [1,2]  #[0,1,2] #log-scale fields by nr
         else:
-            self.scale_cf = []
+            self.scale_cf = [0,1]
         
         
         self.cfc = 'Segment'            # cluster label column
         self.AssignmentID = "CentroidID"
-        self.nr_clusters = 4
+        if "SEGMENTS" in cluster_dict.keys():
+            self.nr_clusters = int(cluster_dict["SEGMENTS"])
+            self._logger("Starting with {} clusters".format(self.nr_clusters))
+        else:
+            self.nr_clusters = 4
+            self._logger("Defaulting to {} clusters".format(self.nr_clusters))
+            
         self.nr_tree_lvl = 3
         self.hover_fields = dict()
         self.hover_fields['Tranzactii (avg)'] = "TranCount"
@@ -227,10 +257,20 @@ class HyperloopClusteringServer:
         
     def LoadDBClusterByID(self,sID):
                 
+        self._logger("Loading cluster by ID: {}".format(sID))
         strqry = self.config_data[sID]["SQL"]
         self.cluster_config = self.config_data[sID]
+        self.FastSave = False
+        self.DownSample = True
+        if "DOWNSAMPLE" in self.cluster_config.keys():
+            self.DownSample = int(self.cluster_config["DOWNSAMPLE"])
+            if not self.DownSample:
+                self._logger("DOWNSAMPLING DISABLED !")
+        if "FASTSAVE" in self.cluster_config.keys():
+            self.FastSave = int(self.cluster_config["FASTSAVE"])
+            if self.FastSave:
+                self._logger("FASTSAVE ENABLED !")
         self._setup_fields(self.cluster_config)
-        self._logger("Loading cluster by ID: {}".format(sID))
         self._load_db_cluster(strqry)
         
         return
@@ -474,10 +514,18 @@ class HyperloopClusteringServer:
                                     rounded=True, 
                                     impurity = False,
                                     special_characters=True)  
-        graph = pydotplus.graph_from_dot_data(dot_data)
-        if not os.path.exists('static'):
-            os.makedirs('static')
-        graph.write_png('static/'+self.tree_file)
+        
+        import importlib
+        pydot_test = importlib.util.find_spec('pydotplus')
+        if pydot_test != None:
+            import pydotplus 
+            graph = pydotplus.graph_from_dot_data(dot_data)
+            if not os.path.exists('static'):
+                os.makedirs('static')
+            graph.write_png('static/'+self.tree_file)
+        else:
+            graph = None
+            
         return graph
 
         
@@ -529,6 +577,7 @@ class HyperloopClusteringServer:
         self._logger("Clustering for {}...".format(self.sAlgorithm))
         X = np.array(self.df_rfm[predictors])
         # unsupervised classification
+        t0=tm.time()
         clf_km = KMeans(n_clusters = self.nr_clusters,
                         n_init = self.nr_inits, 
                         n_jobs = -1)
@@ -538,8 +587,9 @@ class HyperloopClusteringServer:
         self.cluster_centers = clf_km.cluster_centers_
         self.last_clustering_error = clf_km.inertia_
         self.last_cluster_mode = clf_km
-    
-        self._logger("Done clustering. Clusters discovered:\n {}. Clusters inertia: {:.1f}".format(
+        t1=tm.time()
+        self._logger("Done clustering {:.1f}s. Clusters discovered:\n {}. Clusters inertia: {:.1f}".format(
+                                         t1-t0,
                                          self.cluster_centers,
                                          self.last_clustering_error))
         
@@ -809,6 +859,7 @@ class HyperloopClusteringServer:
         self.save_rfm_clustering()
         self._logger("Done saving data.")
         self.btn_save_local.label = sLabel
+        self.btn_save_local.disabled = False
         return
         
     def on_view_cluster(self, attr, old, new):
@@ -870,7 +921,7 @@ class HyperloopClusteringServer:
                 sScaled = 'F'+str(i)+'LOG'
                 self._logger('Transform {}=LOG({})'.format(sField,sField))
                 self.sAlgorithmOptions += ' +LOG('+sField+')'
-                self.df_rfm.loc[self.df_rfm[sField]<=0, sField] = 1
+                self.df_rfm.loc[self.df_rfm[sField]<=0, sField] = 0.01
                 self.df_rfm[sScaled] = np.log(self.df_rfm[sField])
 
             self.scale_fields.append(sScaled)
@@ -944,7 +995,7 @@ class HyperloopClusteringServer:
         
         self.LoadDBClusterByID("1")
         
-        self.prepare_data()     
+        self.prepare_data()   
         
         return
 
@@ -1077,18 +1128,19 @@ class HyperloopClusteringServer:
 
 
 
-        self.text_ClusterName = TextInput(value=self.cluster_config['Name'],
+        self.text_ClusterName = TextInput(value=self.cluster_config['Name']+
+                                     " ({} segments)".format(self.nr_clusters),
                                      title="Nume model:"
                                      ,width = 400)
 
         self.cb_ClusterGrade= Select(title="Calitatea output:", 
-                                    value='TESTS', 
+                                    value='PRODUCTION', 
                                     width = 300,
                                     options=['TESTS','PRODUCTION'])
         
         self.text_ClusterDesc = TextInput(value=self.ClusterDescription,
                                      title="Descriere:"
-                                     ,width = 400)
+                                     ,width = 700)
         
         
         
@@ -1096,7 +1148,7 @@ class HyperloopClusteringServer:
                                      title="Autor:")
 
         self.text_Algorithm = TextInput(value=self.sAlgorithm,
-                                     title="Algoritm:", width = 500)
+                                     title="Algoritm:", width = 700)
         
         self.text_F1 = TextInput(value=self.cluster_config['Fields'][0],
                                      title="Descriere camp F1:")
@@ -1130,11 +1182,11 @@ class HyperloopClusteringServer:
                                    self.btn_reset,
                                    self.text_ClusterName,
                                    widgetbox(self.cb_ClusterGrade),
-                                   self.text_ClusterDesc,
                                    self.text_Author
                                    )
         
         self.tab1_col2_controls = column(self.cluster_figure,
+                                         self.text_ClusterDesc,
                                          self.text_Algorithm,
                                          self.text_F1,
                                          self.text_F2,
@@ -1186,6 +1238,11 @@ class HyperloopClusteringServer:
         self.final_layout = widgets.Tabs(tabs = self.mytabs)  
         
         self._logger("!!! DONE LAYOUT PREPARATION.\n")
+        
+        if self.FastSave:
+            self.on_save()        
+            self._logger("SHUTTING DOWN ...")
+            os.kill(os.getpid(),9)
         
         return
 

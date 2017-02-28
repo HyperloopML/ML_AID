@@ -14,7 +14,7 @@ __author__     = "Andrei Ionut DAMIAN"
 __copyright__  = "Copyright 2007, HTSS"
 __credits__    = ["Ionut Canavea","Ionut Muraru"]
 __license__    = "GPL"
-__version__    = "0.5"
+__version__    = "1.0.2"
 __maintainer__ = "Andrei Ionut DAMIAN"
 __email__      = "ionut.damian@htss.ro"
 __status__     = "Production"
@@ -24,6 +24,9 @@ __modified__   = "2017-02-23"
 
 class ClusterRepository:
     def __init__(self):
+        
+        self.MODULE = "{} v{}".format(__library__,__version__)
+        self._logger("INIT "+self.MODULE)
         
         self.FULL_DEBUG = False
         
@@ -99,10 +102,10 @@ class ClusterRepository:
         cConfig = cluster_config_dict
         nowtime = dt.now()
         strDay = nowtime.strftime("%Y%m%d")
-        strID = nowtime.strftime("%Y%m%d%H%M%S")
+        sYear = nowtime.strftime("%Y")[-2:]
+        strID = sYear + nowtime.strftime("%m%d%H%M%S")
         cID = int(strID)
         
-        self._logger("Creating new DB cluster...")
         
         s_ClusterID = str(cID)
         s_ClusterName = sClusterName
@@ -111,6 +114,8 @@ class ClusterRepository:
         s_nCustomerNo = str(nCustomerNo)
         s_nDay = strDay
         s_ClusterGrade = sClusterGrade
+
+        self._logger("Creating new DB cluster: {}...".format(s_ClusterName))
         
         str_UploadCluster = """
                                 INSERT INTO [dbo].[Clusters]
@@ -161,6 +166,8 @@ class ClusterRepository:
         df['AssignmentID'] = df_desc["NewID"]
         df['AssignmentLabel'] = df_desc["Segment"]
         df['AssignmentDescr'] = "Total "+df_desc["Clienti"].astype(str)+" clienti cu scor "+df_desc["Scor"].astype(str)
+        df['AssignmentNoClients'] = df_desc["Clienti"]
+        df['AssignmentScore'] = df_desc["Scor"]
         self._logger("Saving segments structure in DB...\n{}".format(df))
         sql_helper.SaveTable(df,'Cluster_Assignments')
         self._logger("Done saving segments structure in DB.")
@@ -177,7 +184,7 @@ class ClusterRepository:
             fld_src = cConfig["Fields"][i]
             if fld_src != '':
                 fld_dst = "F"+str(i+1)
-                save_df[fld_dst] = df_cluster[fld_src]
+                save_df[fld_dst] = df_cluster[fld_dst] #df_cluster[fld_src]
         
         sql_helper.SaveTable(save_df,'Clusters_Lines')
         self._logger("Done saving cluster lines in DB.")       
@@ -196,11 +203,13 @@ class ClusterRepository:
             cluster_def = self.config_data[cluster_key]
             cluster_fields = cluster_def["Fields"]
             cluster_ID = cluster_def["ID"]
-            cluster_name = cluster_def["Name"]            
-            self._logger("Loading definition for cluster: {}".format(cluster_key))
-            self._logger("  ID    : {}".format(cluster_ID))
-            self._logger("  Name  : {}".format(cluster_name))
-            self._logger("  Fields: {}".format(cluster_fields))
+            cluster_name = cluster_def["Name"]       
+            if self.FULL_DEBUG:
+                self._logger("Loading definition for cluster: {}".format(cluster_key))
+                self._logger("  ID    : {}".format(cluster_ID))
+                self._logger("  Name  : {}".format(cluster_name))
+                self._logger("  Fields: {}".format(cluster_fields))
+                
             cluster_def["DATA"] = None
             self.cluster_config_list.append(cluster_def)
     
