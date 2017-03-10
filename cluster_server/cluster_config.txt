@@ -1,4 +1,18 @@
 {
+	"1":{
+		"Name" : "Clusterization based on Revenue, Tranzactions frequency, Recency and Margin",
+		"Fields" : ["TotalAmount","TranCount", "MaxDateIndex","NetMargin",""],
+		"SEGMENTS" : "4",
+		"ID" : "PartnerId",
+		"StartDate": "20160101",
+		"EndDate": "20161231",
+		"DistrictID": "-1",
+		"FASTSAVE" : "0",
+		"DOWNSAMPLE" : "1",
+		"Description": "Clusterizare 2016 RTFM la nivelul Romaniei",
+		"SQL" : "exec [uspGetPartnerAmountsByPeriod] '20160101','20161230',-1",
+		"Algorithm" : "kMeans"
+		},
 	"100":{
 		"Name" : "Segmentation of Prahova county based on Recency, Frequency, Monetary Value",
 		"Fields" : ["MaxDateIndex","TranCount","TotalAmount","",""],
@@ -12,7 +26,7 @@
 		"Algorithm" : "kMeans"
 		},
 
-	"1":{
+	"11":{
 		"Name" : "Full 2016 Revenue & Margin segmentation",
 		"Fields" : ["TotalAmount","NetMargin", "","",""],
 		"SEGMENTS" : "4",

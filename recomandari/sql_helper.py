@@ -1,16 +1,6 @@
 # -*- coding: utf-8 -*-
 """
 Created on Wed Jan 25 19:43:09 2017
-
-@author: Andrei Ionut DAMIAN
-@library: SQLHELPER
-@description: Custom MS SQL Server Helper engine
-    
-@project: HyperLoop RECOMMENDER MATRIX
-
-@modified: 2017-02-14
-
-
 """
 
 from __future__ import print_function
@@ -21,6 +11,19 @@ import json
 from sqlalchemy import create_engine
 import datetime
 import time as tm
+
+__author__     = "Andrei Ionut DAMIAN"
+__copyright__  = "Copyright 2007, HTSS"
+__credits__    = ["Ionut Canavea","Ionut Muraru"]
+__license__    = "GPL"
+__version__    = "1.0.3"
+__maintainer__ = "Andrei Ionut DAMIAN"
+__email__      = "ionut.damian@htss.ro"
+__status__     = "Production"
+__library__    = "MSSQL HELPER"
+__created__    = "2017-01-25"
+__modified__   = "2017-02-23"
+__lib__        = "SQLHLP"
 
 
 
@@ -36,8 +39,8 @@ def print_progress(str_text):
 
 class MSSQLHelper:
     def __init__(self, config_file = "sql_config.txt"):
-        self.MODULE = '[MSSQL RECOMMENDER ENGINE]'
-        self._logger("__init__ "+self.MODULE)
+        self.MODULE = '[{} v{}]'.format(__library__,__version__)
+        self._logger("INIT "+self.MODULE)
         cfg_file = open(config_file)
         config_data = json.load(cfg_file)
         self.driver   = config_data["driver"]
@@ -55,6 +58,7 @@ class MSSQLHelper:
         sql_params = urllib.parse.quote_plus(self.connstr)
         
         try:
+            self._logger("ODBC Conn: {}".format(self.connstr))
             self.conn = pyodbc.connect(self.connstr)   
             self.engine = create_engine("mssql+pyodbc:///?odbc_connect=%s" % sql_params)
             self._logger("Connection created on "+self.server)
@@ -67,14 +71,16 @@ class MSSQLHelper:
         df = None
         try:
             t0 = tm.time()
+            self._logger("Downloading data [{}..] ...".format(str_select.replace("\n"," ")[:30]))
             df = pd.read_sql(str_select, self.conn)
-            self._logger("Data downloaded {} rows: ".format(df.shape[0],
-                                                            str_select))
-            self._logger("Dataset head(3):\n{}".format(df.head(3)))
             t1 = tm.time()
             tsec = t1-t0
             tmin = float(tsec) / 60
-            self._logger("READ TABLE time: {:.2f}s ({:.2f}min)".format(tsec,tmin))
+            self._logger("Data downloaded in {:.1f}s / {} rows: ".format(tsec,
+                                                                 df.shape[0],
+                                                                 str_select))
+            self._logger("Dataset head(3):\n{}".format(df.head(3)))
+            self._logger("  READ TABLE time: {:.1f}s ({:.2f}min)".format(tsec,tmin))
         except Exception as err: #pyodbc.Error as err:
             self.HandleError(err)
         return df
@@ -94,7 +100,7 @@ class MSSQLHelper:
             t1 = tm.time()
             tsec = t1-t0
             tmin = float(tsec) / 60
-            self._logger("EXEC SQL  time: {:.2f}s ({:.2f}min)".format(tsec,tmin))
+            self._logger("EXEC SQL  time: {:.1f}s ({:.2f}min)".format(tsec,tmin))
         except Exception as err: #pyodbc.Error as err:
             self.HandleError(err)                        
         return
@@ -111,7 +117,7 @@ class MSSQLHelper:
             t1 = tm.time()
             tsec = t1-t0
             tmin = float(tsec) / 60
-            self._logger("SAVE TABLE time: {:.2f}s ({:.2f}min)".format(tsec,tmin))
+            self._logger("DONE SAVE TABLE. Time = {:.1f}s ({:.2f}min)".format(tsec,tmin))
         except Exception as err: #pyodbc.Error as err:
             self.HandleError(err)                    
         return
@@ -132,11 +138,11 @@ class MSSQLHelper:
         if not hasattr(self, 'log'):        
             self.log = list()
         nowtime = datetime.datetime.now()
-        strnowtime = nowtime.strftime("[SQLHelper][%Y-%m-%d %H:%M:%S] ")
+        strnowtime = nowtime.strftime("[{}][%Y-%m-%d %H:%M:%S] ".format(__lib__))
         logstr = strnowtime + logstr
         self.log.append(logstr)
         if show:
-            print(logstr)
+            print(logstr, flush = True)
         return
 
     

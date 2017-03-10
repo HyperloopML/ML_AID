@@ -34,13 +34,15 @@ __author__     = "Andrei Ionut DAMIAN"
 __copyright__  = "Copyright 2017, HTSS"
 __credits__    = ["Ionut Canavea","Ionut Muraru"]
 __license__    = "GPL"
-__version__    = "1.0.3"
+__version__    = "1.0.4"
 __maintainer__ = "Andrei Ionut DAMIAN"
 __email__      = "ionut.damian@htss.ro"
 __status__     = "Production"
 __library__    = "HYPERLOOP CLUSTERING MAIN"
 __created__    = "2016-12-07"
 __modified__   = "2017-02-27"
+__lib__        = "HyCSVR"
+
 
 class HyperloopClusteringServer:
     
@@ -102,7 +104,7 @@ class HyperloopClusteringServer:
         if not hasattr(self, 'log'):        
             self.log = list()
         nowtime = dt.now()
-        strnowtime = nowtime.strftime("[HCSVR][%Y-%m-%d %H:%M:%S] ")
+        strnowtime = nowtime.strftime("[{}][%Y-%m-%d %H:%M:%S] ".format(__lib__))
         logstr = strnowtime + logstr
         self.log.append(logstr)
         if show:
@@ -916,12 +918,15 @@ class HyperloopClusteringServer:
         for i in range(len(self.cf)):
             sScaled = self.cf[i]
 
-            if i in self.scale_cf: # if must be log-scaled
+            if i in self.scale_cf: # if must be log-scaled            
+                REPLACEMENT_VALUE = 1e-4
                 sField = self.cf[i]
                 sScaled = 'F'+str(i)+'LOG'
                 self._logger('Transform {}=LOG({})'.format(sField,sField))
                 self.sAlgorithmOptions += ' +LOG('+sField+')'
-                self.df_rfm.loc[self.df_rfm[sField]<=0, sField] = 0.01
+                nr_zeros = (self.df_rfm[sField]<=0).sum()
+                self._logger(" Detected {} vals <=0".format(nr_zeros))
+                self.df_rfm.loc[self.df_rfm[sField]<=0, sField] = REPLACEMENT_VALUE
                 self.df_rfm[sScaled] = np.log(self.df_rfm[sField])
 
             self.scale_fields.append(sScaled)

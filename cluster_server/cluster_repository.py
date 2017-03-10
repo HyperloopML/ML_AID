@@ -21,6 +21,8 @@ __status__     = "Production"
 __library__    = "CLUSTER REPO"
 __created__    = "2017-01-25"
 __modified__   = "2017-02-23"
+__lib__        = "HyCREP"
+
 
 class ClusterRepository:
     def __init__(self):
@@ -39,7 +41,7 @@ class ClusterRepository:
         if not hasattr(self, 'log'):        
             self.log = list()
         nowtime = dt.now()
-        strnowtime = nowtime.strftime("[CLREP][%Y-%m-%d %H:%M:%S] ")
+        strnowtime = nowtime.strftime("[{}][%Y-%m-%d %H:%M:%S] ".format(__lib__))
         logstr = strnowtime + logstr
         self.log.append(logstr)
         if show:
