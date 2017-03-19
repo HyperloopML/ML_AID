@@ -118,7 +118,7 @@ GetMaxes = function(dfd, newfield, categ1, categ2) {
         best_categ1 <- colnames(dfd[i,categ1])[best_categ1_index]
         best_categ2_index <- which.max(dfd[i, categ2])
         best_categ2 <- colnames(dfd[i, categ2])[best_categ2_index]
-        dfd[i,newfield]  <- paste(best_categ1,",",best_categ2)
+        dfd[i,newfield]  <- paste0(best_categ1,",",best_categ2)
     }
     return(dfd)
 }
@@ -479,6 +479,8 @@ if (SHOW_HEAT_MAPP) {
 
 ### Begin GENERATIVE CLUSTERING
 
+timeit("Labeling down_df ", down_df <- GetMaxes(down_df, "BESTOF", ALL_BRANDS, ALL_CATEGS))
+
 
 if (SHOW_TSNE_KMPL) {
     STD_TSNE <- FALSE
@@ -496,7 +498,6 @@ if (SHOW_TSNE_KMPL) {
 
     } else {
         library(Rtsne)
-        timeit("Labeling down_df ", down_df <- GetMaxes(dfd,"BESTOF",ALL_BRANDS,ALL_CATEGS))
         rtsne_res <- Rtsne(as.matrix(down_df[, subcluster_column_list]),
                        check_duplicates = FALSE,
                        pca = FALSE)
@@ -506,6 +507,8 @@ if (SHOW_TSNE_KMPL) {
         plot2 <- qplot(rtsne_res$Y[, 1], rtsne_res$Y[, 2],
                        shape = down_df$ID,
                        color = tsne_colors)
+        plot2 <- plot2 + geom_text(aes_string(label = down_df$BESTOF),
+                                   color = "black", size = 2)
         plot2 <- plot2 + theme(legend.position = "none")
         plot2
     }
