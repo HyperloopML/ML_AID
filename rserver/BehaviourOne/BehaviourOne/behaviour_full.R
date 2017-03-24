@@ -187,8 +187,10 @@ for (i in 1:length(column_list)) {
 ###
 
 ## preprocessing
+t0_prep <- proc.time()
 norm_columns <- c()
 nr_input_fields <- length(column_list)
+
 for (i in 1:nr_input_fields) {
     col_name <- column_list[i]
     new_col <- paste0("P",i,"_",substr(col_name,1,3))
@@ -197,7 +199,12 @@ for (i in 1:nr_input_fields) {
     if (length(log_list)>=i)
         is_log <- log_list[i]
     if ((is_log == 1) || (log_all_columns)) {
-        df[df[, col_name] == 0, col_name] <- 1e-3
+
+        fdelta <- min(df[df[, col_name] <= 0, col_name])
+        f_log <- function(x) {
+            return(x <- (x - fdelta) * 1e-5)
+        }
+        df[df[, col_name] <= 0, col_name] <- lapply(df[df[, col_name] <= 0, col_name], f_log)
         df[, new_col] <- log(df[, col_name])
     } else {
         df[, new_col] <- df[, col_name]
@@ -207,6 +214,9 @@ for (i in 1:nr_input_fields) {
     max_c <- max(df[, new_col]) + 1e-1 # add "epsilon" for numerical safety
     df[, new_col] <- (df[, new_col] - min_c) / max_c
 }
+t1_prep <- proc.time()
+prep_time <- t1_prep -t0_prep
+logger(sprintf("Done preprocessing. Total time %.2f min\n", prep_elapsed / 60))
 ## end preprocessing
 
 # base clusterization model
