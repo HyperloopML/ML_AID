@@ -12,8 +12,9 @@
 ##
 ##
 ##
+MODULE.VERSION <- "1.0.1"
 
-ALL_CATEGS <- c("BATISTE", "STREPSILS","PHARMA","COSMETICE",
+ALL_CATEGS <- c("BATISTE", "STREPSILS", "PHARMA", "COSMETICE",
                 "DERMOCOSMETICE", "BABY", "NEASOCIATE")
 ALL_BRANDS <- c("BrandGeneral", "DR_HART", "NUROFEN", "APIVITA", "AVENE", "L_OCCITANE", "VICHY",
                 "BIODERMA", "LA_ROCHE_POSAY", "L_ERBOLARIO", "PARASINUS", "TRUSSA", "SORTIS", "NESTLE",
@@ -35,19 +36,49 @@ SQL_CONNECT = 3
 # 3: use RevoScaleR to load from cache local file
 # 4: csv - just load simple csv file 
 
+
+##
+## HELPER FUNCTIONS
+##
+
 all_log <- " "
 logger <- function(text) {
-    all_log <<- paste0(all_log,text)
+    all_log <<- paste0(all_log, text)
     cat(text)
 }
+
+timeit = function(strmsg, expr) {
+    tm <- system.time(expr)
+    stm <- sprintf("%.2f min", tm[3] / 60)
+    logger(paste0(strmsg, " executed in ", stm, "\n"))
+}
+
+debug_object_size <- function(obj) {
+    obj_name <- deparse(substitute(obj))
+    strs1 <- format(round(as.numeric(object.size(obj) / (1024 * 1024)), 1), nsmall = 1, big.mark = ",")
+    strs2 <- format(
+                round(as.numeric(nrow(df)), 1),
+                nsmall = 0, big.mark = ",",
+                scientific = FALSE)
+    logger(sprintf("Object %s [%s] size: %sMB (%s rows)\n",
+                                            obj_name,
+                                            typeof(obj),
+                                            strs1,
+                                            strs2))
+}
+
+
+##
+## END HELPER FUNCTIONS
+##
 
 ###
 ### @INPUT parameter preparation
 ###
 n_centers <- 4
 n_downsample <- 100
-log_list <- c()                 #c(0, 1, 1)
-column_list <- ALL_COLUMNS      #c("Recency", "DailyFrequency", "Revenue")
+log_list <- c() #c(0, 1, 1)
+column_list <- ALL_COLUMNS #c("Recency", "DailyFrequency", "Revenue")
 segment_labels <- c("1-Very Low", "2-Low", "3-Average", "4-Good", "5-Best")
 cust_column <- "PartnerId"
 log_all_columns <- TRUE #set this to FALSE if log_list is used (then empty log_list means no logs)
@@ -58,14 +89,12 @@ log_all_columns <- TRUE #set this to FALSE if log_list is used (then empty log_l
 centroid_labels <- c()
 subcluster_column_list <- c()
 
-ctime <- format(Sys.time(),"%Y-%m-%d %H:%M:%S")
-logger(sprintf("[%s] BEGIN Clustering/Exploration script SQL_CONNECT=%d\n",ctime , SQL_CONNECT))
+ctime <- format(Sys.time(), "%Y-%m-%d %H:%M:%S")
+logger(sprintf("[%s] BEGIN Clustering/Exploration script SQL_CONNECT=%d\n", ctime, SQL_CONNECT))
 
 SHOW_FULL_PLOT = FALSE
 SHOW_DOWN_PLOT = TRUE
 SHOW_HEAT_MAPP = TRUE
-SHOW_TSNE_KMPL = TRUE
-SHOW_TSNE_FULL = FALSE
 
 USE_REVOSCALER = FALSE # FALSE if using standard kmeans/etc
 
@@ -78,11 +107,6 @@ conns <- paste0("driver={ODBC Driver 13 for SQL Server};",
                         svr, db, uid, pwd)
 sqls <- "SELECT * FROM _BEV_2015v1"
 
-timeit = function(strmsg, expr) {
-    tm <- system.time(expr)
-    stm <- sprintf("%.2f min",tm[3]/60)
-    logger(paste0(strmsg," executed in ",stm,"\n"))
-}
 
 
 if ("RevoScaleR" %in% rownames(installed.packages())) {
@@ -96,7 +120,7 @@ CustomKMeans = function(x, centers, nstart) {
         factors <- colnames(x)
         kformula = as.formula(paste("~", paste(factors, collapse = "+")))
         sformula = toString(kformula)
-        logger(paste0("Using RevoScaleR rxKmeans: [",sformula,"] "))
+        logger(paste0("Using RevoScaleR rxKmeans: [", sformula, "] "))
         model <- rxKmeans(formula = kformula,
                           data = x,
                           numClusters = centers,
@@ -113,13 +137,16 @@ CustomKMeans = function(x, centers, nstart) {
 }
 
 GetMaxes = function(dfd, newfield, categ1, categ2) {
+    t0_maxes <- proc.time()
     for (i in 1:nrow(dfd)) {
         best_categ1_index <- which.max(dfd[i, categ1])
-        best_categ1 <- colnames(dfd[i,categ1])[best_categ1_index]
+        best_categ1 <- colnames(dfd[i, categ1])[best_categ1_index]
         best_categ2_index <- which.max(dfd[i, categ2])
         best_categ2 <- colnames(dfd[i, categ2])[best_categ2_index]
-        dfd[i,newfield]  <- paste0(best_categ1,",",best_categ2)
+        dfd[i, newfield] <- paste0(best_categ1, "/", best_categ2)
     }
+    t1_maxes <- proc.time()
+    t_maxes <- t1_maxes[3] - t0_maxes[3]
     return(dfd)
 }
 
@@ -133,14 +160,12 @@ if (SQL_CONNECT == 1) {
 
     odbcClose(channel)
     logger("Done data downloading.")
-} else if (SQL_CONNECT == 4)
-{
+} else if (SQL_CONNECT == 4) {
 
     mypath <- dirname(sys.frame(1)$ofile)
     dfi <- read.csv(paste0(mypath, "/test.csv"))
-} else if ((SQL_CONNECT == 2) || (SQL_CONNECT == 3))
-{
-    if (SQL_CONNECT == 2) {
+} else if ((SQL_CONNECT == 2) || (SQL_CONNECT == 3)) {
+    if ((SQL_CONNECT == 2) || (!file.exists(dfXdfFileName))) {
         logger("Microsoft RevoScaleR connect to SQL Server...")
         timeit("RxOdbcData ",
             dsOdbcSource <- RxOdbcData(sqlQuery = sqls,
@@ -187,37 +212,48 @@ for (i in 1:length(column_list)) {
 ###
 
 ## preprocessing
+PRE_VER <- "1.1"
+
+logger(paste0("Begin preprocessing v",PRE_VER," ...\n"))
 t0_prep <- proc.time()
+
 norm_columns <- c()
 nr_input_fields <- length(column_list)
 
+
 for (i in 1:nr_input_fields) {
     col_name <- column_list[i]
-    new_col <- paste0("P",i,"_",substr(col_name,1,3))
+    new_col <- paste0("P", i, "_", substr(col_name, 1, 3))
     norm_columns <- c(norm_columns, new_col)
     is_log = 0
-    if (length(log_list)>=i)
+    if (length(log_list) >= i)
         is_log <- log_list[i]
     if ((is_log == 1) || (log_all_columns)) {
+        EXP_BELOW_ZERO <- FALSE
+        if (EXP_BELOW_ZERO) {
+            df[df[, col_name] <= 0, col_name] <-
+                exp(df[df[, col_name] <= 0, col_name]) * 1e-3
+        } else {
+            fdelta <- min(df[df[, col_name] <= 0, col_name])
+            df[df[, col_name] <= 0, col_name] <-
+                (df[df[, col_name] <= 0, col_name] - fdelta + 1) * 1e-5
 
-        fdelta <- min(df[df[, col_name] <= 0, col_name])
-        f_log <- function(x) {
-            return(x <- (x - fdelta) * 1e-5)
         }
-        df[df[, col_name] <= 0, col_name] <- lapply(df[df[, col_name] <= 0, col_name], f_log)
         df[, new_col] <- log(df[, col_name])
     } else {
         df[, new_col] <- df[, col_name]
     }
 
-    min_c <- min(df[, new_col])
+    df[, new_col] <- df[, new_col] - min(df[, new_col])
     max_c <- max(df[, new_col]) + 1e-1 # add "epsilon" for numerical safety
-    df[, new_col] <- (df[, new_col] - min_c) / max_c
+    df[, new_col] <- df[, new_col] / max_c
 }
 t1_prep <- proc.time()
-prep_time <- t1_prep -t0_prep
-logger(sprintf("Done preprocessing. Total time %.2f min\n", prep_elapsed / 60))
+prep_time <- (t1_prep[3] - t0_prep[3]) / 60
+
+logger(sprintf("Done preprocessing. Total time %.2f min\n", prep_time))
 ## end preprocessing
+
 
 # base clusterization model
 clust_column <- "IDCLU" # IMPORTANT: segment ID (sorted from worst to best)
@@ -488,9 +524,12 @@ if (SHOW_HEAT_MAPP) {
 ### END HEAT PLOT
 
 ### Begin GENERATIVE CLUSTERING
+SHOW_TSNE_KMPL = TRUE
+SHOW_TSNE_FULL = FALSE
+
+t0_tsne <- proc.time()
 
 timeit("Labeling down_df ", down_df <- GetMaxes(down_df, "BESTOF", ALL_BRANDS, ALL_CATEGS))
-
 
 if (SHOW_TSNE_KMPL) {
     STD_TSNE <- FALSE
@@ -517,7 +556,7 @@ if (SHOW_TSNE_KMPL) {
         plot2 <- qplot(rtsne_res$Y[, 1], rtsne_res$Y[, 2],
                        shape = down_df$ID,
                        color = tsne_colors)
-        plot2 <- plot2 + geom_text(aes_string(label = down_df$BESTOF),
+        plot2 <- plot2 + geom_text(aes(label = down_df$BESTOF),
                                    color = "black", size = 2)
         plot2 <- plot2 + theme(legend.position = "none")
         plot2
@@ -535,6 +574,10 @@ if (SHOW_TSNE_FULL) {
     plot3 <- plot2 + theme(legend.position = "none")
     plot3
 }
+
+t1_tsne <- proc.time()
+t_tsne <- t1_tsne[3] - t0_tsne[3]
+logger(sprintf("TSNE executed in %.2f sec",t_tsne))
 
 ### END Generative clustering
 
