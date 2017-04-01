@@ -66,6 +66,26 @@ debug_object_size <- function(obj) {
                                             strs2))
 }
 
+get_scriptpath <- function() {
+  # location of script can depend on how it was invoked:
+  # source() and knit() put it in sys.calls()
+  path <- NULL
+  
+  if(!is.null(sys.calls())) {
+    # get name of script - hope this is consisitent!
+    path <- as.character(sys.call(1))[2] 
+    # make sure we got a file that ends in .R, .Rmd or .Rnw
+    if (grepl("..+\\.[R|Rmd|Rnw]", path, perl=TRUE, ignore.case = TRUE) )  {
+      return(path)
+    } else { 
+      message("Obtained value for path does not end with .R, .Rmd or .Rnw: ", path)
+    }
+  } else{
+    # Rscript and R -f put it in commandArgs
+    args <- commandArgs(trailingOnly = FALSE)
+  }
+  return(path)
+}
 
 ##
 ## END HELPER FUNCTIONS
@@ -77,6 +97,7 @@ debug_object_size <- function(obj) {
 
 text_column  <- "AllText"
 label_column <- "ItemName"
+id_column <-"ItemId"
 
 ###
 ### END INPUT PARAMS
@@ -108,7 +129,10 @@ timeit = function(strmsg, expr) {
 if ("RevoScaleR" %in% rownames(installed.packages())) {
     library(RevoScaleR)
     # Create an xdf file name
-    dfXdfFileName <- file.path(getwd(), "hyperloop_saved_products.xdf")
+    file_db_path <- dirname(get_scriptpath()) #getwd()
+    logger(sprintf("Current workind directory: %s\n",file_db_path))
+    dfXdfFileName <- file.path(file_db_path, "hyperloop_saved_products.xdf")
+    logger(sprintf("XDF File: %s\n",dfXdfFileName))
 }
 
 CustomKMeans = function(x, centers, nstart) {
@@ -179,7 +203,7 @@ if (SQL_CONNECT == 1) {
                               maxRowsByCols = 2000000 * 200
                               ))
     dfi[is.na(dfi)] <- 0
-    df <- data.frame(dfi)
+    df <- data.frame(dfi) 
 }
 
 ##
@@ -269,7 +293,7 @@ if (FULL_DEBUG) {
 timeit("Prepare final BoW FULL matrix: ",
             mtxt <- as.matrix(dtm))
 debug_object_size(mtxt)
-dftxt <- data.frame(Name = df$ItemName, mtxt)
+dftxt <- data.frame(ID = df$ItemId, Name = df$ItemName, mtxt)
 debug_object_size(dftxt)
 df_has_columns(dftxt, test_brand)
 logger("\n")
@@ -278,20 +302,26 @@ logger("\n")
 
 timeit("Prepare final BoW large dataframe: ",
             dftxt_large <- as.data.frame(as.matrix(dtm_clean_large)))
-dftxt_large <- data.frame(Name = df$ItemName, dftxt_large)
+dftxt_large <- data.frame(ID = df$ItemId, Name = df$ItemName, dftxt_large)
 debug_object_size(dftxt_large)
 df_has_columns(dftxt_large, test_brand)
 logger("\n")
 
 timeit("Prepare final BoW small dataframe: ",
             dftxt_small <- as.data.frame(as.matrix(dtm_clean_small)))
-dftxt_small <- data.frame(Name = df$ItemName, dftxt_small)
+dftxt_small <- data.frame(ID = df$ItemId, Name = df$ItemName, dftxt_small)
 debug_object_size(dftxt_small)
 df_has_columns(dftxt_small, test_brand)
 logger("\n")
 
-i <- 26535
-print(dftxt[i, col(dftxt[i,])[which(!dftxt[i,] == 0)]])
+idxs <- sample(nrow(dftxt_small),20)
+for(i in idxs){
+  if(length(dftxt_small[i,"Name"])<30)
+  {
+    print(dftxt_small[i, col(dftxt_small[i,])[which(!dftxt_small[i,] == 0)]])
+    cat("\n\n")
+  }
+}
 
 
 t1_prep <- proc.time()

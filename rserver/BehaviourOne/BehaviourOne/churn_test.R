@@ -3,7 +3,7 @@
 ##
 ## @script:       Churn Prediction Alpha test
 ## @created:      2017.03.23
-## @lastmodified: 2017.03.24
+## @lastmodified: 2017.03.27
 ## @project:      Hyperloop
 ## @subproject:   Machine Learning module
 ## @platform:     Microsoft R Server, SQL Server, RevoScaleR
@@ -14,6 +14,7 @@
 ##
 
 MODULE.VERSION <- "0.0.2"
+options(width = 200)
 
 
 ###
@@ -29,27 +30,171 @@ SQL_CONNECT = 3
 # 3: use RevoScaleR to load from cache local file
 # 4: csv - just load simple csv file 
 
+###
+### @INPUT parameter preparation
+###
+
+# sql input
+Predictor.Fields <- c("RFCAM4C4Y14", 
+                      "HYIT1F5C4Y14",
+                      "TOPBR20C4Y14",
+                      "RFMMITHY1TOPBR29C4Y14",
+                      "tX",
+                      "tY")
+Target.Label <- "Churn"
+Inspect.Fields <- c("MARGIN", "M")
+ID.Field <- "PartnerId"
+Table.Name <- "_Attrib_20170324_v1"
+# end sql input
+
+DO_PARALLEL <-FALSE
+
+# tuning input
+All.Fields <- c(ID.Field, Inspect.Fields, Predictor.Fields)
+
+#
+All.Models <- c(
+    "svmRadial", 
+    "lda", 
+    "rpart", 
+    "plr", 
+    "xgbTree",
+    "bayesglm"
+    )
+All.Libraries <- c(
+    "caret", 
+    "rpart", 
+    "LogicReg",
+    "stepPlr", 
+    "MASS", 
+    "e1071",
+    "kernlab", 
+    "xgboost", 
+    "plyr",
+    "fastAdaboost",
+    "arm"
+    )
+
+Proposed.Libraries <- c(
+    "caret", 
+    "rpart", 
+    "fastAdaboost",
+    "xgboost", 
+    "plyr",
+    "MASS",
+    "arm"
+    )
+
+Proposed.Models <- c(
+    "lda",
+    "bayesglm",
+    "rpart", 
+    "xgbTree",
+    "adaboost"
+    )[1:2]
+Nr.Proposed.Models <- length(Proposed.Models)
+
+Cross.Metric <- "Kappa"
+
+Coded.Label <- "classe"
+Dataset.Size <- 1.0     # % out of dataset (100% usually)
+Training.Size <- 0.6    # % out of Dataset.Size
+Validation.Size <- 0.5 # % out of (Dataset.Size - Training.Size)
+
+USE_BEST_CROSS <- TRUE
+
+NR_ROWS <- 2e6
+# end tuning input
+
+###
+### END INPUT PARAMS
+###
+
+##
+## HELPER FUNCTIONS
+##
+
 all_log <- " "
 logger <- function(text) {
     all_log <<- paste0(all_log, text)
     cat(text)
 }
 
-###
-### @INPUT parameter preparation
-###
+timeit = function(strmsg, expr) {
+    tm <- system.time(expr)
+    ftime <- tm[3]
+    stm <- sprintf("%.2f min", ftime / 60)
+    logger(paste0(strmsg, " executed in ", stm, "\n"))
+    return(ftime)
+}
+
+debug_object_size <- function(obj) {
+    obj_name <- deparse(substitute(obj))
+    strs1 <- format(round(as.numeric(object.size(obj) / (1024 * 1024)), 1), nsmall = 1, big.mark = ",")
+    strs2 <- format(
+                round(as.numeric(nrow(df)), 1),
+                nsmall = 0, big.mark = ",",
+                scientific = FALSE)
+    logger(sprintf("Object %s [%s] size: %sMB (%s rows)\n",
+                                            obj_name,
+                                            class(obj)[1],
+                                            strs1,
+                                            strs2))
+}
+
+get_scriptpath <- function() {
+    # location of script can depend on how it was invoked:
+    # source() and knit() put it in sys.calls()
+    path <- NULL
+
+    if (!is.null(sys.calls())) {
+        # get name of script - hope this is consisitent!
+        path <- as.character(sys.call(1))[2]
+        # make sure we got a file that ends in .R, .Rmd or .Rnw
+        if (grepl("..+\\.[R|Rmd|Rnw]", path, perl = TRUE, ignore.case = TRUE)) {
+            return(path)
+        } else {
+            message("Obtained value for path does not end with .R, .Rmd or .Rnw: ", path)
+        }
+    } else {
+        # Rscript and R -f put it in commandArgs
+        args <- commandArgs(trailingOnly = FALSE)
+    }
+    return(path)
+}
 
 
-###
-### END INPUT PARAMS
-###
+install_and_load <- function(libraries) {
+    for (i in libraries) {
+        if (!is.element(i, .packages(all.available = TRUE))) {
+            install.packages(i)
+        }
+        library(i, character.only = TRUE)
+    }
+}
+
+setup_paralel_env <- function() {
+
+    install_and_load(c("doParallel","foreach"))
+
+    ### Register parallel backend
+    avail_cores <- detectCores() # available cores
+    p_cluster <<- makeCluster(avail_cores - 2)
+    registerDoParallel(p_cluster)
+    logger(sprintf("[Parallel backend] Cores registered: %d\n", getDoParWorkers()))
+    logger(sprintf("[Parallel backend] Environment: %s\n", getDoParName()))
+    logger(sprintf("[Parallel backend] Backend version: %s\n", getDoParVersion()))
+}
+
+
+##
+## END HELPER FUNCTIONS
+##
+
 
 
 ctime <- format(Sys.time(), "%Y-%m-%d %H:%M:%S")
-logger(sprintf("[%s] BEGIN Products Exploration script SQL_CONNECT=%d\n", ctime, SQL_CONNECT))
-
-
-USE_REVOSCALER = FALSE # FALSE if using standard kmeans/etc
+logger(sprintf("[%s] BEGIN Churn multi-model cross-validation script v.%s SQL_CONNECT=%d\n", ctime, MODULE.VERSION, SQL_CONNECT))
 
 
 svr <- "server=VSQL08\\HYPERLOOP;"
@@ -58,13 +203,7 @@ uid <- "uid=andreidi;"
 pwd <- "pwd=HypML2017"
 conns <- paste0("driver={ODBC Driver 13 for SQL Server};",
                         svr, db, uid, pwd)
-sqls <- "SELECT * FROM _Attrib_20170324"
-
-timeit = function(strmsg, expr) {
-    tm <- system.time(expr)
-    stm <- sprintf("%.2f min", tm[3] / 60)
-    logger(paste0(strmsg, " executed in ", stm, "\n"))
-}
+sqls <- "SELECT * FROM _Attrib_20170324_v1"
 
 
 if ("RevoScaleR" %in% rownames(installed.packages())) {
@@ -149,7 +288,9 @@ if (SQL_CONNECT == 1) {
 ##
 
 strs <- format(round(as.numeric(object.size(df) / (1024 * 1024)), 1), nsmall = 1, big.mark = ",")
-logger(sprintf("Done data downloading. Dataset size: %sMB\n", strs))
+logger(sprintf("Done data downloading for table  [%s]. Dataset size: %sMB\n",
+                Table.Name,
+                strs))
 strs <- format(
             round(as.numeric(nrow(df)), 1),
             nsmall = 0, big.mark = ",",
@@ -157,16 +298,32 @@ strs <- format(
 logger(sprintf("Loaded %s rows in memory dataframe\n", strs))
 
 
-###
-### end input parameter preparation
-###
+
+
+
+# first check loaded libraries
+install_and_load(Proposed.Libraries)
+
+if (DO_PARALLEL) {
+    # setup parallel processing environment
+    setup_paralel_env()
+}
 
 ## preprocessing
-PRE_VER <- "0.0.1"
+PRE_VER <- "0.0.2"
 
-logger(paste0("Begin text preprocessing v", PRE_VER, " ...\n"))
+logger(paste0("Begin data preprocessing v", PRE_VER, " ...\n"))
 t0_prep <- proc.time()
 
+###
+###
+
+df$classe <- df[, Target.Label]
+df[, Target.Label] <- NULL
+df$classe <- as.factor(df$classe)
+
+
+###
 ###
 
 t1_prep <- proc.time()
@@ -174,3 +331,143 @@ prep_time <- (t1_prep[3] - t0_prep[3]) / 60
 
 logger(sprintf("Done preprocessing. Total time %.2f min\n", prep_time))
 ## end preprocessing
+
+
+### BEGIN cross-validation data preparation
+
+finalData <- df
+inTraining <- createDataPartition(finalData$classe, p = Training.Size, list = FALSE)
+df_train <- finalData[inTraining,]
+testdataStd <- finalData[-inTraining,]
+inVal <- createDataPartition(testdataStd$classe, p = Validation.Size, list = FALSE)
+df_valid <- testdataStd[inVal,]
+df_test <- testdataStd[-inVal,]
+### END cross-validation data preparation
+
+### BEGIN model selection, training, validation and testing
+PRE_VER <- "0.2.1"
+
+logger(paste0("Begin model training and cross-validation v", PRE_VER, " ...\n"))
+t0_prep <- proc.time()
+
+###
+###
+
+Train.Accuracy <- c()
+Cross.Accuracy <- c()
+Cross.Recall <- c()
+Cross.Kappa <- c()
+Training.Time <- c()
+Confusion.Matrices <- c()
+Used.Data <- c()
+Script.Ver <- c()
+
+Best.Accuracy  <- 0
+
+for (c_model in 1:Nr.Proposed.Models) {
+    Current.Model.Method <- Proposed.Models[c_model]
+    slabel <- paste0(Coded.Label, "~")
+    sfactors <- paste(Predictor.Fields, collapse = "+")
+    clf_formula = as.formula(paste(slabel,sfactors))
+    sformula = paste(slabel,sfactors)
+    logger(sprintf("\nTraining [%s: %s] model ...\n", Current.Model.Method, sformula))
+    c_time <- timeit(Current.Model.Method,
+                     Current.Model <- train(clf_formula,
+                                            data = df_train,
+                                            method = Current.Model.Method,
+                                            metric = Cross.Metric
+                                            )
+                    )
+
+    Training.Time[c_model] <- c_time
+
+    logger(sprintf("Done training [%s] model ...\n", Current.Model.Method))
+
+    preds_train <- predict(Current.Model, df_train)
+    preds_valid <- predict(Current.Model, df_valid)
+
+    cfm_train <- confusionMatrix(preds_train, df_train$classe, positive = "1")
+    cfm_valid <- confusionMatrix(preds_valid, df_valid$classe, positive = "1")
+
+    Train.Accuracy[c_model] <- cfm_train$overall["Accuracy"]
+    Cross.Accuracy[c_model] <- cfm_valid$overall["Accuracy"]
+    Cross.Kappa[c_model] <- cfm_valid$overall["Kappa"]
+    Cross.Recall[c_model] <- cfm_valid$byClass["Sensitivity"]
+    Script.Ver[c_model] <- paste0("ChurnModel v",MODULE.VERSION)
+ 
+
+    Confusion.Matrices <- c(Confusion.Matrices, cfm_valid)
+    tacc <- Train.Accuracy[c_model]
+    vacc <- Cross.Accuracy[c_model]
+    vkap <- Cross.Kappa[c_model]
+    vrec <- Cross.Recall[c_model]
+
+    logger(sprintf("Train acc: %.3f Valid acc: %.3f Valid kap: %.3f Valid rec: %.3f\n",
+                    tacc,vacc,vkap,vrec))
+
+    if (USE_BEST_CROSS) {
+        if (Best.Accuracy < Cross.Recall[c_model]) {
+            Best.Model <- Current.Model
+            Best.Accuracy <- Cross.Recall[c_model]
+        }
+    } else {
+        if (Best.Accuracy < Cross.Accuracy[c_model]) {
+            Best.Model <- Current.Model
+            Best.Accuracy <- Cross.Accuracy[c_model]
+        }
+    }
+}
+
+for (i in 1:Nr.Proposed.Models) {
+    Used.Data[i] <- Table.Name
+}
+
+summary_info <- data.frame(Used.Data, Script.Ver,
+                           Proposed.Models, Train.Accuracy,
+                           Cross.Accuracy, Cross.Recall, Cross.Kappa,
+                           Training.Time)
+summary_info <- summary_info[order(summary_info$Cross.Accuracy),]
+print(summary_info)
+
+logger(sprintf("Predicting with: %s\n", Best.Model$method))
+timeit(paste0("Predict Testing data with best model: ", Best.Model$method),
+       testpred <- predict(Best.Model, df_test)
+       ) 
+test_conf <- confusionMatrix(testpred, df_test$classe, positive = "1")
+
+df_test$Prediction <- testpred
+
+logger(sprintf("Total positives: %d\n", nrow(df_test[df_test$classe == 1,])))
+
+
+df_right <- df_test[df_test$classe == 1 & df_test$Prediction == 1,]
+df_right <- df_right[order(df_right[, Inspect.Fields[1]],
+                           decreasing = TRUE),]
+
+print(head(df_right),3)
+
+###
+###
+
+t1_prep <- proc.time()
+prep_time <- (t1_prep[3] - t0_prep[3]) / 60
+
+logger(sprintf("Done model training and cross-validation. Total time %.2f min\n", prep_time))
+### END  model selection, training, validation and testing
+
+if (DO_PARALLEL) {
+    logger("Shutting down parallel backend...")
+    stopCluster(p_cluster)
+}
+logger("Script done.")
+
+Log.Lines <- c()
+for (c_model in 1:Nr.Proposed.Models) {
+     Log.Lines[c_model] <- all_log
+    }
+summary_info$Log <- Log.Lines
+
+###
+### OUTPUT IS: summary_info
+### Must be inserted in DB
+###

@@ -67,6 +67,27 @@ debug_object_size <- function(obj) {
                                             strs2))
 }
 
+get_scriptpath <- function() {
+  # location of script can depend on how it was invoked:
+  # source() and knit() put it in sys.calls()
+  path <- NULL
+  
+  if(!is.null(sys.calls())) {
+    # get name of script - hope this is consisitent!
+    path <- as.character(sys.call(1))[2] 
+    # make sure we got a file that ends in .R, .Rmd or .Rnw
+    if (grepl("..+\\.[R|Rmd|Rnw]", path, perl=TRUE, ignore.case = TRUE) )  {
+      return(path)
+    } else { 
+      message("Obtained value for path does not end with .R, .Rmd or .Rnw: ", path)
+    }
+  } else{
+    # Rscript and R -f put it in commandArgs
+    args <- commandArgs(trailingOnly = FALSE)
+  }
+  return(path)
+}
+
 
 ##
 ## END HELPER FUNCTIONS
@@ -110,30 +131,33 @@ sqls <- "SELECT * FROM _BEV_2015v1"
 
 
 if ("RevoScaleR" %in% rownames(installed.packages())) {
-    library(RevoScaleR)
-    # Create an xdf file name
-    dfXdfFileName <- file.path(getwd(), "hyperloop_saved_data.xdf")
-}
+  library(RevoScaleR)
+  # Create an xdf file name
+  file_db_path <- dirname(get_scriptpath()) #getwd()
+  logger(sprintf("Current workind directory: %s\n",file_db_path))
+  dfXdfFileName <- file.path(file_db_path, "hyperloop_saved_data.xdf")
+  logger(sprintf("XDF File: %s\n",dfXdfFileName))
+} 
 
 CustomKMeans = function(x, centers, nstart) {
-    if (USE_REVOSCALER) {
-        factors <- colnames(x)
-        kformula = as.formula(paste("~", paste(factors, collapse = "+")))
-        sformula = toString(kformula)
-        logger(paste0("Using RevoScaleR rxKmeans: [", sformula, "] "))
-        model <- rxKmeans(formula = kformula,
-                          data = x,
-                          numClusters = centers,
-                          numStarts = nstart,
-                          reportProgress = 0)
-    } else {
-        logger("Using standard kMeans: ")
-        model <- kmeans(x = x,
-                        nstart = nstart,
-                        centers = centers
-                        )
-    }
-    return(model)
+  if (USE_REVOSCALER) {
+    factors <- colnames(x)
+    kformula = as.formula(paste("~", paste(factors, collapse = "+")))
+    sformula = toString(kformula)
+    logger(paste0("Using RevoScaleR rxKmeans: [", sformula, "] "))
+    model <- rxKmeans(formula = kformula,
+                      data = x,
+                      numClusters = centers,
+                      numStarts = nstart,
+                      reportProgress = 0)
+  } else {
+    logger("Using standard kMeans: ")
+    model <- kmeans(x = x,
+                    nstart = nstart,
+                    centers = centers
+    )
+  }
+  return(model)
 }
 
 GetMaxes = function(dfd, newfield, categ1, categ2) {
@@ -393,11 +417,11 @@ calculated_column_list <- norm_columns
 subcluster_column_list <- subcluster_column_list
 
 x_dim <- subcluster_column_list[1]
-y_dim <- subcluster_column_list[2]
-z_dim <- subcluster_column_list[3]
+y_dim <- subcluster_column_list[4]
+z_dim <- subcluster_column_list[14]
 x_dim_lbl <- column_list[1]
-y_dim_lbl <- column_list[2]
-z_dim_lbl <- column_list[3]
+y_dim_lbl <- column_list[4]
+z_dim_lbl <- column_list[14]
 c_dim <- label_column
 n_dim <- clust_column
 s_dim <- subcl_column
@@ -553,9 +577,16 @@ if (SHOW_TSNE_KMPL) {
         tsne_kmeans <- kmeans(rtsne_res$Y, centers = 4, nstart = 100)
         tsne_colors <- as.factor(tsne_kmeans$cluster)
         down_df$VisualClustering <- tsne_kmeans$cluster
-        plot2 <- qplot(rtsne_res$Y[, 1], rtsne_res$Y[, 2],
-                       shape = down_df$ID,
-                       color = tsne_colors)
+        
+  
+        
+        plot2 <- qplot(rtsne_res$Y[, 1], rtsne_res$Y[, 2])
+        
+        plot2 <- plot2 + geom_point(aes(shape = down_df$ID, color = down_df$ID), 
+                                    size = 4)
+
+        plot2 <- plot2 + geom_point(aes(alpha = 0.5))
+
         plot2 <- plot2 + geom_text(aes(label = down_df$BESTOF),
                                    color = "black", size = 2)
         plot2 <- plot2 + theme(legend.position = "none")
