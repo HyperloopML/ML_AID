@@ -3,7 +3,7 @@
 ##
 ## @script:       Products segmentation test
 ## @created:      2017.03.23
-## @lastmodified: 2017.03.24
+## @lastmodified: 2017.04.06
 ## @project:      Hyperloop
 ## @subproject:   Machine Learning module
 ## @platform:     Microsoft R Server, SQL Server, RevoScaleR
@@ -12,58 +12,115 @@
 ##
 ##
 ##
-MODULE.VERSION <- "0.2.1"
 
-ALL_CATEGS <- c("BATISTE", "STREPSILS", "PHARMA", "COSMETICE",
-                "DERMOCOSMETICE", "BABY", "NEASOCIATE")
-ALL_BRANDS <- c("BrandGeneral", "DR_HART", "NUROFEN", "APIVITA", "AVENE", "L_OCCITANE", "VICHY",
-                "BIODERMA", "LA_ROCHE_POSAY", "L_ERBOLARIO", "PARASINUS", "TRUSSA", "SORTIS", "NESTLE",
-                "OXYANCE", "TERTENSIF", "ASPENTER", "ALPHA")
-ALL_COLUMNS <- c(ALL_BRANDS, ALL_CATEGS)
-###
-### 
-### BEGIN SQL Server R code
-### 
-### OBS: set SQL_CONNECT=0 for MS SQL Server Server side R scripts
+
 ###
 SQL_CONNECT = 3
 
-NR_ROWS = 1e8
-FULL_DEBUG <- FALSE
-# 0: Run from SLQ Server; 
+
 # 1: use RODBC to remotely connect to sql server
 # 2: use RevoScaleR to remotely connect to sql server (Microsoft R ONLY!)
 # 3: use RevoScaleR to load from cache local file
 # 4: csv - just load simple csv file 
 
+###
+### @INPUT parameter preparation
+###
+
+svr <- "server=VSQL08\\HYPERLOOP;"
+db  <- "database=StatisticalStore;"
+uid <- "uid=andreidi;"
+pwd <- "pwd=HypML2017"
+sqls <- "SELECT * FROM _TextItems"
+
+text_column  <- "AllText"
+label_column <- "ItemName"
+id_column <-"ItemId"
+NORMALIZE <- FALSE
+SAVE_NAME <- FALSE
+
+###
+### END INPUT PARAMS
+###
+
+######################
+######################
+######################
+######################
+###################### BEGIN UPDATE COPY-PASTE SECTION
+######################
+######################
+######################
+######################
+
+MODULE.VERSION <- "0.2.7"
+MODULE.NAME <- "PRODUCTS_PREP"
+NR_ROWS = 1e8
+FULL_DEBUG <- FALSE
+REMOVE_INVALiD_INACTIV <- FALSE
+
+
+SPARSITY <- 0.999
+
 ##
 ## HELPER FUNCTIONS
 ##
 
+get_scriptpath <- function() {
+  # location of script can depend on how it was invoked:
+  # source() and knit() put it in sys.calls()
+  path <- NULL
+  
+  if(!is.null(sys.calls())) {
+    # get name of script - hope this is consisitent!
+    path <- as.character(sys.call(1))[2] 
+    # make sure we got a file that ends in .R, .Rmd or .Rnw
+    if (grepl("..+\\.[R|Rmd|Rnw]", path, perl=TRUE, ignore.case = TRUE) )  {
+      return(path)
+    } else { 
+      message("Obtained value for path does not end with .R, .Rmd or .Rnw: ", path)
+    }
+  } else{
+    # Rscript and R -f put it in commandArgs
+    args <- commandArgs(trailingOnly = FALSE)
+  }
+  return(path)
+}
+
+
 all_log <- " "
+log_fnpath <- dirname(get_scriptpath())
+log_ctime <- format(Sys.time(), "%Y%m%d%H%M%S")
+log_FN <- paste0("_log_",MODULE.NAME,"_",log_ctime,".txt")
+LogFileName <- file.path(log_fnpath, log_FN)
 logger <- function(text) {
-    all_log <<- paste0(all_log, text)
-    cat(text)
+  all_log <<- paste0(all_log, text)
+  cat(text)
+  write(x = all_log,
+        file = LogFileName,
+        sep = '\n',
+        append = FALSE)
 }
 
 timeit = function(strmsg, expr) {
-    tm <- system.time(expr)
-    stm <- sprintf("%.2f min", tm[3] / 60)
-    logger(paste0(strmsg, " executed in ", stm, "\n"))
+  tm <- system.time(expr)
+  stm <- sprintf("%.2f min", tm[3] / 60)
+  logger(paste0(strmsg, " executed in ", stm, "\n"))
 }
 
 debug_object_size <- function(obj) {
-    obj_name <- deparse(substitute(obj))
-    strs1 <- format(round(as.numeric(object.size(obj) / (1024 * 1024)), 1), nsmall = 1, big.mark = ",")
-    strs2 <- format(
-                round(as.numeric(nrow(df)), 1),
-                nsmall = 0, big.mark = ",",
-                scientific = FALSE)
-    logger(sprintf("Object %s [%s] size: %sMB (%s rows)\n",
-                                            obj_name,
-                                            class(obj)[1],
-                                            strs1,
-                                            strs2))
+  obj_name <- deparse(substitute(obj))
+  strs1 <- format(round(as.numeric(object.size(obj) / (1024 * 1024)), 1), nsmall = 1, big.mark = ",")
+  strs2 <- format(
+    round(as.numeric(nrow(df)), 1),
+    nsmall = 0, big.mark = ",",
+    scientific = FALSE)
+  logger(sprintf("Object %s [%s] size: %sMB (%s rows by %d cols)\n",
+                 obj_name,
+                 class(obj)[1],
+                 strs1,
+                 strs2,
+                 length(names(obj))))
 }
 
 get_scriptpath <- function() {
@@ -87,37 +144,33 @@ get_scriptpath <- function() {
   return(path)
 }
 
+save_df <- function(df)
+{
+  logger("\nSaving data...\n")
+  file_db_path <- dirname(get_scriptpath()) 
+  if(FALSE)
+    logger(sprintf("Current working directory: %s\n",file_db_path))
+  FN <- paste0(MODULE.NAME,"_v",MODULE.VERSION,"_data.csv")
+  FileName <- file.path(file_db_path, FN)
+  timeit(sprintf("Saving File: %s",FileName),
+         write.csv(x = df, file = FileName, row.names = TRUE))
+}
+
 ##
 ## END HELPER FUNCTIONS
 ##
 
-###
-### @INPUT parameter preparation
-###
-
-text_column  <- "AllText"
-label_column <- "ItemName"
-id_column <-"ItemId"
-
-###
-### END INPUT PARAMS
-###
-
-
 ctime <- format(Sys.time(), "%Y-%m-%d %H:%M:%S")
-logger(sprintf("[%s] BEGIN Products Exploration script SQL_CONNECT=%d\n", ctime, SQL_CONNECT))
-
+logger(sprintf("[%s] BEGIN Products Exploration script v%s SQL_CONNECT=%d\n", ctime, MODULE.VERSION,SQL_CONNECT))
+library(reshape)
+library(tm)
 
 USE_REVOSCALER = FALSE # FALSE if using standard kmeans/etc
 
 
-svr <- "server=VSQL08\\HYPERLOOP;"
-db  <- "database=MachineLearning3;"
-uid <- "uid=andreidi;"
-pwd <- "pwd=HypML2017"
+
 conns <- paste0("driver={ODBC Driver 13 for SQL Server};",
                         svr, db, uid, pwd)
-sqls <- "SELECT * FROM _TextItems"
 
 timeit = function(strmsg, expr) {
     tm <- system.time(expr)
@@ -187,7 +240,7 @@ if (SQL_CONNECT == 1) {
 } else if ((SQL_CONNECT == 2) || (SQL_CONNECT == 3)) {
     if ((SQL_CONNECT == 2) || (!file.exists(dfXdfFileName))) {
         logger("Microsoft RevoScaleR connect to SQL Server...\n")
-        timeit("RxOdbcData ",
+        timeit(sprintf("RxOdbcData [%s]",sqls),
             dsOdbcSource <- RxOdbcData(sqlQuery = sqls,
                                        connectionString = conns))
 
@@ -203,28 +256,26 @@ if (SQL_CONNECT == 1) {
                               maxRowsByCols = 2000000 * 200
                               ))
     dfi[is.na(dfi)] <- 0
-    df <- data.frame(dfi) 
+    df <- data.frame(dfi)
+    logger("Done data downloading.\n")
+    if(TRUE)
+    {
+      logger("Deleting xdf file...\n")
+      unlink(dfXdfFileName)
+    }
 }
 
 ##
 ## END DATA INPUT
 ##
-
-strs <- format(round(as.numeric(object.size(df) / (1024 * 1024)), 1), nsmall = 1, big.mark = ",")
-logger(sprintf("Done data downloading. Dataset size: %sMB\n", strs))
-strs <- format(
-            round(as.numeric(nrow(df)), 1),
-            nsmall = 0, big.mark = ",",
-            scientific = FALSE)
-logger(sprintf("Loaded %s rows in memory dataframe\n", strs))
-
+debug_object_size(df)
 
 ###
 ### end input parameter preparation
 ###
 
 ## preprocessing
-PRE_VER <- "0.0.1"
+PRE_VER <- "0.0.2"
 
 logger(paste0("Begin text preprocessing v", PRE_VER, " ...\n"))
 t0_prep <- proc.time()
@@ -232,16 +283,20 @@ t0_prep <- proc.time()
 timeit("Removing unknown chars Text: ", df$AllText <- iconv(df$AllText, 'Latin-9'))
 timeit("Removing unknown chars Name: ", df$ItemName <- iconv(df$ItemName, 'Latin-9'))
 debug_object_size(df)
-toMatch <- c("invalid", "inactiv")
-excluded_filter <- paste(toMatch, collapse = "|")
-logger(paste0("Cleaning ",excluded_filter,"..."))
-excluded_recs <- grep(excluded_filter, df$ItemName)
-df <- df[-excluded_recs,]
-debug_object_size(df)
-if(FULL_DEBUG)
+
+if(REMOVE_INVALiD_INACTIV){
+  toMatch <- c("invalid", "inactiv")
+  excluded_filter <- paste(toMatch, collapse = "|")
+  logger(paste0("Cleaning ",excluded_filter,"...\n"))
+  excluded_recs <- grep(excluded_filter, df$ItemName)
+  df <- df[-excluded_recs,]
+  debug_object_size(df) 
+}
+
+if(FALSE)
     print(head(df[nchar(df$AllText)>300,]))
 
-library(tm)
+
 
 timeit("Prepare VectorSource: ", vector_src <- VectorSource(df[, text_column]))
 debug_object_size(vector_src)
@@ -261,71 +316,72 @@ df_has_columns <- function(dfin, colname) {
     if (length(colname) > 1) {
         test_filter <- paste(colname, collapse = "|")
     }
-
+    logger(sprintf("Looking for columns such as [%s]\n",test_filter))
     icols <- grep(test_filter, colnames(dfin))
     has_columns <- FALSE
     if (length(icols) > 0) {
         has_columns <- TRUE
         print(colnames(dfin)[icols])
     } else {
-        logger("Column not found :(")
+        logger("Column not found\n")
     }
     return(has_columns)
 }
 
-sparse_prc <- 0.999
-timeit(sprintf("RemoveSparseTerms %.3f: ", sparse_prc),
-        dtm_clean_large <- removeSparseTerms(dtm, sparse_prc))
-debug_object_size(dtm_clean_large)
-print(dtm_clean_large)
-logger("\n")
+if(SPARSITY<1)
+{
+  sparse_prc <- SPARSITY
+  timeit(sprintf("RemoveSparseTerms %.3f: ", sparse_prc),
+         dtm <- removeSparseTerms(dtm, sparse_prc))
+  debug_object_size(dtm)
+  print(dtm)
+  logger("\n")  
+}
 
-sparse_prc <- 0.9983
-timeit(sprintf("RemoveSparseTerms %.3f: ", sparse_prc),
-        dtm_clean_small <- removeSparseTerms(dtm, sparse_prc))
-debug_object_size(dtm_clean_small)
-print(dtm_clean_small)
-logger("\n")
 
-test_brand <- c("dr","hart")
 
-if (FULL_DEBUG) {
 timeit("Prepare final BoW FULL matrix: ",
             mtxt <- as.matrix(dtm))
 debug_object_size(mtxt)
-dftxt <- data.frame(ID = df$ItemId, Name = df$ItemName, mtxt)
+if(SAVE_NAME)
+{
+  dftxt <- data.frame(ID = df$ItemId, Name = df$ItemName, mtxt)
+} else
+{
+  dftxt <- data.frame(ID = df$ItemId, mtxt)
+}
 debug_object_size(dftxt)
+
+logger("\n")
+test_brand <- c("dupaplaja","hart","basici","plaja")
 df_has_columns(dftxt, test_brand)
 logger("\n")
+
+newcolumns <- setdiff(colnames(dftxt),c("ID","Name"))
+
+if(NORMALIZE){
+  timeit("Normalising: ",
+         dftxt <- melt(dftxt, id = c("ID","Name"))
+  )
+  debug_object_size(dftxt)
 }
-
-
-timeit("Prepare final BoW large dataframe: ",
-            dftxt_large <- as.data.frame(as.matrix(dtm_clean_large)))
-dftxt_large <- data.frame(ID = df$ItemId, Name = df$ItemName, dftxt_large)
-debug_object_size(dftxt_large)
-df_has_columns(dftxt_large, test_brand)
-logger("\n")
-
-timeit("Prepare final BoW small dataframe: ",
-            dftxt_small <- as.data.frame(as.matrix(dtm_clean_small)))
-dftxt_small <- data.frame(ID = df$ItemId, Name = df$ItemName, dftxt_small)
-debug_object_size(dftxt_small)
-df_has_columns(dftxt_small, test_brand)
-logger("\n")
-
-idxs <- sample(nrow(dftxt_small),20)
-for(i in idxs){
-  if(length(dftxt_small[i,"Name"])<30)
-  {
-    print(dftxt_small[i, col(dftxt_small[i,])[which(!dftxt_small[i,] == 0)]])
-    cat("\n\n")
-  }
-}
-
 
 t1_prep <- proc.time()
 prep_time <- (t1_prep[3] - t0_prep[3]) / 60
 
-logger(sprintf("Done preprocessing. Total time %.2f min\n", prep_time))
+logger(sprintf("Done products preprocessing. Total time %.2f min\n", prep_time))
+
 ## end preprocessing
+
+
+######################
+######################
+######################
+######################
+###################### BEGIN UPDATE COPY-PASTE SECTION
+######################
+######################
+######################
+######################
+
+save_df(dftxt)

@@ -3,7 +3,7 @@
 ##
 ## @script:       Churn Prediction Alpha test
 ## @created:      2017.03.23
-## @lastmodified: 2017.03.27
+## @lastmodified: 2017.04.05
 ## @project:      Hyperloop
 ## @subproject:   Machine Learning module
 ## @platform:     Microsoft R Server, SQL Server, RevoScaleR
@@ -13,8 +13,10 @@
 ##
 ##
 
-MODULE.VERSION <- "0.0.2"
-options(width = 200)
+##
+## FOR SQL SERVER: COPY ONLY "COPY-PASTE" SECTION AFTER "INPUT PARAMETERS" SECTION
+##
+
 
 
 ###
@@ -103,12 +105,31 @@ Validation.Size <- 0.5 # % out of (Dataset.Size - Training.Size)
 
 USE_BEST_CROSS <- TRUE
 
-NR_ROWS <- 2e6
+NR_ROWS <- 2e5
 # end tuning input
 
 ###
 ### END INPUT PARAMS
 ###
+
+###
+### 
+
+###############
+###############
+###############
+###############
+###############
+############### BEGIN COPY-PASTE SECTION CODE
+###############
+###############
+###############
+###############
+###############
+
+MODULE.VERSION <- "0.1.5"
+MODULE.NAME <- "CHURN"
+options(width = 300)
 
 ##
 ## HELPER FUNCTIONS
@@ -142,6 +163,17 @@ debug_object_size <- function(obj) {
                                             strs2))
 }
 
+## deparse best tuning parameters
+get_tune_params <- function(caret_model) {
+    best <- caret_model$bestTune
+    sparams <- ""
+    for (i in 1:length(names(best))) {
+        sparams <- paste0(sparams, sprintf("%s=%.2f ", names(best[i]), best[i]))
+    }
+    return(sparams)
+}
+## end deparse tuning params
+
 get_scriptpath <- function() {
     # location of script can depend on how it was invoked:
     # source() and knit() put it in sys.calls()
@@ -167,9 +199,11 @@ get_scriptpath <- function() {
 install_and_load <- function(libraries) {
     for (i in libraries) {
         if (!is.element(i, .packages(all.available = TRUE))) {
+            logger(sprintf("Installing package: %s\n",i))
             install.packages(i)
         }
-        library(i, character.only = TRUE)
+        logger(sprintf("Loading package: %s\n", i))
+        library(i, character.only = TRUE, verbose = TRUE)
     }
 }
 
@@ -184,6 +218,16 @@ setup_paralel_env <- function() {
     logger(sprintf("[Parallel backend] Cores registered: %d\n", getDoParWorkers()))
     logger(sprintf("[Parallel backend] Environment: %s\n", getDoParName()))
     logger(sprintf("[Parallel backend] Backend version: %s\n", getDoParVersion()))
+}
+
+save_df <- function(df) {
+    logger("\nSaving data...\n")
+    file_db_path <- dirname(get_scriptpath())
+    logger(sprintf("Current workind directory: %s\n", file_db_path))
+    FN <- paste0(MODULE.NAME, "_v", MODULE.VERSION, "_data.csv")
+    FileName <- file.path(file_db_path, FN)
+    logger(sprintf("Saving File: %s\n", FileName))
+    timeit("Save: ", write.csv(x = df, file = FileName, row.names = TRUE))
 }
 
 
@@ -296,8 +340,8 @@ strs <- format(
             nsmall = 0, big.mark = ",",
             scientific = FALSE)
 logger(sprintf("Loaded %s rows in memory dataframe\n", strs))
-
-
+logger(sprintf("Loading Models:   %s\n", paste(Proposed.Models, collapse = " ")))
+logger(sprintf("Loading Packages: %s\n", paste(Proposed.Libraries, collapse = " ")))
 
 
 
@@ -310,7 +354,7 @@ if (DO_PARALLEL) {
 }
 
 ## preprocessing
-PRE_VER <- "0.0.2"
+PRE_VER <- "0.0.3"
 
 logger(paste0("Begin data preprocessing v", PRE_VER, " ...\n"))
 t0_prep <- proc.time()
@@ -345,9 +389,10 @@ df_test <- testdataStd[-inVal,]
 ### END cross-validation data preparation
 
 ### BEGIN model selection, training, validation and testing
-PRE_VER <- "0.2.1"
+TRAIN_VER <- "0.3.3"
 
-logger(paste0("Begin model training and cross-validation v", PRE_VER, " ...\n"))
+logger(paste0("Begin model training and cross-validation v", TRAIN_VER, " ...\n"))
+
 t0_prep <- proc.time()
 
 ###
@@ -361,6 +406,7 @@ Training.Time <- c()
 Confusion.Matrices <- c()
 Used.Data <- c()
 Script.Ver <- c()
+Tuning.Params <-c()
 
 Best.Accuracy  <- 0
 
@@ -381,8 +427,6 @@ for (c_model in 1:Nr.Proposed.Models) {
 
     Training.Time[c_model] <- c_time
 
-    logger(sprintf("Done training [%s] model ...\n", Current.Model.Method))
-
     preds_train <- predict(Current.Model, df_train)
     preds_valid <- predict(Current.Model, df_valid)
 
@@ -393,7 +437,8 @@ for (c_model in 1:Nr.Proposed.Models) {
     Cross.Accuracy[c_model] <- cfm_valid$overall["Accuracy"]
     Cross.Kappa[c_model] <- cfm_valid$overall["Kappa"]
     Cross.Recall[c_model] <- cfm_valid$byClass["Sensitivity"]
-    Script.Ver[c_model] <- paste0("ChurnModel v",MODULE.VERSION)
+    Script.Ver[c_model] <- paste0("ChurnModel v", MODULE.VERSION)
+    Tuning.Params[c_model] <- get_tune_params(Current.Model)
  
 
     Confusion.Matrices <- c(Confusion.Matrices, cfm_valid)
@@ -402,8 +447,12 @@ for (c_model in 1:Nr.Proposed.Models) {
     vkap <- Cross.Kappa[c_model]
     vrec <- Cross.Recall[c_model]
 
-    logger(sprintf("Train acc: %.3f Valid acc: %.3f Valid kap: %.3f Valid rec: %.3f\n",
-                    tacc,vacc,vkap,vrec))
+    logger(sprintf(" Train acc: %.3f Valid acc: %.3f Valid kap: %.3f Valid rec: %.3f\n",
+                    tacc, vacc, vkap, vrec))
+    logger(sprintf(" Tune params: %s\n",
+                    Tuning.Params[c_model]))
+    logger(sprintf(" Done training [%s] model ...\n", Current.Model.Method))
+
 
     if (USE_BEST_CROSS) {
         if (Best.Accuracy < Cross.Recall[c_model]) {
@@ -425,12 +474,12 @@ for (i in 1:Nr.Proposed.Models) {
 summary_info <- data.frame(Used.Data, Script.Ver,
                            Proposed.Models, Train.Accuracy,
                            Cross.Accuracy, Cross.Recall, Cross.Kappa,
-                           Training.Time)
+                           Training.Time, Tuning.Params)
 summary_info <- summary_info[order(summary_info$Cross.Accuracy),]
+logger("\nTuning results:\n")
 print(summary_info)
 
-logger(sprintf("Predicting with: %s\n", Best.Model$method))
-timeit(paste0("Predict Testing data with best model: ", Best.Model$method),
+timeit(paste0("\nPredict Testing data with best model: ", Best.Model$method),
        testpred <- predict(Best.Model, df_test)
        ) 
 test_conf <- confusionMatrix(testpred, df_test$classe, positive = "1")
@@ -452,14 +501,13 @@ print(head(df_right),3)
 t1_prep <- proc.time()
 prep_time <- (t1_prep[3] - t0_prep[3]) / 60
 
-logger(sprintf("Done model training and cross-validation. Total time %.2f min\n", prep_time))
+logger(sprintf("\nDone model training and cross-validation. Total time %.2f min\n", prep_time))
 ### END  model selection, training, validation and testing
 
 if (DO_PARALLEL) {
     logger("Shutting down parallel backend...")
     stopCluster(p_cluster)
 }
-logger("Script done.")
 
 Log.Lines <- c()
 for (c_model in 1:Nr.Proposed.Models) {
@@ -467,7 +515,21 @@ for (c_model in 1:Nr.Proposed.Models) {
     }
 summary_info$Log <- Log.Lines
 
+logger("\nScript done.")
+
 ###
 ### OUTPUT IS: summary_info
 ### Must be inserted in DB
 ###
+
+###############
+###############
+###############
+###############
+###############
+############### END COPY-PASTE SECTION CODE
+###############
+###############
+###############
+###############
+###############
