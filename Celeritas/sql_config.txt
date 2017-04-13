@@ -1,0 +1,7 @@
+{
+	"server" : "VSQL08\\HYPERLOOP",
+	"database" : "StatisticalStore",
+	"username" : "andreidi",
+	"password" : "HypML2017",
+	"driver" : "{ODBC Driver 13 for SQL Server}"
+}

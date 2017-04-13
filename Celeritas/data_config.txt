@@ -1,0 +1,9 @@
+{
+	"COMPUTED_BEHAVIOR_MATRIX_SQL" : "SELECT * FROM bev5 WHERE MicroSegmentId IN (13, 35, 162, 353)",
+
+	"PRODUCT_FEATURE_MATRIX" : "SELECT * FROM _RFMM14_sgmidXItemXAttrib2_Random",
+
+	"CUSTOMER_ID_FIELD" : "MicroSegmentId",
+	"PRODUCT_ID_FIELD" : "ItemId",
+	"PRODUCT_NAME_FIELD" : "ItemName"
+}
