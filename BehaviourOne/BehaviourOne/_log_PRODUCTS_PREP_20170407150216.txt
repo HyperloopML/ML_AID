@@ -1,0 +1,37 @@
+ [2017-04-07 15:02:16] BEGIN Products Exploration script v0.2.7 SQL_CONNECT=3
+Current workind directory: D:/Dropbox/_HYPERLOOP/rserver/BehaviourOne/BehaviourOne
+XDF File: D:/Dropbox/_HYPERLOOP/rserver/BehaviourOne/BehaviourOne/hyperloop_saved_products.xdf
+Microsoft RevoScaleR connect to SQL Server...
+RxOdbcData [SELECT * FROM _TextItems] executed in 0.00 min
+rxImport  executed in 1.39 min
+RevoScaleR loading dataframe...
+rxDataStep:  executed in 0.01 min
+Done data downloading.
+Deleting xdf file...
+Object df [data.frame] size: 8.9MB (25,869 rows by 3 cols)
+Begin text preprocessing v0.0.2 ...
+Removing unknown chars Text:  executed in 0.01 min
+Removing unknown chars Name:  executed in 0.00 min
+Object df [data.frame] size: 8.9MB (25,869 rows by 3 cols)
+Prepare VectorSource:  executed in 0.00 min
+Object vector_src [VectorSource] size: 6.1MB (25,869 rows by 5 cols)
+Prepare Corpus:  executed in 0.04 min
+Object corpus [VCorpus] size: 99.4MB (25,869 rows by 25869 cols)
+
+Prepare DocumentTermMatrix:  executed in 0.18 min
+Object dtm [DocumentTermMatrix] size: 9.9MB (25,869 rows by 6 cols)
+
+RemoveSparseTerms 0.999:  executed in 0.00 min
+Object dtm [DocumentTermMatrix] size: 7.3MB (25,869 rows by 6 cols)
+
+Prepare final BoW FULL matrix:  executed in 0.01 min
+Object mtxt [matrix] size: 192.9MB (25,869 rows by 0 cols)
+Object dftxt [data.frame] size: 193.0MB (25,869 rows by 971 cols)
+
+Looking for columns such as [dupaplaja|hart|basici|plaja]
+
+Done products preprocessing. Total time 0.29 min
+
+Saving data...
+Saving File: D:/Dropbox/_HYPERLOOP/rserver/BehaviourOne/BehaviourOne/PRODUCTS_PREP_v0.2.7_data.csv executed in 0.47 min
+

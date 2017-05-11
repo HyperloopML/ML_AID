@@ -11,18 +11,19 @@ import json
 from sqlalchemy import create_engine
 import datetime
 import time as tm
+import os
 
 __author__     = "Andrei Ionut DAMIAN"
-__copyright__  = "Copyright 2007, HTSS"
-__credits__    = ["Alexandru Purdila","Ionut Canavea","Ionut Muraru"]
+__copyright__  = "Copyright 2007"
+__credits__    = ["Alexandru Purdila"]
 __license__    = "GPL"
-__version__    = "1.1.5"
+__version__    = "1.2.5"
 __maintainer__ = "Andrei Ionut DAMIAN"
 __email__      = "ionut.damian@htss.ro"
 __status__     = "Production"
 __library__    = "MSSQL HELPER"
 __created__    = "2017-01-25"
-__modified__   = "2017-04-12"
+__modified__   = "2017-04-18"
 __lib__        = "SQLHLP"
 
 
@@ -40,6 +41,10 @@ def print_progress(str_text):
 class MSSQLHelper:
     def __init__(self, config_file = "sql_config.txt", parent_log = None):
         
+        self.DEBUG = 1
+        self.debug_str_size = 35
+        
+        
         self.parent_log = parent_log
         self.MODULE = '[{} v{}]'.format(__library__,__version__)
         self._logger("INIT "+self.MODULE)
@@ -51,43 +56,94 @@ class MSSQLHelper:
         self.database = config_data["database"]
         self.username = config_data["username"]
         self.password = config_data["password"]
+        self.cwd = os.getcwd()
         
+        try:
+            self.dfolder  = config_data["datafolder"]
+        except:
+            self.dfolder = "save"
+            self.dfolder = os.path.join(self.cwd,self.dfolder)
+            
+        self.data_folder = self.dfolder
+        self.dfolder = os.path.join(self.dfolder,"db_cache")
+        
+        if not os.path.isdir(self.dfolder):
+            self._logger("Creating data folder:{}".format(
+                                self.dfolder[-self.debug_str_size:]))
+            os.makedirs(self.dfolder)
+        else:
+            self._logger("Using data folder:...{}".format(
+                    self.dfolder[-self.debug_str_size:]))
+            
         self.connstr = 'DRIVER=' + self.driver
         self.connstr+= ';SERVER=' + self.server
         self.connstr+= ';DATABASE=' + self.database
         self.connstr+= ';UID=' + self.username
         self.connstr+= ';PWD=' + self.password
+
         
         sql_params = urllib.parse.quote_plus(self.connstr)
         
         try:
-            self._logger("ODBC Conn: {}".format(self.connstr))
-            self.conn = pyodbc.connect(self.connstr)   
-            self.engine = create_engine("mssql+pyodbc:///?odbc_connect=%s" % sql_params)
+            self._logger("ODBC Conn: {}...".format(self.connstr[:self.debug_str_size]))
+            self.conn = pyodbc.connect(self.connstr, 
+                                       timeout = 2)   
+            self.engine = create_engine("mssql+pyodbc:///?odbc_connect=%s" % sql_params,
+                                        connect_args={'connect_timeout': 2})
             self._logger("Connection created on "+self.server)
         except Exception as err: #pyodbc.Error as err:
+            self._logger("FAILED ODBC Conn!")
             self.HandleError(err)        
         return
     
     
-    def Select(self,str_select):
+    def Select(self,str_select, caching = True, convert_ascii = None):
         df = None
         try:
+            str_fn = "".join(["_" if x in " ,;()*\\\\/[].><" else x for x in str_select])
+            str_fn = str_fn.replace("__","_").replace("__","_")
+            str_fn += ".csv"
+            str_fn = os.path.join(self.dfolder,str_fn)
+            if self.DEBUG>1:
+                self._logger("Using datafile: {}".format(str_fn))
             t0 = tm.time()
-            fmt_sql = " ".join(str_select.split())[:80]
-            self._logger("Downloading data [{}..] ...".format(fmt_sql))
-            df = pd.read_sql(str_select, self.conn)
+            if (not os.path.isfile(str_fn)) or (not caching):
+                fmt_sql = " ".join(str_select.split())[:80]
+                if self.DEBUG>0:
+                    self._logger("Downloading data [{}..] ...".format(fmt_sql[:30]))
+                else:
+                    self._logger("Downloading data ...")
+                df = pd.read_sql(str_select, self.conn)
+                if convert_ascii != None:
+                    # now convert columns to ascii
+                    for col in convert_ascii:
+                        df[col] = df[col].apply(lambda x: ''.join(
+                                [" " if ord(i) < 32 or ord(i) > 126 else i 
+                                     for i in x]))
+                if caching:
+                    if self.DEBUG>0:
+                        self._logger("Saving to [..{}]...".format(str_fn[-self.debug_str_size:]))
+                    else:
+                        self._logger("Saving cache...")
+                    df.to_csv(str_fn, index = False)                    
+            else:
+                if self.DEBUG>0:
+                    self._logger("Loading file [..{}] ...".format(str_fn[-self.debug_str_size:]))
+                else:
+                    self._logger("Loading file ...")
+                df = pd.read_csv(str_fn)
             nsize = self.GetSize(df) / float(1024*1024)
             t1 = tm.time()
             tsec = t1-t0
             tmin = float(tsec) / 60
-            self._logger("Data downloaded: {.2f} in {:.1f}s({:.1f}min) / {} rows: ".format(
+            self._logger("Dataset loaded: {:.2f}MB in {:.1f}s({:.1f}m) {} rows".format(
                          nsize,
                          tsec,
                          tsec/60,
                          df.shape[0],
                          str_select))
-            self._logger("Dataset head(3):\n{}".format(df.head(2)))
+            if self.DEBUG>1:
+                self._logger("Dataset head(3):\n{}".format(df.head(2)))
             #self._logger("  READ TABLE time: {:.1f}s ({:.2f}min)".format(tsec,tmin))
         except Exception as err: #pyodbc.Error as err:
             self.HandleError(err)
@@ -137,7 +193,7 @@ class MSSQLHelper:
 
 
     def HandleError(self, err):
-        strerr = "ERROR: "+ str(err)
+        strerr = "ERROR: "+ str(err)[:50]
         self._logger(strerr)
         return
     
@@ -149,6 +205,7 @@ class MSSQLHelper:
     def _logger(self, logstr, show = True):
         
         if self.parent_log != None:
+            logstr = "[{}] ".format(__lib__) + logstr
             self.parent_log._logger(logstr,show)
         else:            
             if not hasattr(self, 'log'):        

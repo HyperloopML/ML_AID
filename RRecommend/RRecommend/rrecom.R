@@ -13,21 +13,32 @@
 ##
 ##
 ##
-##  TODO:
-##      
-##      chk NaN ptr 5 104   6   3  10 110 132   2 109 120  16  63 114 115  40  12 103   1 101
-##      test std vs lm vs conf
-##      add cost function !!! - list iterations
-##      normal equation full batch
-##      Full batch GD fara MEDIE ! NG style :)
-##      add intercept to sgd
-##      try logit ?
-##
+TODO <- "
+TODO:
+      
+chk 19 clustere
+chk validare echipa
+chk NaN ptr 5 104   6   3  10 110 132   2 109 120  16  63 114 115  40  12 103   1 101
+ADD LINE SEARCH (check 5 alpha vs cost/objective function)
+add intercept to sgd
+try softmax pe coeficienti ?
+try logit ?
+verificare si renuntare la coloane duplicate (test vals si dupa test nume)
+try generative modelling
+cross-validation
+"
 
+library(reshape2)
 
 DEBUG = FALSE
 
 DEMO = FALSE
+
+
+SGD.ALPHAS <- c(0.001, 0.0005, 0.0001)
+SGD.EPOCHS <- c(10, 90)
+SGD.LAMBDAS <- c(0.001, 0.1)
+SGD.MOMENTUMS <- c(1)
 
 
 
@@ -36,9 +47,9 @@ DEMO = FALSE
 ### PLEASE REVIEW CONNECTION PARAMS
 ###
 svr <- "server=VSQL08\\HYPERLOOP;"
-db <- "database=StatisticalStore;"
+db <- "database=temp_ML;"
 uid <- "uid=andreidi;"
-pwd <- "pwd=HypML2017"
+pwd <- "pwd=HML2017!!"
 Debug.Machine.Name <- "DAMIAN"
 ###
 ### END CONNECTION PARAMS SECTION
@@ -90,13 +101,13 @@ SQL_CONNECT = 3
 
 
 
-MODULE.VERSION <- "1.0.1"
+MODULE.VERSION <- "1.2.5"
 MODULE.NAME <- "BEHAVIOR_RECOMMENDATIONS"
 
 SQL.MICROSEGMENTLIST <- paste0("SELECT DISTINCT ", User.Field, " FROM ", Table.Name)
 SQL.NR.OBS <- paste0("SELECT COUNT(*) FROM ", Table.Name)
 SQL.LOADMICROSEGMENT <- paste0("SELECT * FROM ", Table.Name, " WHERE ", User.Field, " = ")
-SQL.TOP100 <- paste0("SELECT TOP 100 * FROM ", Table.Name)
+SQL.TOP10 <- paste0("SELECT TOP 10 * FROM ", Table.Name)
 
 SQL.DEMOMICROSEG <- "SELECT * FROM bev5"
 
@@ -130,12 +141,27 @@ USED_PROCESSING_POWER <- 0.65
 ##
 
 
-HELPER_LIB_VER <- "1.4.0"
+HELPER_LIB_VER <- "1.4.3"
 
 
 FULL_DEBUG <- FALSE
 
 options(digits = 3)
+
+get_formula <- function(lbl, vars) {
+    slabel <- paste0(lbl, "~")
+    sfactors <- paste(vars, collapse = "+")
+    clf_formula = as.formula(paste(slabel, sfactors))
+    return(clf_formula)
+}
+
+get_formula_nobias <- function(lbl, vars) {
+    slabel <- paste0(lbl, "~")
+    sfactors <- paste(vars, collapse = "+")
+    sfactors <- paste0("0+",sfactors)
+    clf_formula = as.formula(paste(slabel, sfactors))
+    return(clf_formula)
+}
 
 nonzero <- function(v) {
     non_zero_ind <- which(!(v == 0))
@@ -234,6 +260,7 @@ timeit = function(strmsg, expr, NODATE = FALSE) {
     ftime <- tm[3]
     stm <- sprintf("%.2fs", ftime)
     logger(paste0("  executed in ", stm, "\n"))
+    ftime <- round(ftime, digits = 2)
     return(ftime)
 }
 
@@ -299,7 +326,7 @@ setup_paralel_env <- function() {
     logger(sprintf("[Parallel backend] Backend version: %s\n", getDoParVersion()))
 }
 
-save_df <- function(df, sfn = "") {
+save_df <- function(df, sfn = "", simple_name = FALSE) {
     if (FULL_DEBUG)
         logger("\nSaving data...\n")
     file_db_path <- get_data_dir()
@@ -307,7 +334,9 @@ save_df <- function(df, sfn = "") {
         logger(sprintf("Used data directory: %s\n", file_db_path))
     FN <- paste0(MODULE.NAME, "_v", gsub("\\.", "_", MODULE.VERSION), "_", log_ctime, "_data.csv")
     if (sfn != "")
-        FN <- paste0(sfn, "_", log_ctime, "_data.csv")
+        if (simple_name)
+            FN <- sfn else
+                FN <- paste0(sfn, "_", log_ctime, "_data.csv")
     FileName <- file.path(file_db_path, FN)
     timeit(sprintf("Saving File:[%s] ...", FileName),
            write.csv(x = df, file = FileName, row.names = TRUE))
@@ -328,6 +357,16 @@ GetMaxes = function(dfd, newfield, categ1, categ2) {
     return(dfd)
 }
 
+load_file <- function(sfile) {
+    file_db_path <- get_data_dir()
+    fn <- file.path(file_db_path, sfile)
+    if (file.exists(fn)) {
+        df <- read.csv(fn, row.names=1)
+    } else {
+        df <- data.frame()
+    }
+    return(df)
+}
 
 load_df <- function(str_table, caching = TRUE, use_sql = FALSE) {
 
@@ -337,7 +376,7 @@ load_df <- function(str_table, caching = TRUE, use_sql = FALSE) {
     Data.FileName <- paste0(Data.FileName, ".xdf")
     str_sql <- paste(SQL.DATASELECTION, str_table)
 
-    if (sql)
+    if (use_sql)
         str_sql <- str_table
 
 
@@ -345,8 +384,9 @@ load_df <- function(str_table, caching = TRUE, use_sql = FALSE) {
         library(RevoScaleR)
         # Create an xdf file name
         file_db_path <- get_data_dir()
+        file_db_path <- file.path(file_db_path, "_dbcache")
         if (FULL_DEBUG)
-            logger(sprintf("Current workind directory: %s\n", file_db_path))
+            logger(sprintf("Current dbcache directory: %s\n", file_db_path))
         dfXdfFileName <- file.path(file_db_path, Data.FileName)
         logger(sprintf("XDF File: %s\n", dfXdfFileName))
     }
@@ -416,6 +456,14 @@ normalize <- function(x) {
     return((x - mn) / (mx - mn))
 }
 
+save_plot <- function(sfn) {
+    file_db_path <- get_data_dir()
+    stime <- format(Sys.time(), "%Y%m%d%H%M%S")
+    FN <- file.path(file_db_path, paste0(stime,"_",sfn, "_PLOT.png"))
+    logger(sprintf("Saving plot: %s\n",FN))
+    dev.print(device = png, file = FN, width = 1024, height = 768)
+}
+
 ##
 ## END HELPER FUNCTIONS
 ##
@@ -429,62 +477,396 @@ STOHASTIC <- TRUE
 
 SCALE_MIN_MAX <- TRUE
 
+cost_list_SGD <- c()
+cost_scores_SGD <- c()
+cost_index_SGD <- 0
+CostFunctionSGD <- function(H, Y) {
 
-TrainMicromodel <- function(data, target_col, var_cols) {
+    cost_index_SGD <<- cost_index_SGD + 1
+
+    cdiff <- (H - Y)
+    cdiff <- cdiff ** 2
+    cost <- sum(cdiff) / length(cdiff)
+    avg_cost <- -1
+    if (!is.finite(cost)) {
+        logger("SGD Cost generated not finite value!\n")
+        avg_cost <- cost_scores_SGD[cost_index_SGD - 1]
+    } else {
+        cost_list_SGD[cost_index_SGD] <<- cost
+        m <- length(cost_list_SGD)
+        avg_cost <- sum(cost_list_SGD) / m
+        cost_scores_SGD[cost_index_SGD] <<- avg_cost
+    }
+    return(avg_cost)
+}
+
+cost_list_STD <- c()
+cost_scores_STD <- c()
+cost_index_STD <- 0
+CostFunctionSTD <- function(H, Y) {
+
+    cost_index_STD <<- cost_index_STD + 1
+
+    cdiff <- (H - Y)
+    cdiff <- cdiff ** 2
+    cost <- sum(cdiff) / length(cdiff)
+    avg_cost <- -1
+
+    if (!is.finite(cost)) {
+        logger("STD Cost generated not finite value!\n")
+        avg_cost <- cost_scores_STD[cost_index_STD - 1]
+    } else {
+        cost_list_STD[cost_index_STD] <<- cost
+        m <- length(cost_list_STD)
+        avg_cost <- sum(cost_list_STD) / m
+        cost_scores_STD[cost_index_STD] <<- avg_cost
+    }
+
+    return(avg_cost)
+}
+
+
+cnf_cost_list <- c()
+cnf_cost_scores <- c()
+cnf_cost_index <- 0
+CostFunctionCONF <- function(H, Y) {
+
+    cnf_cost_index <<- cnf_cost_index + 1
+    cost <- (H - Y) ** 2
+    if (!is.finite(cost)) {
+        logger("CNF Cost generated not finite value!\n")
+        avg_cost <- cnf_cost_scores[cnf_cost_index-1]
+    } else {
+        cnf_cost_list[cnf_cost_index] <<- cost
+        m <- length(cnf_cost_list)
+        avg_cost <- sum(cnf_cost_list) / m
+        cnf_cost_scores[cnf_cost_index] <<- avg_cost
+    }
+    return(avg_cost)
+}
+
+train_costs <- c()
+train_costs_index <- 0
+cost_func_launch <- 0
+train_cost_steps <- 0
+
+SimpleCost <- function(coefs, data, y) {
+    H <- data %*% coefs
+    h2 <- (H - y) ** 2
+    cost <- sum(h2) / length(h2)
+    if (!is.finite(cost)) {
+        logger("CNF Cost generated not finite value!\n")
+        cost <- 5000
+    }
+    return(cost)
+}
+
+TrainCost <- function(coefs, data, y) {
+    cost <- -1
+
+    if (cost_func_launch == 0) {
+        train_costs <<- c()
+        train_costs_index <<- 0
+    }
+
+    cost_func_launch <<- cost_func_launch + 1
+
+    if ((cost_func_launch %% train_costs_steps) == 0) {
+        cost <- SimpleCost(coefs,data,y)
+        train_costs_index <<- train_costs_index + 1
+        train_costs[train_costs_index] <<- cost
+    }
+
+    return(cost)
+}
+
+CheckPreds <- function(UserID, coefs, data, lm, colnames, UserInfo) {
+    y <- data[, Target.Field]
+    nr_obs <- length(y)
+    prods <- data[, Product.Field]
+    data_mat <- as.matrix(data[, Predictor.Fields])
+    df <- data.frame(Prods = prods, Count = y)
+    df_rmse <- data.frame()
+    df_rmse[1, "INFO"] <- UserInfo
+    c <- 1
+    smicr <- paste0("M",UserID)
+    for (i in 1:length(coefs)) {
+        # assume 1 is SGD
+        coef_vect <- coefs[[i]]
+        yhat <- data_mat %*% coef_vect
+        col <- colnames[c]
+        df[,col] <- yhat
+        c <- c + 1
+        err <- sqrt(sum((yhat - y) ** 2) / nr_obs)
+        df_rmse[1, col] <- round(err, digits = 2)
+        if (i == 1) {
+            if (err < SGD_BEST_COST) {
+                SGD_BEST_COST <<- err
+                save_plot(smicr)
+            }
+        }
+    }
+    for (i in 1:length(lm)) {
+        clf <- lm[[i]]
+        yhat <- predict(clf, data)
+        col <- colnames[c]
+        df[, col] <- yhat
+        c <- c + 1
+        err <- sqrt(sum((yhat - y) ** 2) / nr_obs)
+        df_rmse[1, col] <- round(err, digits = 2)
+    }
+
+    df_rmse[1, "MOM_SGD"] <- SGD_USE_MOMENTUM
+    df_rmse[1, "ALPHA"] <- SGD_ALPHA
+    df_rmse[1, "LAMBDA"] <- SGD_LAMBDA
+    df_rmse[1, "EPOCHS"] <- SGD_EPOCHS
+
+    sFN <- paste0("RMSE_", smicr, ".csv")
+
+    df_hist <- load_file(sFN)
+    df_rmse <- rbind(df_rmse, df_hist)
+    cat("\nHEAD:\n")
+    print(head(df, 3))
+    cat("\nTAIL:\n")
+    print(tail(df, 3))
+    cat("\nRMSE:\n")
+    print(df_rmse)
+    save_df(df_rmse, sfn = sFN, simple_name = TRUE)
+}
+
+
+SGD_ALPHA <- 0.0005
+SGD_EPOCHS <- 100
+SGD_LAMBDA <- 0.1
+SGM_MOMENTUM <- 0.9
+SGD_BATCH <- 128
+SGD_USE_MOMENTUM <- 0
+SGD_AVERAGE <- 1
+
+SGD_BEST_COST <- 1e20
+
+SGD_CURRENT_ID <- -1
+
+
+TrainMicromodelSGD <- function(data, target_col, var_cols) {
 
     if (DEBUG) {
-        if(FALSE)
-            data <- data[order(data[, target_col], decreasing = TRUE),]
+        cost_func_launch <<- 0 # reset cost function
     }
+
+    micro_coefs_sgd <- as.vector(rep(0, length(var_cols)))
+
+    coefs_names <- var_cols # add intercept if needed
+
+    y_train <- data[, target_col]
+    items_coefs <- as.data.frame(data[, var_cols])
+    #items_coefs <- sapply(items_coefs,as.numeric)
+
+    if (SCALE_MIN_MAX) {
+        items_coefs <- scale_minmax(items_coefs)
+    }
+
+    items_coefs <- as.matrix(items_coefs)
+
+    alpha_sgd <- SGD_ALPHA
+    lambda_sgd <- SGD_LAMBDA
+    epochs <- SGD_EPOCHS
+    batch_size <- SGD_BATCH
+    momentum_speed <- SGM_MOMENTUM
+    momentum <- 0
+
+    ###
+    ### stohastic gradient descent for content based filtering
+    ###
+    total_size <- nrow(data)
+    iters <- nrow(data) %/% batch_size
+    if (iters <= 10) {
+        batch_size <- 16
+        iters <- nrow(data) %/% batch_size
+    } else {
+        iters <- iters + 1
+    }
+
+    steps <- iters %/% 1
+    train_costs_steps <<- (epochs * iters) %/% 100
+
+
+    for (epoch in 1:epochs) {
+        for (i in 1:iters) {
+            soffs <- ((i - 1) * batch_size + 1) %% (total_size - batch_size)
+            eoffs <- soffs + batch_size
+            batch_items_coefs <- items_coefs[soffs:eoffs,]
+            batch_y <- y_train[soffs:eoffs]
+            if (FULL_DEBUG && (i %% steps) == 0) {
+                names(micro_coefs_sgd) <- coefs_names
+                non_zero_coefs_std <- nonzero(micro_coefs_sgd)
+                cat("Non zero coefs SGD:\n")
+                print(non_zero_coefs_std[1:5])
+            }
+            item_coefs_matrix <- as.matrix(batch_items_coefs)
+            H_sgd <- (item_coefs_matrix %*% micro_coefs_sgd)
+            Y_sgd <- batch_y
+            if (DEBUG) {
+                #J <- CostFunctionSGD(H_sgd, Y_sgd)
+                J <- TrainCost(micro_coefs_sgd, items_coefs, y_train)
+            }
+
+            ydiff <- H_sgd - Y_sgd
+
+            grad_sgd <- base::t(item_coefs_matrix) %*% ydiff + lambda_sgd * micro_coefs_sgd
+
+            if (SGD_AVERAGE==1)
+                grad_sgd <- grad_sgd / batch_size
+
+            if (SGD_USE_MOMENTUM==1) {
+                momentum <- momentum_speed * momentum + grad_sgd
+            } else {
+                momentum <- grad_sgd
+            }
+
+            micro_coefs_sgd <- micro_coefs_sgd - alpha_sgd * momentum
+        }
+    }
+
+    if (DEBUG) {
+        #plot_scores <- cost_scores_SGD
+        J <- SimpleCost(micro_coefs_sgd, items_coefs, y_train)
+        plot_scores <- train_costs
+        cost_scores_SGD <<- plot_scores
+        nrsco <- length(plot_scores)
+        cidx <- c(1, nrsco %/% 5, nrsco %/% 4, nrsco %/% 3, nrsco %/% 2, nrsco %/% 1.4, nrsco %/% 1.2, nrsco)
+        sinf <- paste0(" ID:", SGD_CURRENT_ID,
+                       " A:", alpha_sgd, 
+                       " E:", epochs, 
+                       " L:", lambda_sgd,
+                       " M:", SGD_USE_MOMENTUM)
+
+        cat(paste0(sinf, 
+                   " C:"))
+        print(plot_scores[cidx])
+
+        # plot device setup
+        # for first plot in series !
+        if (length(dev.list()) != 0)
+            dev.off()
+        par(oma = c(0, 0, 2, 0))
+        par(mfrow = c(2, 2))
+
+        plot(plot_scores,
+             type = "l",
+             #asp = 1,
+             main = paste0("SGD J:", round(J, digits = 2),
+                           " LJ:", round(tail(plot_scores, 1), digits = 2)
+                           )
+             )
+
+        title(main=sinf, outer = TRUE)
+    }
+    names(micro_coefs_sgd) <- coefs_names
+    return(micro_coefs_sgd)
+}
+
+
+TrainMicromodelSTD <- function(data, target_col, var_cols) {
+
+    if (DEBUG) {
+        cost_func_launch <<- 0 # reset cost function
+
+        if (FALSE)
+            data <- data[order(data[, target_col], decreasing = TRUE),]
+        }
 
 
     micro_coefs_std <- as.vector(rep(0, length(var_cols)))
     names(micro_coefs_std) <- var_cols
 
     y_train <- data[, target_col]
-    items_coefs <- as.data.frame(lapply(data[, var_cols],as.numeric))
+    items_coefs <- as.data.frame(data[, var_cols])
+    #items_coefs <- sapply(items_coefs,as.numeric)
 
     if (SCALE_MIN_MAX) {
         items_coefs <- scale_minmax(items_coefs)
     }
 
-    alpha_std <- 0.01
-    lambda_std <- 1.5
+    items_coefs <- as.matrix(items_coefs)
 
-    if (STOHASTIC) {
-        ###
-        ### stohastic gradient descent for content based filtering
-        ###
-        steps <- nrow(data) %/% 5
-        
-        for (i in 1:nrow(data)) {
-            if (DEBUG && (i %% steps)==0) {
-                non_zero_coefs_std <- nonzero(micro_coefs_std)
-                non_zero_obs <- nonzero(items_coefs[i,])
-                cat("Non zero coefs std:\n")
-                print(non_zero_coefs_std[1:5])
-                #cat("Non zero obs:\n")
-                #print(non_zero_obs[1:3])
+    alpha_std<- SGD_ALPHA
+    lambda_std <- SGD_LAMBDA
+    epochs <- SGD_EPOCHS %/% 2
+
+
+    train_costs_steps <<- ( epochs * nrow(data)) %/% 100
+
+    for (epoch in 1:epochs) {
+        if (STOHASTIC) {
+            ###
+            ### stohastic gradient descent for content based filtering
+            ###
+
+            steps <- nrow(data) %/% 1
+
+            for (i in 1:nrow(data)) {
+                if (FULL_DEBUG && (i %% steps) == 0) {
+                    non_zero_coefs_std <- nonzero(micro_coefs_std)
+                    cat("Non zero coefs STD:\n")
+                    print(non_zero_coefs_std[1:5])
+                }
+                item_coefs_vect <- items_coefs[i,] #as.vector(sapply(items_coefs[i,], as.numeric))
+                H_std <- (micro_coefs_std %*% item_coefs_vect)[1]
+                Y_std <- y_train[i]
+                if (DEBUG) {
+                    #J <- CostFunctionSTD(H_std, Y_std)
+                    J <- TrainCost(micro_coefs_std,
+                                   items_coefs,
+                                   y_train )
+                }
+
+                grad_std <- (H_std - Y_std) * item_coefs_vect + lambda_std * micro_coefs_std
+
+                micro_coefs_std <- micro_coefs_std - alpha_std * grad_std
             }
-            item_coefs_vect <- as.vector(sapply(items_coefs[i,], as.numeric)) # unlist(x_train[i,])
-            H_std <- (micro_coefs_std %*% item_coefs_vect)[1]
+        } else {
+            ###
+            ### full batch gradient descent for content based filtering
+            ###
 
-            Y_std <- y_train[i]
-            grad_std <- (H_std - Y_std) * item_coefs_vect + lambda_std * micro_coefs_std
+            Theta <- (X_T %*% X + lambda * I) ^ -1 * X_T * Y
 
-            micro_coefs_std <- micro_coefs_std - alpha_std * grad_std
         }
-    } else {
-        ###
-        ### full batch gradient descent for content based filtering
-        ###
+    }
+
+
+    if (DEBUG) {
+        #plot_scores <- cost_scores_STD
+        J <- SimpleCost(micro_coefs_std,
+                                   items_coefs,
+                                   y_train)
+        plot_scores <- train_costs
+        cost_scores_STD <<- plot_scores
+        nrsco <- length(plot_scores)
+        cidx <- c(1, nrsco %/% 5, nrsco %/% 4, nrsco %/% 3, nrsco %/% 2, nrsco %/% 1.4, nrsco %/% 1.2, nrsco)
+        cat(paste0(" STD A:", alpha_std,
+                   " E:", epochs,
+                   " L:", lambda_std,
+                   " C:"))
+        print(plot_scores[cidx])
+
+        plot(plot_scores,
+             type = "l",
+             #asp = 1,
+             main = paste0("STD J:", round(J, digits = 2),
+                           " LJ:", round(tail(plot_scores, 1), digits = 2)
+                           )
+             )
     }
 
     return(micro_coefs_std)
 
 }
 
-TrainMicromodelConfidence <- function(data, target_col, var_cols) {
+
+
+TrainMicromodelCONF <- function(data, target_col, var_cols) {
     ##
     ##  implements stohastic/batch implicit feedback filtering with confidence
     ##
@@ -492,6 +874,7 @@ TrainMicromodelConfidence <- function(data, target_col, var_cols) {
     if (DEBUG) {
         if (FALSE)
             data <- data[order(data[, target_col], decreasing = TRUE),]
+        cost_func_launch <<- 0 # reset cost function
         }
 
     micro_coefs_cnf <- as.vector(rep(0, length(var_cols)))
@@ -499,43 +882,79 @@ TrainMicromodelConfidence <- function(data, target_col, var_cols) {
 
 
     y_train <- data[, target_col]
-    items_coefs <- data[, var_cols]
-    alpha_cnf <- 0.001
-    lambda_cnf <- 10
-    confidence_scaler <- 5
+    items_coefs <- as.data.frame(data[, var_cols])
+    #items_coefs <- sapply(items_coefs,as.numeric)
 
-    if (STOHASTIC) {
-        ###
-        ### stohastic gradient descent for content based filtering with confidence intervals
-        ###
-        steps <- nrow(data) %/% 5
+    if (SCALE_MIN_MAX) {
+        items_coefs <- scale_minmax(items_coefs)
+    }
+
+    items_coefs <- as.matrix(items_coefs)
+
+    alpha_cnf <- SGD_ALPHA * 0.1
+    lambda_cnf <- SGD_LAMBDA * 2
+    epochs <- SGD_EPOCHS %/% 2
+
+    confidence_scaler <- 1
+
+
+    ###
+    ### stohastic gradient descent for content based filtering with confidence intervals
+    ###
+    steps <- nrow(data) %/% 1
+
+    train_costs_steps <<- (epochs * nrow(data)) %/% 100
+
+    for (epoch in 1:epochs) {
 
         for (i in 1:nrow(data)) {
-            if (DEBUG && (i %% steps) == 0) {
+
+            if (FULL_DEBUG && (i %% steps) == 0) {
                 non_zero_coefs_cnf <- nonzero(micro_coefs_cnf)
-                non_zero_obs <- nonzero(items_coefs[i,])
                 cat("Non zero coefs cnf:\n")
                 print(non_zero_coefs_cnf[1:5])
-                #cat("Non zero obs:\n")
-                #print(non_zero_obs[1:5])
             }
-            item_coefs_vect <- as.vector(sapply(items_coefs[i,], as.numeric)) # unlist(x_train[i,])
+            item_coefs_vect <- items_coefs[i,] #as.vector(sapply(items_coefs[i,], as.numeric))
 
             H_cnf <- (micro_coefs_cnf %*% item_coefs_vect)[1]
-
             conf <- 1 + confidence_scaler * y_train[i]
-
             Y_cnf <- 1
+            if (DEBUG) {
+                #J <- CostFunctionCONF(H_cnf, Y_cnf)
+                J <- TrainCost(micro_coefs_cnf, items_coefs,y_train)
+            }
+
+
             grad_cnf <- conf * (H_cnf - Y_cnf) * item_coefs_vect + lambda_cnf * micro_coefs_cnf
 
             micro_coefs_cnf <- micro_coefs_cnf - alpha_cnf * grad_cnf
         }
-    } else {
-        ###
-        ### full batch gradient descent for content based filtering
-        ###
-    }
 
+    } 
+
+
+
+    if (DEBUG) {
+        #plot_scores <- cnf_cost_scores
+        J <- SimpleCost(micro_coefs_cnf, items_coefs, y_train)
+        plot_scores <- train_costs
+        cnf_cost_scores <<- plot_scores
+        nrsco <- length(plot_scores)
+        cidx <- c(1, nrsco %/% 5, nrsco %/% 4, nrsco %/% 3, nrsco %/% 2, nrsco %/% 1.4, nrsco %/% 1.2, nrsco)
+        cat(paste0(" CNF A:", alpha_cnf,
+                   " E:", epochs,
+                   " L:", lambda_cnf,
+                   " C:"))
+        print(plot_scores[cidx])
+
+        plot(plot_scores,
+             type = "l",
+             #asp = 1,
+             main = paste0("CNF J:", round(J, digits = 2),
+                           " LJ:", round(tail(plot_scores, 1), digits = 2)
+                           )
+             )
+    }
 
     return(micro_coefs_cnf)
 
@@ -551,7 +970,7 @@ GetProductsScoring <- function(df_micro_behavior, df_products, vars) {
 
     # compute:
     # MxN * N*K = MxK
-    timeit("Behavior matrix ...",
+    timeit("Score matrix generation...",
         score_matrix <- prod_matrix %*% cust_matrix_T
         )
     df_res <- as.data.frame(score_matrix)
@@ -600,6 +1019,10 @@ generate_recommendations <- function(df_mc = NULL) {
     return(df_scores)
 }
 
+##
+## start demo and behavior vectors prep !
+##
+
 if (DEMO) {
     ##
     ## DEMO only section
@@ -611,6 +1034,9 @@ if (DEMO) {
     ## behaviour generation section
     ##
     t0_prep <- proc.time()
+
+    ##
+    ##
 
     ctime <- format(Sys.time(), "%Y-%m-%d %H:%M:%S")
     logger(
@@ -625,11 +1051,15 @@ if (DEMO) {
         setup_paralel_env()
     }
 
-    df <- rx_load_sql(SQL.TOP100) # only for inference of predictor fields
-
-    df_nr <- rx_load_sql(SQL.NR.OBS) # COUNT(*) 
-
-    df_microlist <- rx_load_sql(SQL.MICROSEGMENTLIST) # DISTINCT MicroSegmentId
+    if (DEBUG) {
+        df <- load_df(SQL.TOP10, use_sql = TRUE) # only for inference of predictor fields
+        df_nr <- load_df(SQL.NR.OBS, use_sql = TRUE) # COUNT(*) 
+        df_microlist <- load_df(SQL.MICROSEGMENTLIST, use_sql = TRUE) # DISTINCT MicroSegmentId
+    } else {
+        df <- rx_load_sql(SQL.TOP10) # only for inference of predictor fields
+        df_nr <- rx_load_sql(SQL.NR.OBS) # COUNT(*) 
+        df_microlist <- rx_load_sql(SQL.MICROSEGMENTLIST) # DISTINCT MicroSegmentId
+    }
 
 
     nr_all_obs <- df_nr[1, 1]
@@ -639,15 +1069,18 @@ if (DEMO) {
     if (DEBUG) {
         #All.Microsegments <- unique(df_microlist[, User.Field])[1:5]
 
-        Microsegments.Bad <- c(315, 200, 247)
+        Microsegments.Bad <- c(315, 200, 247, 2, 3)
         Microsegments.Good <- c(13, 35, 162, 353)
-        All.Microsegments <- Microsegments.Bad
+        #All.Microsegments <- c(Microsegments.Bad, Microsegments.Good)
+        All.Microsegments <- c(66,8)
 
     } else {
         All.Microsegments <- unique(df_microlist[, User.Field])
     }
     Nr.Microsegments <- length(All.Microsegments)
-    logger(sprintf("Loaded %d microsegments\n", Nr.Microsegments))
+    logger(sprintf("Loaded %d microsegments [%s ...]\n",
+                        Nr.Microsegments,
+                        paste(All.Microsegments[1:3],collapse = ", ")))
 
     df_output <- data.frame()
 
@@ -659,12 +1092,24 @@ if (DEMO) {
     nr_step <- 0
     total_loaded <- 0
 
+    all_debug_steps <- Nr.Microsegments * length(SGD.ALPHAS) * length(SGD.LAMBDAS) * length(SGD.EPOCHS)
+    debug_step <- 0
+
 
     for (MicroSegment in All.Microsegments) {
+        SGD_BEST_COST <<- 1e10
+        SGD_CURRENT_ID <<- MicroSegment
+
+
         nr_step <- nr_step + 1
 
         ssql <- paste(SQL.LOADMICROSEGMENT, toString(MicroSegment))
-        df_micro <- load_df(ssql, use_sql = TRUE)
+        if (DEBUG) {
+            df_micro <- load_df(ssql, use_sql = TRUE)
+        } else {
+            df_micro <- rx_load_sql(ssql)
+        }
+        df_micro[, Predictor.Fields] <- sapply(df_micro[, Predictor.Fields], as.numeric)
         obj_size <- object.size(df_micro) / (1024 * 1024)
         total_loaded <- total_loaded + obj_size
         #df_micro[, Target.Field] <- df_micro[, Target.Field] * SCALE_FACTOR
@@ -676,42 +1121,113 @@ if (DEMO) {
                 status_prc * 100, nr_step, Nr.Microsegments, obj_size, total_loaded,
                 MicroSegment, nr_observations))
 
-        if (!USE_CUSTOM_MODEL) {
+        if (DEBUG) {
+            regr_fomula <- get_formula_nobias(Target.Field, Predictor.Fields)
+            t3 <- timeit("\nTraining LM micromodel nobias...",
+                    Micro3 <- lm(formula = regr_fomula, data = df_micro),
+                    NODATE = TRUE)
+            Model3 <- Micro3$coefficients
+
             regr_fomula <- get_formula(Target.Field, Predictor.Fields)
-            MicroModel <- lm(formula = regr_fomula, data = df_micro)
-            ModelCoefficients <- MicroModel$coefficients[-1]
-        } else {
-            if (DEBUG) {
+            t4 <- timeit("\nTraining LM micromodel with bias...",
+                    Micro4 <- lm(formula = regr_fomula, data = df_micro),
+                    NODATE = TRUE)
+            Model4 <- Micro4$coefficients[-1]
 
-                timeit(" Training CNF micromodel...",
-                        Model2 <- TrainMicromodelConfidence(df_micro, Target.Field, Predictor.Fields),
-                        NODATE = TRUE)
+            #
+            # grid-search cross validation
+            #
+            for (A_ in SGD.ALPHAS) {
+                for (L_ in SGD.LAMBDAS) {
+                    for (E_ in SGD.EPOCHS) {
+                        for (M_ in SGD.MOMENTUMS) {
 
-                timeit(" Training STD micromodel...",
-                        Model1 <- TrainMicromodel(df_micro, Target.Field, Predictor.Fields),
-                        NODATE = TRUE)
+                            SGD_ALPHA <<- A_
+                            SGD_LAMBDA <<- L_
+                            SGD_EPOCHS <<- E_
+                            SGD_USE_MOMENTUM <<- M_
+                            debug_step <- debug_step + 1
 
-                regr_fomula <- get_formula(Target.Field, Predictor.Fields)
-                timeit(" Training LM micromodel...",
-                        Micro3 <- lm(formula = regr_fomula, data = df_micro),
-                        NODATE = TRUE)
-                Model3 <- Micro3$coefficients[-1]
+                            
+                            inf <- paste0(sprintf("Starting cross-valid step %d/%d for ",
+                                                  debug_step,
+                                                  all_debug_steps)
+                                          , "MICRO=", MicroSegment
+                                          , " ALPHA=", SGD_ALPHA
+                                          , " LAMBDA=", SGD_LAMBDA
+                                          , " EPOCHS=", SGD_EPOCHS
+                                          , " MOMENTUM=", SGD_USE_MOMENTUM 
+                                         )
 
-                cat("STD:\n")
-                print(Model1[1:10])
-                cat("CNF:\n")
-                print(Model2[1:10])
-                cat("LM:\n")
-                print(Model3[1:10])
-                cat("DF\n")
-                print(df_micro[1:5, 1:15])
+                            logger(inf)
 
-            } else {
-                timeit(" Training micromodel...",
-                ModelCoefficients <- TrainMicromodel(df_micro, Target.Field, Predictor.Fields),
-                NODATE = TRUE)
+                            t0 <- timeit("\nTraining SGD micromodel...",
+                                         Model0 <- TrainMicromodelSGD(df_micro,
+                                                                      Target.Field,
+                                                                      Predictor.Fields),
+                                         NODATE = TRUE)
+
+                            t1 <- timeit("\nTraining STD micromodel...",
+                                         Model1 <- TrainMicromodelSTD(df_micro,
+                                                                      Target.Field,
+                                                                      Predictor.Fields),
+                                         NODATE = TRUE)
+
+                            t2 <- timeit("\nTraining CNF micromodel...",
+                                         Model2 <- TrainMicromodelCONF(df_micro,
+                                                                       Target.Field,
+                                                                       Predictor.Fields),
+                                         NODATE = TRUE)
+
+                            prin_cols <- 5
+                            cat(" SGD:\n")
+                            print(Model0[1:prin_cols])
+                            cat(" STD:\n")
+                            print(Model1[1:prin_cols])
+                            cat(" CNF:\n")
+                            print(Model2[1:prin_cols])
+
+                            if (FULL_DEBUG) {
+                                cat(" LMnobias: ")
+                                print(Model3[1:prin_cols])
+                                cat(" LMwbias: ")
+                                print(Model4[1:prin_cols])
+                                cat(" DFcounts: ")
+                                print(colSums(df_micro[, Predictor.Fields])[1:prin_cols])
+                            }
+
+                            info <- paste0("m", MicroSegment
+                                            #, "_a", SGD_ALPHA
+                                            #, "_M", SGD_USE_MOMENTUM
+                                            #, "_L", SGD_LAMBDA
+                                            #, "_e", SGD_EPOCHS
+                                            )
+                            CheckPreds(MicroSegment,
+                                        coefs = list(Model0, Model1, Model2)
+                                        , data = df_micro
+                                        , lm = list(Micro3, Micro4)
+                                        , colnames = c("SGD_SC", 
+                                                       "STD_SC", 
+                                                       "CNF_SC", 
+                                                       "LMn_SC", 
+                                                       "LMb_SC")
+                                        , UserInfo = info
+                                        #, times = c(t0,t1,t2,t3,t4)
+                                        )
+
+                            ModelCoefficients <- Model0
+                        }
+                    }
+                }
             }
+
+
+        } else {
+            timeit(" Training micromodel SGD...",
+                ModelCoefficients <- TrainMicromodelSGD(df_micro, Target.Field, Predictor.Fields),
+                NODATE = TRUE)
         }
+
 
         if (INSPECT_RESULTS) {
             NonZeroCoef <- show_non_zero(ModelCoefficients)
@@ -721,20 +1237,28 @@ if (DEMO) {
                         DifProds = as.vector(NonZeroCols),
                         Coeff = as.vector(NonZeroCoef))
         }
-
-        df_output <- rbind(df_output, c(MicroSegment, nr_observations, ModelCoefficients))
-        colnames(df_output) <- c("MicroSegmentId", "Obs", names(ModelCoefficients))
+        
+        df_output <- rbind(df_output, c(MicroSegment, ModelCoefficients))
+        colnames(df_output) <- c("MicroSegmentId",  names(ModelCoefficients))
         save_df(df_output)
     }
 
+    if (!DEBUG) {
+        df_output <- df_output[order(df_output[, User.Field]),]
+        save_df(df_output, FILE.MATRIX)
+        timeit("Melting properties...",
+            df_melt_output <- melt(df_output, id = c("MicroSegmentId"))
+                 )
+        save_df(df_melt_output, sfn = "MELTED_VECTORS")
 
-    df_output <- df_output[order(df_output[, User.Field]),]
-    save_df(df_output, FILE.MATRIX)
+        dfo <- df_output[complete.cases(df_output),]
+        df_scores <- generate_recommendations(dfo)
+        timeit("Melting scores...",
+            df_melt_scores <- melt(df_scores, id = c("ProductID", "ProductName"))
+              )
+        save_df(df_melt_scores, sfn = "MELTED_SCORES")
 
-    dfo <- df_output[complete.cases(df_output),]
-    df_scores <- generate_recommendations(dfo)
-    df_melt_scores <- melt(df_scores, id = c("ProductID", "ProductName"))
-    save_df(df_melt_scores)
+    }
 
 
 
