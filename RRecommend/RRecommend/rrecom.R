@@ -35,9 +35,9 @@ DEBUG = FALSE
 DEMO = FALSE
 
 
-SGD.ALPHAS <- c(0.001, 0.0005, 0.0001)
-SGD.EPOCHS <- c(10, 90)
-SGD.LAMBDAS <- c(0.001, 0.1)
+SGD.ALPHAS <- c(0.0001) #, 0.0005, 0.0001)
+SGD.EPOCHS <- c(10) #, 90)
+SGD.LAMBDAS <- c(0.001) #, 0.1)
 SGD.MOMENTUMS <- c(1)
 
 
@@ -65,12 +65,12 @@ if (Sys.info()["nodename"] == Debug.Machine.Name) {
 }
 
 if (DEBUG) {
-    Table.Name <- "_RFMM16_sgmidXItemXAttrib1"
-    SQL.ALLPRODUCTS <- "SELECT * FROM _ProductFeatures2016"
-    TABLE.ALLPRODUCTS <- "_ProductFeatures2016"
-    #Table.Name <- "_RFMM14_sgmidXItemXAttrib1"
-    #SQL.ALLPRODUCTS <- "SELECT * FROM _ProductFeatures2014"
-    #TABLE.ALLPRODUCTS <- "_ProductFeatures2014"
+    #Table.Name <- "_RFMM16_sgmidXItemXAttrib1"
+    #SQL.ALLPRODUCTS <- "SELECT * FROM _ProductFeatures2016"
+    #TABLE.ALLPRODUCTS <- "_ProductFeatures2016"
+    Table.Name <- "_RFMM14_sgmidXItemXAttrib1"
+    SQL.ALLPRODUCTS <- "SELECT * FROM _ProductFeatures2014"
+    TABLE.ALLPRODUCTS <- "_ProductFeatures2014"
 } else {
     Table.Name <- "_RFMM16_sgmidXItemXAttrib1"
     SQL.ALLPRODUCTS <- "SELECT * FROM _ProductFeatures2016"
@@ -554,6 +554,7 @@ SimpleCost <- function(coefs, data, y) {
     H <- data %*% coefs
     h2 <- (H - y) ** 2
     cost <- sum(h2) / length(h2)
+    #cost <- cost + 
     if (!is.finite(cost)) {
         logger("CNF Cost generated not finite value!\n")
         cost <- 5000
@@ -580,11 +581,16 @@ TrainCost <- function(coefs, data, y) {
     return(cost)
 }
 
-CheckPreds <- function(UserID, coefs, data, lm, colnames, UserInfo) {
+CheckPreds <- function(UserID, coefs, data, lm, col_names, UserInfo) {
     y <- data[, Target.Field]
     nr_obs <- length(y)
     prods <- data[, Product.Field]
     data_mat <- as.matrix(data[, Predictor.Fields])
+    if (nrow(coefs[[1]]) != ncol(data_mat)) {
+        cnames <- c("BIAS", colnames(data_mat))
+        data_mat <- cbind(rep(1, nrow(data_mat)), data_mat) # add bias intercept term
+        colnames(data_mat) <- cnames
+    }
     df <- data.frame(Prods = prods, Count = y)
     df_rmse <- data.frame()
     df_rmse[1, "INFO"] <- UserInfo
@@ -594,7 +600,7 @@ CheckPreds <- function(UserID, coefs, data, lm, colnames, UserInfo) {
         # assume 1 is SGD
         coef_vect <- coefs[[i]]
         yhat <- data_mat %*% coef_vect
-        col <- colnames[c]
+        col <- col_names[c]
         df[,col] <- yhat
         c <- c + 1
         err <- sqrt(sum((yhat - y) ** 2) / nr_obs)
@@ -609,7 +615,7 @@ CheckPreds <- function(UserID, coefs, data, lm, colnames, UserInfo) {
     for (i in 1:length(lm)) {
         clf <- lm[[i]]
         yhat <- predict(clf, data)
-        col <- colnames[c]
+        col <- col_names[c]
         df[, col] <- yhat
         c <- c + 1
         err <- sqrt(sum((yhat - y) ** 2) / nr_obs)
@@ -654,10 +660,6 @@ TrainMicromodelSGD <- function(data, target_col, var_cols) {
         cost_func_launch <<- 0 # reset cost function
     }
 
-    micro_coefs_sgd <- as.vector(rep(0, length(var_cols)))
-
-    coefs_names <- var_cols # add intercept if needed
-
     y_train <- data[, target_col]
     items_coefs <- as.data.frame(data[, var_cols])
     #items_coefs <- sapply(items_coefs,as.numeric)
@@ -666,7 +668,10 @@ TrainMicromodelSGD <- function(data, target_col, var_cols) {
         items_coefs <- scale_minmax(items_coefs)
     }
 
+    micro_coefs_sgd <- as.vector(rep(0, length(var_cols) + 1))
+    coefs_names <- c("BIAS", var_cols)
     items_coefs <- as.matrix(items_coefs)
+    items_coefs <- cbind(rep(1,nrow(items_coefs)), items_coefs)
 
     alpha_sgd <- SGD_ALPHA
     lambda_sgd <- SGD_LAMBDA
@@ -712,8 +717,9 @@ TrainMicromodelSGD <- function(data, target_col, var_cols) {
             }
 
             ydiff <- H_sgd - Y_sgd
-
-            grad_sgd <- base::t(item_coefs_matrix) %*% ydiff + lambda_sgd * micro_coefs_sgd
+            tmp_micro_coefs = micro_coefs_sgd
+            tmp_micro_coefs[1]=0
+            grad_sgd <- base::t(item_coefs_matrix) %*% ydiff + lambda_sgd * tmp_micro_coefs
 
             if (SGD_AVERAGE==1)
                 grad_sgd <- grad_sgd / batch_size
@@ -777,8 +783,6 @@ TrainMicromodelSTD <- function(data, target_col, var_cols) {
         }
 
 
-    micro_coefs_std <- as.vector(rep(0, length(var_cols)))
-    names(micro_coefs_std) <- var_cols
 
     y_train <- data[, target_col]
     items_coefs <- as.data.frame(data[, var_cols])
@@ -788,7 +792,11 @@ TrainMicromodelSTD <- function(data, target_col, var_cols) {
         items_coefs <- scale_minmax(items_coefs)
     }
 
+    micro_coefs_std <- as.vector(rep(0, length(var_cols) + 1))
+    coefs_names <- c("BIAS", var_cols)
+    names(micro_coefs_std) <- coefs_names
     items_coefs <- as.matrix(items_coefs)
+    items_coefs <- cbind(rep(1, nrow(items_coefs)), items_coefs)
 
     alpha_std<- SGD_ALPHA
     lambda_std <- SGD_LAMBDA
@@ -820,8 +828,10 @@ TrainMicromodelSTD <- function(data, target_col, var_cols) {
                                    items_coefs,
                                    y_train )
                 }
+                tmp_micro_coefs = micro_coefs_std
+                tmp_micro_coefs[1] = 0
 
-                grad_std <- (H_std - Y_std) * item_coefs_vect + lambda_std * micro_coefs_std
+                grad_std <- (H_std - Y_std) * item_coefs_vect + lambda_std * tmp_micro_coefs
 
                 micro_coefs_std <- micro_coefs_std - alpha_std * grad_std
             }
@@ -889,7 +899,11 @@ TrainMicromodelCONF <- function(data, target_col, var_cols) {
         items_coefs <- scale_minmax(items_coefs)
     }
 
+    micro_coefs_cnf <- as.vector(rep(0, length(var_cols) + 1))
+    coefs_names <- c("BIAS", var_cols)
+    names(micro_coefs_cnf) <- coefs_names
     items_coefs <- as.matrix(items_coefs)
+    items_coefs <- cbind(rep(1, nrow(items_coefs)), items_coefs)
 
     alpha_cnf <- SGD_ALPHA * 0.1
     lambda_cnf <- SGD_LAMBDA * 2
@@ -924,8 +938,10 @@ TrainMicromodelCONF <- function(data, target_col, var_cols) {
                 J <- TrainCost(micro_coefs_cnf, items_coefs,y_train)
             }
 
+            tmp_micro_coefs = micro_coefs_cnf
+            tmp_micro_coefs[1] = 0
 
-            grad_cnf <- conf * (H_cnf - Y_cnf) * item_coefs_vect + lambda_cnf * micro_coefs_cnf
+            grad_cnf <- conf * (H_cnf - Y_cnf) * item_coefs_vect + lambda_cnf * tmp_micro_coefs
 
             micro_coefs_cnf <- micro_coefs_cnf - alpha_cnf * grad_cnf
         }
@@ -1069,10 +1085,10 @@ if (DEMO) {
     if (DEBUG) {
         #All.Microsegments <- unique(df_microlist[, User.Field])[1:5]
 
-        Microsegments.Bad <- c(315, 200, 247, 2, 3)
+        Microsegments.Bad <- c(315, 247 , 200, 2, 3)
         Microsegments.Good <- c(13, 35, 162, 353)
         #All.Microsegments <- c(Microsegments.Bad, Microsegments.Good)
-        All.Microsegments <- c(66,8)
+        All.Microsegments <- c(315)
 
     } else {
         All.Microsegments <- unique(df_microlist[, User.Field])
@@ -1109,6 +1125,7 @@ if (DEMO) {
         } else {
             df_micro <- rx_load_sql(ssql)
         }
+        df_micro <- df_micro[order(df_micro$ItemId),]
         df_micro[, Predictor.Fields] <- sapply(df_micro[, Predictor.Fields], as.numeric)
         obj_size <- object.size(df_micro) / (1024 * 1024)
         total_loaded <- total_loaded + obj_size
@@ -1206,7 +1223,7 @@ if (DEMO) {
                                         coefs = list(Model0, Model1, Model2)
                                         , data = df_micro
                                         , lm = list(Micro3, Micro4)
-                                        , colnames = c("SGD_SC", 
+                                        , col_names = c("SGD_SC", 
                                                        "STD_SC", 
                                                        "CNF_SC", 
                                                        "LMn_SC", 
