@@ -1,9 +1,10 @@
 ##
 ##
 ##
-## @script:       Microsegmentation Content Based Recommender System
-## @created:      2017.03.23
-## @lastmodified: 2017.05.30
+## @script:       Microsegmentation Content Based Recommender V2 System
+## @v1_created:   2017.03.23
+## @v2_created:   2017.05.23
+## @lastmodified: 2017.05.23
 ## @project:      Hyperloop
 ## @subproject:   Machine Learning module
 ## @platform:     Microsoft R Server, SQL Server, RevoScaleR
@@ -13,27 +14,13 @@
 ##
 ##
 ##
-TODO <- "
-TODO:
-      
-chk 19 clustere
-chk validare echipa
-chk NaN ptr 5 104   6   3  10 110 132   2 109 120  16  63 114 115  40  12 103   1 101
-ADD LINE SEARCH (check 5 alpha vs cost/objective function)
-add intercept to sgd
-try softmax pe coeficienti ?
-try logit ?
-verificare si renuntare la coloane duplicate (test vals si dupa test nume)
-try generative modelling
-cross-validation
-"
+
 
 library(reshape2)
 
 
-
 # use predefined repository folder or just "" for automatic current folder
-USE_REPOSITORY <- "d:/GoogleDrive/_hyperloop_data/microbehavior"
+USE_REPOSITORY <- "d:/GoogleDrive/_hyperloop_data/microbehavior2"
 USED_PROCESSING_POWER <- 0.65
 
 DEBUG = FALSE
@@ -42,14 +29,12 @@ DEMO = FALSE
 
 
 SGD.ALPHAS <- c(0.0001) #, 0.0005, 0.0001)
-SGD.EPOCHS <- c(100) #, 90)
+SGD.EPOCHS <- c(250) #, 90)
 SGD.LAMBDAS <- c(0.001) #, 0.1)
-SGD.SCALE_MIN_MAX <- c(0)
 SGD.MOMENTUMS <- c(1)
 NORMALEQ.LAMBDAS <- c(0.5) #,1,1.5,2,2.5,3,3.5)
 LAMBDA_NORMAL_EQ <- 3
 
-test_df <- NULL
 
 
 
@@ -57,7 +42,7 @@ test_df <- NULL
 ### PLEASE REVIEW CONNECTION PARAMS
 ###
 svr <- "server=VSQL08\\HYPERLOOP;"
-db <- "database=temp_ML;"
+db <- "database=AIDB;"
 uid <- "uid=andreidi;"
 pwd <- "pwd=HML2017!!"
 Debug.Machine.Name <- "DAMIAN"
@@ -78,19 +63,21 @@ if (DEBUG) {
     #Table.Name <- "_RFMM16_sgmidXItemXAttrib1"
     #SQL.ALLPRODUCTS <- "SELECT * FROM _ProductFeatures2016"
     #TABLE.ALLPRODUCTS <- "_ProductFeatures2016"
-    Table.Name <- "_RFMM14_sgmidXItemXAttrib1"
-    SQL.ALLPRODUCTS <- "SELECT * FROM _ProductFeatures2014"
-    TABLE.ALLPRODUCTS <- "_ProductFeatures2014"
+    Table.Name <- "VW_SGM_MICRO_ITEM_PROP"
+    SQL.ALLPRODUCTS <- "SELECT * FROM VW_ITEM_PROP_VAL"
+    TABLE.ALLPRODUCTS <- "VW_ITEM_PROP_VAL"
+    RESTRICTION <- " SGM_ID = 39 AND ENABLED] = 1 "
 } else {
-    Table.Name <- "_RFMM16_sgmidXItemXAttrib1"
-    SQL.ALLPRODUCTS <- "SELECT * FROM _ProductFeatures2016"
-    TABLE.ALLPRODUCTS <- "_ProductFeatures2016"
+    Table.Name <- "VW_SGM_MICRO_ITEM_PROP"
+    SQL.ALLPRODUCTS <- "SELECT * FROM VW_ITEM_PROP_VAL"
+    TABLE.ALLPRODUCTS <- "VW_ITEM_PROP_VAL"
+    RESTRICTION <- " SGM_ID = 39 AND ENABLED] = 1 "
 }
 
-User.Field <- "MicroSegmentId"
-Target.Field <- "Count"
-Product.Field <- "ItemId"
-Product.Name <- "ItemName"
+User.Field <-    "MICRO_SGM_ID"
+Target.Field <-  "AMOUNT"
+Product.Field <- "ITEM_ID"
+Product.Name <-  "ITEM_NAME"
 NonPredictors.Fields <- c(
                         User.Field
                         , Target.Field
@@ -111,15 +98,14 @@ SQL_CONNECT = 3
 
 
 
-MODULE.VERSION <- "1.2.5"
+MODULE.VERSION <- "2.0.0"
 MODULE.NAME <- "BEHAVIOR_RECOMMENDATIONS"
 
-SQL.MICROSEGMENTLIST <- paste0("SELECT DISTINCT ", User.Field, " FROM ", Table.Name)
-SQL.NR.OBS <- paste0("SELECT COUNT(*) FROM ", Table.Name)
-SQL.LOADMICROSEGMENT <- paste0("SELECT * FROM ", Table.Name, " WHERE ", User.Field, " = ")
-SQL.TOP10 <- paste0("SELECT TOP 10 * FROM ", Table.Name)
+SQL.MICROSEGMENTLIST <- paste0("SELECT DISTINCT ", User.Field, " FROM ", Table.Name," WHERE ", RESTRICTION)
+SQL.NR.OBS <- paste0("SELECT COUNT(*) FROM ", Table.Name, "WHERE ", RESTRICTION)
+SQL.LOADMICROSEGMENT <- paste0("SELECT * FROM ", Table.Name, " WHERE ", RESTRICTION, " AND ", User.Field, " = ")
 
-SQL.DEMOMICROSEG <- "SELECT * FROM bev5"
+SQL.TOP1 <- paste0("SELECT TOP 1 * FROM ", Table.Name)
 
 FILE.MATRIX = "BEHAVIOR_MATRIX"
 FILE.SCORES = "SCORES_MATRIX"
@@ -483,7 +469,7 @@ scale_minmax <- function(df) {
 
 STOHASTIC <- TRUE
 
-SCALE_MIN_MAX <- FALSE
+SCALE_MIN_MAX <- TRUE
 
 cost_list_SGD <- c()
 cost_scores_SGD <- c()
@@ -645,16 +631,15 @@ CheckPreds <- function(UserID, coefs, data, lm, col_names, UserInfo) {
     df_rmse[1, "ALPHA"] <- SGD_ALPHA
     df_rmse[1, "LAMBDA"] <- SGD_LAMBDA
     df_rmse[1, "EPOCHS"] <- SGD_EPOCHS
-    df_rmse[1, "SCALE"] <- SCALE_MIN_MAX
 
     sFN <- paste0("RMSE_", smicr, ".csv")
 
     df_hist <- load_file(sFN)
     df_rmse <- rbind(df_rmse, df_hist)
     cat("\nHEAD:\n")
-    print(head(df, 6))
+    print(head(df, 3))
     cat("\nTAIL:\n")
-    print(tail(df, 2))
+    print(tail(df, 3))
     cat("\nRMSE:\n")
     print(df_rmse)
     save_df(df_rmse, sfn = sFN, simple_name = TRUE)
@@ -688,7 +673,6 @@ TrainNormalEquation <- function(data, target_col, var_cols) {
     micro_coefs_neq <- as.vector(Theta)
     names(micro_coefs_neq) <- coefs_names
     if (DEBUG) {
-        test_df <<- X %*% micro_coefs_neq
         y_train <- data[, target_col]
         J <- SimpleCost(micro_coefs_neq, X, y_train)
         cat(paste0("\nNormalEq with lambda: ",lambda," ERROR: ",J,"\n"))
@@ -1217,14 +1201,12 @@ if (DEMO) {
             for (A_ in SGD.ALPHAS) {
                 for (L_ in SGD.LAMBDAS) {
                     for (E_ in SGD.EPOCHS) {
-                        M_ <- SGD.MOMENTUMS[1]
-                        for (S_ in SGD.SCALE_MIN_MAX) {
+                        for (M_ in SGD.MOMENTUMS) {
 
                             SGD_ALPHA <<- A_
                             SGD_LAMBDA <<- L_
                             SGD_EPOCHS <<- E_
                             SGD_USE_MOMENTUM <<- M_
-                            SCALE_MIN_MAX <<- S_
                             debug_step <- debug_step + 1
 
                             
@@ -1235,8 +1217,7 @@ if (DEMO) {
                                           , " ALPHA=", SGD_ALPHA
                                           , " LAMBDA=", SGD_LAMBDA
                                           , " EPOCHS=", SGD_EPOCHS
-                                          , " MOMENTUM=", SGD_USE_MOMENTUM
-                                          , " SCALE_MINMAX=", SCALE_MIN_MAX
+                                          , " MOMENTUM=", SGD_USE_MOMENTUM 
                                          )
 
                             logger(inf)

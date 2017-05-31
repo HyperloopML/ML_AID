@@ -57,7 +57,7 @@ NO_LOG_SAVE <- FALSE
 
 
 # use predefined repository folder or just "" for automatic current folder
-USE_REPOSITORY <- "c:/_hyperloop_data/clustering"
+USE_REPOSITORY <- "d:/GoogleDrive/_hyperloop_data/clustering"
 USED_PROCESSING_POWER <- 0.65
 ##
 ## HELPER FUNCTIONS

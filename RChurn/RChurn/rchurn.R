@@ -100,7 +100,7 @@ options(width = 300)
 HELPER_LIB_VER <- "1.3.2"
 
 # use predefined repository folder or just "" for automatic current folder
-USE_REPOSITORY <- "c:/_hyperloop_data/churn"
+USE_REPOSITORY <- "d:/GoogleDrive/_hyperloop_data/churn"
 
 FULL_DEBUG <- FALSE
 
