@@ -4,7 +4,7 @@
 ## @script:       Microsegmentation Content Based Recommender V2 System
 ## @v1_created:   2017.03.23
 ## @v2_created:   2017.05.23
-## @lastmodified: 2017.05.31
+## @lastmodified: 2017.06.15
 ## @project:      Hyperloop
 ## @subproject:   Machine Learning module
 ## @platform:     Microsoft R Server, SQL Server, RevoScaleR
@@ -51,7 +51,7 @@ test_df <- NULL
 svr <- "server=VSQL08\\HYPERLOOP;"
 db <- "database=AIDB;"
 uid <- "uid=andreidi;"
-pwd <- "pwd=HML2017!!"
+pwd <- "pwd=AIDB2017!!"
 Debug.Machine.Name <- "DAMIAN"
 ###
 ### END CONNECTION PARAMS SECTION
@@ -73,7 +73,7 @@ SQL.MICROLIST.SP <- "EXEC [SP_MICRO_SGM_LIST] @SGM_ID=%d"
 SQL.GETMICRO.SP <- "EXEC [SP_SGM_MICRO_ITEM_PROP] @SGM_ID = %d, @MICRO_SGM_ID = %d, @ITEM_ID = NULL, @CUST_ID = NULL, @ENABLED = NULL, @NON_RX = 1"
 
 # initialize new model and return model ID
-SQL.INITMODEL.SP <- " EXEC [SP_ADD_BEV_MODEL] @SGM_ID=%d, @NAME='%s'"
+SQL.INITMODEL.SP <- " EXEC [SP_ADD_BEV_MODEL] @SGM_ID=%d, @MODEL_NAME='%s'"
 
 # update model data by ID %1=model %2=error %3=runtimetime
 SQL.UPDATEMODEL.SP <- "EXEC [SP_UPDATE_BEV_MODEL] @BEV_MODEL_ID=%d, @ERROR=%f, @RUNTIME=%f"
@@ -82,7 +82,8 @@ SQL.UPDATEMODEL.SP <- "EXEC [SP_UPDATE_BEV_MODEL] @BEV_MODEL_ID=%d, @ERROR=%f, @
 SQL.ADDMODELINFO.SP <- "EXEC [SP_ADD_BEV_MODEL_DETAIL] @BEV_MODEL_ID=%d, @MICRO_SGM_ID=%d, @BEST_A1='%s', @BEST_A2='%s', @BEST_A3='%s', @BEST_A4='%s', @BEST_A5='%s', @MICRO_ERROR=%f"
 
 Target.Field <- "AMOUNT"
-Target.2.Field <- "QTY"
+Target.Field.2 <- "QTY"
+Target.Field.3 <- "COUNT"
 Product.Field <- "ITEM_ID"
 Product.Name <- "ITEM_NAME"
 Enabled.Field <- "ENABLED"
@@ -94,7 +95,8 @@ NonPredictors.Fields <- c(
                         , Target.Field
                         , Product.Field
                         , Product.Name
-                        , Target.2.Field
+                        , Target.Field.2
+                        , Target.Field.3
                         , Period.Field
                         , Model.Field
                         , Enabled.Field
@@ -114,8 +116,9 @@ SQL_CONNECT = 3
 
 
 
-MODULE.VERSION <- "2.0.1.1"
+MODULE.VERSION <- "2.0.2.3"
 MODULE.NAME <- "BEHAVIOR_RECOMMENDATIONS_V2"
+MODULE.NAME.SHORT <- "BEHAV"
 
 
 TABLE.OUTPUTVECTORS <- "BEV_SGM_MICRO"
@@ -147,7 +150,7 @@ NR_ROWS <- 2e7
 ##
 
 
-HELPER_LIB_VER <- "1.4.3"
+HELPER_LIB_VER <- "1.5.1"
 
 
 FULL_DEBUG <- FALSE
@@ -214,9 +217,17 @@ log_FN <- paste0("_log_", MODULE.NAME, "_", log_ctime, ".txt")
 LogFileName <- file.path(log_fnpath, log_FN)
 
 logger <- function(stext) {
+    prefix <- ""
+    if (substr(stext, 1, 1) == '\n') {
+        prefix <- "\n"
+        stext <- substr(stext,2,10000)
+    }
+    slog_ctime <- format(Sys.time(), "[%Y-%m-%d %H%:%M:%S]")
+    slog_ctime <- sprintf("[%s]%s", MODULE.NAME.SHORT, slog_ctime)
     if (is.vector(stext)) {
         stext <- paste(stext, collapse = ",", sep = "")
     }
+    stext <- paste0(prefix,slog_ctime, stext)
     cat(stext)
     flush.console()
     all_log <<- paste(all_log, stext, sep = "")
@@ -251,7 +262,7 @@ logger <- function(stext) {
 
 logger(sprintf("Preparing helper lib v%s...\n", HELPER_LIB_VER))
 
-timeit = function(strmsg, expr, NODATE = FALSE) {
+timeit = function(strmsg, expr, NODATE = TRUE) {
     prf <- ""
     if (substr(strmsg, 1, 1) == "\n") {
         prf <- "\n"
@@ -473,13 +484,12 @@ save_plot <- function(sfn) {
 
 ExecSP <- function(sSQL){
    
-  logger(sprintf("Executing [%s]", sSQL))
-  res <- RxSqlServerData(sqlQuery = sSQL, connectionString = conns)
-  
-  return(res)
+    logger(sprintf("Executing [%s]\n", sSQL))
+    res <- rx_load_sql(sSQL) #RxSqlServerData(sqlQuery = sSQL, connectionString = conns) #
+    return(res)
 }
 
-LoadBatch <- function(sql, cached = T) {
+LoadBatch <- function(ssql, cached = T) {
     df_batch <- NULL
     if (cached) {
         df_batch <- load_df(ssql, use_sql = TRUE)
@@ -501,10 +511,10 @@ LoadMicrosegment <- function(sgm_id, micro_sgm_id, cached = T) {
     return(LoadBatch(ssql, cached = cached))
 }
 
-SaveModelMetadata <- function(model_id, ModelName) {
-    ssql <- sprintf(SQL.INITMODEL.SP, model_id, ModelName)
+SaveModelMetadata <- function(sgm_id, ModelName) {
+    ssql <- sprintf(SQL.INITMODEL.SP, sgm_id, ModelName)
     df_model <- ExecSP(ssql)
-    return(df_model)
+    return(df_model[1,1])
 }
 
 UpdateModelMetadata <- function(model_id, model_error, model_time) {
@@ -521,13 +531,13 @@ GetTransactionCount <- function(model_id) {
     FULL = FALSE
 
     ssql <- sprintf(SQL.TRANSCOUNT.SP, model_id, FULL)
-    df_count <- ExecSP(ssql)
+    df_count <- load_df(ssql, use_sql = TRUE)
     return(df_count)
 }
 
 GetMicrosegmentList <- function(model_id) {
-    ssql <- sprint(SQL.MICROLIST.SP, model_id)
-    df_micros <- ExeSP(ssql)
+    ssql <- sprintf(SQL.MICROLIST.SP, model_id)
+    df_micros <- ExecSP(ssql)
     return(df_micros)
 }
 
@@ -1171,11 +1181,10 @@ if (DEMO) {
     ##
     ##
 
-    ctime <- format(Sys.time(), "%Y-%m-%d %H:%M:%S")
     logger(
         sprintf(
-            "\n[%s] BEGIN Behavior/Recommendations stand-alonescript v.%s DEBUG=%d\n",
-                ctime, MODULE.VERSION, DEBUG))
+            "\nBEGIN Behavior/Recommendations stand-alonescript v.%s DEBUG=%d\n",
+                MODULE.VERSION, DEBUG))
 
 
 
@@ -1185,8 +1194,8 @@ if (DEMO) {
     }
 
 
-    df_nr <- GetTransactionCount(as.integer(SEGMENT_MODEL_ID))
     df_microlist <- GetMicrosegmentList(as.integer(SEGMENT_MODEL_ID))
+    df_nr <- GetTransactionCount(as.integer(SEGMENT_MODEL_ID))
 
 
     nr_all_obs <- df_nr[1, 1]
@@ -1204,7 +1213,7 @@ if (DEMO) {
         All.Microsegments <- unique(df_microlist[, User.Field])
     }
     Nr.Microsegments <- length(All.Microsegments)
-    logger(sprintf("Loaded %d microsegments [%s ...]\n",
+    logger(sprintf("Loading %d microsegments [%s ...]\n",
                         Nr.Microsegments,
                         paste(All.Microsegments[1:3], collapse = ", ")))
 
@@ -1223,7 +1232,8 @@ if (DEMO) {
 
     #save model meta
     Model.Name <- sprintf("Microsegments behaviour matrix coefs for segmentation %s",SEGMENT_MODEL_ID)
-    Model.ID <- SaveModelMetadata(Model.Name)
+    Model.ID <- SaveModelMetadata(as.integer(SEGMENT_MODEL_ID), Model.Name)
+    logger(sprintf("Model %d: [%s]", Model.ID,Model.Name))
     
 
     for (MicroSegment in All.Microsegments) {
@@ -1368,6 +1378,7 @@ if (DEMO) {
                                         )
 
                             ModelCoefficients <- Model0
+
                         }
                     }
                 }
@@ -1379,12 +1390,24 @@ if (DEMO) {
                 ModelCoefficients <- TrainNormalEquation(df_micro, Target.Field, Predictor.Fields),
                 NODATE = TRUE)
           
-          #TrainXGBTreeRegressor()
-          #GetTop5Atributes()
-          #SaveAttributes(Model.ID, MicroSegment, ModelCoefficients)
-          SaveSubmodelMeta(Model.ID, MicroSegment, A1, A2, A3, A4, A5, MSE)
         }
 
+        xgb <- xgboost(data = df_micro[, Predictor.Fields],
+                                label = df_micro[, Target.Field],
+                                missing = 0,
+                                verbose = 1,
+                                nround = 5)
+
+        xgb_res <- predict(xgb, df_micro[, Predictor.Fields])
+        XG_RMSE <- sqrt(mean((df_micro[, Predictor.Fields] - xgb_res) ** 2))
+
+        feat_imp <- xgb.importance(feature_names = sparse_matrix@Dimnames[[2]], model = xgb)
+
+        head(feat_imp)
+
+        #logger("XGB RMSE: %.2f w BEST PREDS: %s", XG_RMSE, paste(best_preds[1:5], collapse = ","))
+
+        #SaveSubmodelMeta(Model.ID, MicroSegment, A1, A2, A3, A4, A5, MSE)
 
         if (INSPECT_RESULTS) {
             NonZeroCoef <- show_non_zero(ModelCoefficients)
