@@ -15,13 +15,14 @@
 ##
 ##
 
-library(reshape2)
+LIBS <- c("reshape2", "reshape2", "xgboost", "caret", "MASS")
+
 
 
 TIME_FRAME_ID <- "3"
 SEGMENT_MODEL_ID <- "39"
 User.Field <- "MICRO_SGM_ID"
-MicroSegment.Field <-"MICRO_SGM_ID"
+MicroSegment.Field <- "MICRO_SGM_ID"
 
 
 # use predefined repository folder or just "" for automatic current folder
@@ -29,6 +30,7 @@ USE_REPOSITORY <- "d:/GoogleDrive/_hyperloop_data/microbehavior"
 USED_PROCESSING_POWER <- 0.65
 
 DEBUG = FALSE
+DEBUG_HTSS = TRUE # if true then load even if cached==true
 
 DEMO = FALSE
 
@@ -42,6 +44,16 @@ NORMALEQ.LAMBDAS <- c(0.5) #,1,1.5,2,2.5,3,3.5)
 LAMBDA_NORMAL_EQ <- 3
 
 test_df <- NULL
+
+ENABLE_SGD <- TRUE
+ENABLE_STD <- FALSE
+ENABLE_CNF <- FALSE
+ENABLE_LMB <- FALSE
+ENABLE_LMN <- FALSE
+
+REDUCE_FEATS <- FALSE
+
+SHOW_PLOTS <- FALSE
 
 
 
@@ -76,10 +88,13 @@ SQL.GETMICRO.SP <- "EXEC [SP_SGM_MICRO_ITEM_PROP] @SGM_ID = %d, @MICRO_SGM_ID = 
 SQL.INITMODEL.SP <- " EXEC [SP_ADD_BEV_MODEL] @SGM_ID=%d, @MODEL_NAME='%s'"
 
 # update model data by ID %1=model %2=error %3=runtimetime
-SQL.UPDATEMODEL.SP <- "EXEC [SP_UPDATE_BEV_MODEL] @BEV_MODEL_ID=%d, @ERROR=%f, @RUNTIME=%f"
+SQL.UPDATEMODEL.SP <- "EXEC [SP_UPD_BEV_MODEL] @MODEL_ID=%d, @ERR1_NAME='%s', @ERR1_VAL=%f, @ERR2_NAME='%s', @ERR2_VAL=%f, @RUN_TIME=%f"
 
 # add model info by model ID (params %1=model %2=micusrid, %3=bestattr1, %4=bestattr2, %5=bestattr3, %6=bestattr4, %7=bestattr5, %8=error
-SQL.ADDMODELINFO.SP <- "EXEC [SP_ADD_BEV_MODEL_DETAIL] @BEV_MODEL_ID=%d, @MICRO_SGM_ID=%d, @BEST_A1='%s', @BEST_A2='%s', @BEST_A3='%s', @BEST_A4='%s', @BEST_A5='%s', @MICRO_ERROR=%f"
+SQL.ADDMODELINFO.SP <- "EXEC [SP_ADD_BEV_MODEL_DETAIL] @MODEL_ID=%d,@MICRO_SGM_ID=%d,@BEST_P_1='%s',@BEST_P_2='%s',@BEST_P_3='%s',@BEST_P_4='%s',@BEST_P_5='%s',@BEST_P_6='%s',@BEST_P_7='%s',@BEST_P_8='%s',@BEST_P_9='%s',@BEST_P_10='%s',@ERR1_NAME='%s',@ERR1_VAL=%.3f,@ERR2_NAME='%s',@ERR2_VAL=%.3f, @BEST_P_IMP_1=%f,@BEST_P_IMP_2=%f,@BEST_P_IMP_3=%f,@BEST_P_IMP_4=%f,@BEST_P_IMP_5=%f,@BEST_P_IMP_6=%f,@BEST_P_IMP_7=%f,@BEST_P_IMP_8=%f,@BEST_P_IMP_9=%f,@BEST_P_IMP_10=%f"
+
+# get all articles dataframe
+SQL.GETART.SP <- "EXEC [SP_GET_ITEMS_PROPS]"
 
 Target.Field <- "AMOUNT"
 Target.Field.2 <- "QTY"
@@ -88,7 +103,14 @@ Product.Field <- "ITEM_ID"
 Product.Name <- "ITEM_NAME"
 Enabled.Field <- "ENABLED"
 Period.Field <- "PER_ID"
-Model.Field <- "SGM_ID"
+Segmentation.Field <- "SGM_ID"
+Model.Field <- "MODEL_ID"
+
+OutputID.Field <- "UID"
+
+Preds.Table <- "BEV_PRED_ITEM"
+Coefs.Table <- "BEV_MODEL_PROP_COEFS"
+
 
 NonPredictors.Fields <- c(
                         User.Field
@@ -99,6 +121,7 @@ NonPredictors.Fields <- c(
                         , Target.Field.3
                         , Period.Field
                         , Model.Field
+                        , Segmentation.Field
                         , Enabled.Field
                         )
 
@@ -220,14 +243,19 @@ logger <- function(stext) {
     prefix <- ""
     if (substr(stext, 1, 1) == '\n') {
         prefix <- "\n"
-        stext <- substr(stext,2,10000)
+        stext <- substr(stext, 2, 10000)
     }
     slog_ctime <- format(Sys.time(), "[%Y-%m-%d %H%:%M:%S]")
     slog_ctime <- sprintf("[%s]%s", MODULE.NAME.SHORT, slog_ctime)
     if (is.vector(stext)) {
         stext <- paste(stext, collapse = ",", sep = "")
     }
-    stext <- paste0(prefix,slog_ctime, stext)
+    stext <- paste0(prefix, slog_ctime, " ", stext)
+
+    if (substr(stext, nchar(stext), nchar(stext) + 1) != "\n") {
+        stext <- paste0(stext, "\n")
+    }
+
     cat(stext)
     flush.console()
     all_log <<- paste(all_log, stext, sep = "")
@@ -282,6 +310,20 @@ timeit = function(strmsg, expr, NODATE = TRUE) {
     return(ftime)
 }
 
+ZeroVar <- function(df) {
+    colVars <- apply(df, 2, var)
+    isConstant <- (colVars <= 0)
+    colNames <- names(isConstant[isConstant == T])
+    return(colNames)
+
+}
+
+ZeroVarCaret <- function(df) {
+    res <- nearZeroVar(df, saveMetrics = T)
+    colNames <- rownames(res[res[, "zeroVar"] == T,])
+    return(colNames)
+}
+
 
 debug_object_size <- function(obj) {
     obj_name <- deparse(substitute(obj))
@@ -319,14 +361,18 @@ get_tune_params <- function(caret_model) {
 install_and_load <- function(libraries) {
     for (i in libraries) {
         if (!is.element(i, .packages(all.available = TRUE))) {
-            logger(sprintf("Installing package: %s\n", i))
+            logger(sprintf("Installing package: %s", i))
             install.packages(i)
         }
-        logger(sprintf("Loading package: %s\n", i))
+        logger(sprintf("Loading package: %s", i))
         if (!(paste0("package:", i) %in% search()))
             library(i, character.only = TRUE, verbose = TRUE)
         }
 }
+
+# setup environment
+install_and_load(LIBS)
+#
 
 p_cluster <- 0
 setup_paralel_env <- function() {
@@ -349,14 +395,14 @@ save_df <- function(df, sfn = "", simple_name = FALSE) {
         logger("\nSaving data...\n")
     file_db_path <- get_data_dir()
     if (FULL_DEBUG)
-        logger(sprintf("Used data directory: %s\n", file_db_path))
+        logger(sprintf(" Used data directory: %s\n", file_db_path))
     FN <- paste0(MODULE.NAME, "_v", gsub("\\.", "_", MODULE.VERSION), "_", log_ctime, "_data.csv")
     if (sfn != "")
         if (simple_name)
             FN <- sfn else
                 FN <- paste0(sfn, "_", log_ctime, "_data.csv")
             FileName <- file.path(file_db_path, FN)
-    timeit(sprintf("Saving File:[%s] ...", FileName),
+    timeit(sprintf(" Saving File:[%s] ...", FileName),
            write.csv(x = df, file = FileName, row.names = TRUE))
 }
 
@@ -404,36 +450,36 @@ load_df <- function(str_table, caching = TRUE, use_sql = FALSE) {
         file_db_path <- get_data_dir()
         file_db_path <- file.path(file_db_path, "_dbcache")
         if (FULL_DEBUG)
-            logger(sprintf("Current dbcache directory: %s\n", file_db_path))
+            logger(sprintf("  Current dbcache directory: %s\n", file_db_path))
         dfXdfFileName <- file.path(file_db_path, Data.FileName)
-        logger(sprintf("XDF File: %s\n", dfXdfFileName))
+        logger(sprintf("  XDF File: %s\n", dfXdfFileName))
     }
 
     if (SQL_CONNECT == 1) {
-        logger(sprintf("Connecting MSSQLServer [%s]...\n", conns))
+        logger(sprintf("  Connecting MSSQLServer [%s]...\n", conns))
         library(RODBC)
         channel <- odbcDriverConnect(conns)
 
-        timeit(sprintf("Downloading [%s] table... ", str_sql),
+        timeit(sprintf("  Downloading [%s] table... ", str_sql),
            df_in <- sqlQuery(channel, paste(str_sql)))
 
         odbcClose(channel)
-        logger("Done data downloading.\n")
+        logger("  Done data downloading.\n")
     } else if (SQL_CONNECT > 1) {
         if ((SQL_CONNECT == 2) || !file.exists(dfXdfFileName) || !caching) {
-            logger(sprintf("RevoScaleRConn MSSQLServer [%s]...\n", conns))
+            logger(sprintf("  R evoScaleRConn MSSQLServer [%s]...\n", conns))
 
             dsOdbcSource <- RxOdbcData(sqlQuery = str_sql,
                                      connectionString = conns)
 
 
             # Import the data into the xdf file
-            timeit(sprintf("Downloading [rxImport: %s]...\n", str_sql),
+            timeit(sprintf("  Downloading [rxImport: %s]...\n", str_sql),
                  rxImport(dsOdbcSource, dfXdfFileName, overwrite = TRUE))
         } else
-            logger("Bypassing SQL Server. Loading data directly from XDF file...\n")
+            logger("  Bypassing SQL Server. Loading data directly from XDF file...\n")
         # Read xdf file into a data frame
-        timeit("RevoScaleR loading dataframe [rxDataStep]... ",
+        timeit("  RevoScaleR loading dataframe [rxDataStep]... ",
                df_in <- rxDataStep(inData = dfXdfFileName,
                                    numRows = NR_ROWS,
                                    maxRowsByCols = 20000000 * 200
@@ -451,14 +497,14 @@ rx_load_sql <- function(str_sql) {
 
     library(RevoScaleR)
     if (FULL_DEBUG)
-        logger(sprintf("RevoScaleRConn MSSQLServer [%s]...\n", conns))
+        logger(sprintf("  RevoScaleRConn MSSQLServer [%s]...\n", conns))
 
     dsOdbcSource <- RxOdbcData(sqlQuery = str_sql,
                                 connectionString = conns)
 
 
     # Import the data into the xdf file
-    timeit(sprintf("Loading dataframe [rxImport: %s]...", str_sql),
+    timeit(sprintf("  Loading dataframe [rxImport: %s]...", str_sql),
            df_in <- rxImport(inData = dsOdbcSource, reportProgress = 0))
 
 
@@ -475,25 +521,41 @@ normalize <- function(x) {
 }
 
 save_plot <- function(sfn) {
-    file_db_path <- get_data_dir()
-    stime <- format(Sys.time(), "%Y%m%d%H%M%S")
-    FN <- file.path(file_db_path, paste0(stime, "_", sfn, "_PLOT.png"))
-    logger(sprintf("Saving plot: %s\n", FN))
-    dev.print(device = png, file = FN, width = 1024, height = 768)
+    if (SHOW_PLOTS) {
+        file_db_path <- get_data_dir()
+        stime <- format(Sys.time(), "%Y%m%d%H%M%S")
+        FN <- file.path(file_db_path, paste0(stime, "_", sfn, "_PLOT.png"))
+        logger(sprintf(" Saving plot: %s\n", FN))
+        dev.print(device = png, file = FN, width = 1024, height = 768)
+    }
 }
 
-ExecSP <- function(sSQL){
-   
-    logger(sprintf("Executing [%s]\n", sSQL))
-    res <- rx_load_sql(sSQL) #RxSqlServerData(sqlQuery = sSQL, connectionString = conns) #
+ExecSP <- function(sSQL) {
+
+    logger(sprintf(" Executing [%s]\n", sSQL))
+    res <- RxSqlServerData(sqlQuery = sSQL, connectionString = conns) #rx_load_sql(sSQL) 
     return(res)
 }
 
 LoadBatch <- function(ssql, cached = T) {
     df_batch <- NULL
-    if (cached) {
-        df_batch <- load_df(ssql, use_sql = TRUE)
+    if (cached && DEBUG) {
+        logger(" LoadBatch: Trying to load from cache...")
+        df_batch <- load_df(ssql, use_sql = TRUE, caching = TRUE)
     } else {
+        logger(" LoadBatch: DIRECT SQL LOAD...")
+        df_batch <- rx_load_sql(ssql)
+    }
+    return(df_batch)
+}
+
+LoadBatchMaybe <- function(ssql, cached = T) {
+    df_batch <- NULL
+    if (cached && (!DEBUG_HTSS) && (DEBUG)) {
+        logger(" LoadBatchMaybe: Trying to load from cache...")
+        df_batch <- load_df(ssql, use_sql = TRUE, caching = TRUE)
+    } else {
+        logger(" LoadBatchMaybe: DIRECT SQL LOAD...")
         df_batch <- rx_load_sql(ssql)
     }
     return(df_batch)
@@ -506,6 +568,13 @@ LoadBatch <- function(ssql, cached = T) {
 ##
 #########################
 
+LoadItems <- function() {
+    logger("Loading items dataframe ...")
+    ssql <- SQL.GETART.SP
+    df <- LoadBatch(ssql)
+    return(df)
+}
+
 LoadMicrosegment <- function(sgm_id, micro_sgm_id, cached = T) {
     ssql <- sprintf(SQL.GETMICRO.SP, sgm_id, micro_sgm_id)
     return(LoadBatch(ssql, cached = cached))
@@ -513,32 +582,55 @@ LoadMicrosegment <- function(sgm_id, micro_sgm_id, cached = T) {
 
 SaveModelMetadata <- function(sgm_id, ModelName) {
     ssql <- sprintf(SQL.INITMODEL.SP, sgm_id, ModelName)
-    df_model <- ExecSP(ssql)
-    return(df_model[1,1])
+    df_model <- LoadBatchMaybe(ssql)
+    return(df_model[1, 1])
 }
 
-UpdateModelMetadata <- function(model_id, model_error, model_time) {
-    ssql <- sprintf(SQL.UPDATEMODEL.SP, model_id, model_error, model_time)
-    ExecSP(ssql)
+UpdateModelMetadata <- function(model_id, err1_name,err1_val,err2_name,err2_val, model_time) {
+    ssql <- sprintf(SQL.UPDATEMODEL.SP, model_id, err1_name, err1_val, err2_name, err2_val, model_time)
+    LoadBatchMaybe(ssql) #ExecSP(ssql)
 }
 
-SaveSubmodelMeta <- function(model_id, MicroSegment, A1, A2, A3, A4, A5, MSE) {
-    ssql <- sprintf(SQL.ADDMODELINFO.SP, model_id, MicroSegment, A1, A2, A3, A4, A5, MSE)
-    ExecSP(ssql)
+SaveSubmodelMeta <- function(model_id, MicroSegment,
+                             A1, A2, A3, A4, A5, A6, A7, A8, A9, A10,
+                             E1_name, E1_val, E2_name, E2_val,
+                             fA1, fA2, fA3, fA4, fA5, fA6, fA7, fA8, fA9, fA10) {
+    logger(sprintf("Saving submodel meta for MODEL:%d MICRO:%d %s:%.2f %s:%.2f A1:%s A1f:%.3f A2:%s A2f:%.3f",
+                                                model_id,
+                                                MicroSegment,
+                                                E1_name,
+                                                E1_val,
+                                                E2_name,
+                                                E2_val,
+                                                A1, fA1, A2,fA2))
+    ssql <- sprintf(SQL.ADDMODELINFO.SP,
+                    model_id, MicroSegment,
+                    A1, A2, A3, A4, A5, A6, A7, A8, A9, A10,
+                    E1_name, E1_val, E2_name, E2_val,
+                    fA1, fA2, fA3, fA4, fA5, fA6, fA7, fA8, fA9, fA10)
+
+    LoadBatchMaybe(ssql) # ExecSP(ssql)
 }
 
 GetTransactionCount <- function(model_id) {
     FULL = FALSE
 
     ssql <- sprintf(SQL.TRANSCOUNT.SP, model_id, FULL)
-    df_count <- load_df(ssql, use_sql = TRUE)
+    df_count <- LoadBatch(ssql)
     return(df_count)
 }
 
 GetMicrosegmentList <- function(model_id) {
     ssql <- sprintf(SQL.MICROLIST.SP, model_id)
-    df_micros <- ExecSP(ssql)
+    df_micros <- LoadBatch(ssql)
     return(df_micros)
+}
+
+UploadToSQL <- function(dest_table, source_df) {
+    svrTable <- RxSqlServerData(table = dest_table, connectionString = conns)
+    logger(sprintf(" rxDataStep Uploading dataframe with size (%s) to table [%s] ...", toString(dim(source_df)), dest_table))
+    rxDataStep(inData = source_df, outFile = svrTable, append = "rows")
+    logger(" Done uploading.")
 }
 
 
@@ -625,6 +717,12 @@ train_costs_index <- 0
 cost_func_launch <- 0
 train_cost_steps <- 0
 
+RSquared <- function(y, yhat) {
+    ymean <- mean(y)
+    rsq <- 1 - sum((yhat - y) ** 2) / sum((y - ymean) ** 2)
+    return(rsq)
+}
+
 SimpleCost <- function(coefs, data, y) {
     H <- data %*% coefs
     h2 <- (H - y) ** 2
@@ -636,6 +734,17 @@ SimpleCost <- function(coefs, data, y) {
         cost <- 5000
     }
     return(cost)
+}
+
+GetRMSE <- function(y, yhat) {
+    return(sqrt(mean((yhat - y) ** 2)))
+}
+
+GetRPRC <- function(y, yhat) {
+    res <- abs(yhat - y)
+    y[y == 0] <- 1
+    res_prc <- res / y
+    return(mean(res_prc))
 }
 
 TrainCost <- function(coefs, data, y) {
@@ -658,6 +767,7 @@ TrainCost <- function(coefs, data, y) {
 }
 
 CheckPreds <- function(UserID, coefs, data, lm, col_names, UserInfo) {
+    logger("\nSUMMARY OF THE TRAINING PROCESS")
     y <- data[, Target.Field]
     nr_obs <- length(y)
     prods <- data[, Product.Field]
@@ -677,42 +787,70 @@ CheckPreds <- function(UserID, coefs, data, lm, col_names, UserInfo) {
         colnames(data_mat) <- cnames
     }
     df <- data.frame(Prods = prods, Count = y)
+    colnames(df) <- c("ProdID", Target.Field)
     df_rmse <- data.frame()
     df_rmse[1, "INFO"] <- UserInfo
     c <- 1
     smicr <- paste0("M", UserID)
     for (i in 1:length(coefs)) {
-        # assume 1 is SGD
         coef_vect <- coefs[[i]]
-        yhat <- data_mat %*% coef_vect
-        col <- col_names[c]
-        df[, col] <- yhat
-        c <- c + 1
-        mse <- sum((yhat - y) ** 2) / nr_obs
-        err <- sqrt(mse)
-        df_rmse[1, col] <- round(err, digits = 2)
-        if (i == 1) {
-            if (err < SGD_BEST_COST) {
-                SGD_BEST_COST <<- err
-                save_plot(smicr)
+        if (!is.null(coef_vect)) {
+            # assume 1 is SGD
+            yhat <- data_mat %*% coef_vect
+            col <- col_names[c]
+            df[, col] <- yhat
+
+            rsq <- RSquared(y, yhat)
+            err <- GetRMSE(y, yhat)
+            err_prc <- GetRPRC(y, yhat)
+            col1 <- paste0(col, "_RE")
+            col2 <- paste0(col, "_R2")
+            col3 <- paste0(col, "_PR")
+            df_rmse[1, col1] <- round(err, digits = 2)
+            df_rmse[1, col2] <- round(rsq, digits = 2)
+            df_rmse[1, col3] <- round(err_prc, digits = 2)
+
+            if (i == 1) {
+                if (err < SGD_BEST_COST) {
+                    SGD_BEST_COST <<- err
+                    save_plot(smicr)
+                }
             }
         }
+        c <- c + 1
     }
     for (i in 1:length(lm)) {
         clf <- lm[[i]]
-        yhat <- predict(clf, data)
-        col <- col_names[c]
-        df[, col] <- yhat
+        if (!is.null(clf)) {
+            col <- col_names[c]
+            if (col == "XGB") {
+                yhat <- predict(clf, as.matrix(data[, Predictor.Fields]))
+            } else {
+                yhat <- predict(clf, data)
+            }
+            df[, col] <- yhat
+
+            rsq <- RSquared(y, yhat)
+            err <- GetRMSE(y, yhat)
+            err_prc <- GetRPRC(y, yhat)
+            col1 <- paste0(col, "_RE")
+            col2 <- paste0(col, "_R2")
+            col3 <- paste0(col, "_PR")
+            df_rmse[1, col1] <- round(err, digits = 2)
+            df_rmse[1, col2] <- round(rsq, digits = 2)
+            df_rmse[1, col3] <- round(err_prc, digits = 2)
+        }
         c <- c + 1
-        err <- sqrt(sum((yhat - y) ** 2) / nr_obs)
-        df_rmse[1, col] <- round(err, digits = 2)
     }
 
-    df_rmse[1, "MOM_SGD"] <- SGD_USE_MOMENTUM
-    df_rmse[1, "ALPHA"] <- SGD_ALPHA
-    df_rmse[1, "LAMBDA"] <- SGD_LAMBDA
+    #df_rmse[1, "MOM_SGD"] <- SGD_USE_MOMENTUM
+    #df_rmse[1, "ALPHA"] <- SGD_ALPHA
+    #df_rmse[1, "LAMBDA"] <- SGD_LAMBDA
+    #df_rmse[1, "SCALE"] <- SCALE_MIN_MAX
+    df_rmse[1, "TIME"] <- format(Sys.time(), "%Y-%m-%d %H:%M:%S")
+    df_rmse[1, "RED_F"] <- REDUCE_FEATS
     df_rmse[1, "EPOCHS"] <- SGD_EPOCHS
-    df_rmse[1, "SCALE"] <- SCALE_MIN_MAX
+
 
     sFN <- paste0("RMSE_", smicr, ".csv")
 
@@ -727,7 +865,6 @@ CheckPreds <- function(UserID, coefs, data, lm, col_names, UserInfo) {
     save_df(df_rmse, sfn = sFN, simple_name = TRUE)
 }
 
-library(MASS)
 
 TrainNormalEquation <- function(data, target_col, var_cols) {
     items_coefs <- as.data.frame(data[, var_cols])
@@ -758,7 +895,7 @@ TrainNormalEquation <- function(data, target_col, var_cols) {
         test_df <<- X %*% micro_coefs_neq
         y_train <- data[, target_col]
         J <- SimpleCost(micro_coefs_neq, X, y_train)
-        cat(paste0("\nNormalEq with lambda: ", lambda, " ERROR: ", J, "\n"))
+        logger(sprintf("NormalEq on (%s) with lambda:%.2f MSE:%.1f ", toString(dim(X)), lambda, J))
     }
     return(micro_coefs_neq)
 }
@@ -817,10 +954,6 @@ TrainMicromodelSGD <- function(data, target_col, var_cols) {
     steps <- iters %/% 1
     train_costs_steps <<- (epochs * iters) %/% 100
 
-    if (DEBUG) {
-        cat("\nSGD X:\n")
-        print(items_coefs[1:5, 1:9])
-    }
 
 
     for (epoch in 1:epochs) {
@@ -874,26 +1007,28 @@ TrainMicromodelSGD <- function(data, target_col, var_cols) {
                        " L:", lambda_sgd,
                        " M:", SGD_USE_MOMENTUM)
 
-        cat(paste0(sinf,
-                   " C:"))
-        print(plot_scores[cidx])
+        logger(sprintf(paste0(sinf, " C: %s"), toString(plot_scores[cidx])))
 
-        # plot device setup
-        # for first plot in series !
-        if (length(dev.list()) != 0)
-            dev.off()
-        par(oma = c(0, 0, 2, 0))
-        par(mfrow = c(2, 2))
+        if (SHOW_PLOTS) {
 
-        plot(plot_scores,
+            # plot device setup
+            # for first plot in series !
+            if (length(dev.list()) != 0)
+                dev.off()
+            par(oma = c(0, 0, 2, 0))
+            par(mfrow = c(2, 2))
+
+            plot(plot_scores,
              type = "l",
-        #asp = 1,
+            #asp = 1,
              main = paste0("SGD J:", round(J, digits = 2),
                            " LJ:", round(tail(plot_scores, 1), digits = 2)
                            )
              )
 
-        title(main = sinf, outer = TRUE)
+            title(main = sinf, outer = TRUE)
+        }
+
     }
     names(micro_coefs_sgd) <- coefs_names
     return(micro_coefs_sgd)
@@ -982,19 +1117,22 @@ TrainMicromodelSTD <- function(data, target_col, var_cols) {
         cost_scores_STD <<- plot_scores
         nrsco <- length(plot_scores)
         cidx <- c(1, nrsco %/% 5, nrsco %/% 4, nrsco %/% 3, nrsco %/% 2, nrsco %/% 1.4, nrsco %/% 1.2, nrsco)
-        cat(paste0(" STD A:", alpha_std,
+        sinf <- paste0(" STD A:", alpha_std,
                    " E:", epochs,
                    " L:", lambda_std,
-                   " C:"))
-        print(plot_scores[cidx])
+                   " C: %s")
 
-        plot(plot_scores,
+        logger(sprintf(sinf, plot_scores[cidx]))
+        if (SHOW_PLOTS) {
+            plot(plot_scores,
              type = "l",
-        #asp = 1,
+            #asp = 1,
              main = paste0("STD J:", round(J, digits = 2),
                            " LJ:", round(tail(plot_scores, 1), digits = 2)
                            )
              )
+        }
+
     }
 
     return(micro_coefs_std)
@@ -1084,23 +1222,36 @@ TrainMicromodelCONF <- function(data, target_col, var_cols) {
         cnf_cost_scores <<- plot_scores
         nrsco <- length(plot_scores)
         cidx <- c(1, nrsco %/% 5, nrsco %/% 4, nrsco %/% 3, nrsco %/% 2, nrsco %/% 1.4, nrsco %/% 1.2, nrsco)
-        cat(paste0(" CNF A:", alpha_cnf,
+        sinf <- paste0(" CNF A:", alpha_cnf,
                    " E:", epochs,
                    " L:", lambda_cnf,
-                   " C:"))
-        print(plot_scores[cidx])
-
-        plot(plot_scores,
+                   " C: %s")
+        logger(sprintf(sinf, plot_scores[cidx]))
+        if (SHOW_PLOTS) {
+            plot(plot_scores,
              type = "l",
-        #asp = 1,
+            #asp = 1,
              main = paste0("CNF J:", round(J, digits = 2),
                            " LJ:", round(tail(plot_scores, 1), digits = 2)
                            )
              )
+        }
+
     }
 
     return(micro_coefs_cnf)
 
+}
+
+GetScores <- function(df_items, coefs) {
+    X <- cbind(rep(1, nrow(df_items)), df_items)
+
+    if (DEBUG) {
+        logger(sprintf(" GetScores(Items: %s , Coefs: %d)", toString(dim(X)), length(coefs)))
+    }
+
+    scores <- as.matrix(X) %*% as.vector(coefs)
+    return(scores)
 }
 
 
@@ -1207,7 +1358,7 @@ if (DEMO) {
         Microsegments.Bad <- c(315, 247, 200, 2, 3)
         Microsegments.Good <- c(13, 35, 162, 353)
         #All.Microsegments <- c(Microsegments.Bad, Microsegments.Good)
-        All.Microsegments <- c(315)
+        All.Microsegments <- c(150) #,1, 100,150,200,250,300,350,399)
 
     } else {
         All.Microsegments <- unique(df_microlist[, User.Field])
@@ -1217,7 +1368,6 @@ if (DEMO) {
                         Nr.Microsegments,
                         paste(All.Microsegments[1:3], collapse = ", ")))
 
-    df_output <- data.frame()
 
     SCALE_FACTOR <- 1
     USE_CUSTOM_MODEL <- TRUE
@@ -1230,13 +1380,21 @@ if (DEMO) {
     all_debug_steps <- Nr.Microsegments * length(SGD.ALPHAS) * length(SGD.LAMBDAS) * length(SGD.EPOCHS)
     debug_step <- 0
 
+
     #save model meta
-    Model.Name <- sprintf("Microsegments behaviour matrix coefs for segmentation %s",SEGMENT_MODEL_ID)
+    Model.Name <- sprintf("Model for %d [%s] behavior vectors [%s]-based for segmentation [%d]",
+                        Nr.Microsegments, User.Field, Target.Field, as.integer(SEGMENT_MODEL_ID))
+    logger(sprintf("\nSaving metadata for model: [%s]", Model.Name))
     Model.ID <- SaveModelMetadata(as.integer(SEGMENT_MODEL_ID), Model.Name)
-    logger(sprintf("Model %d: [%s]", Model.ID,Model.Name))
-    
+    logger(sprintf("\nTRAINING %d UIDs FOR MODEL_ID:%d [%s]", Nr.Microsegments, Model.ID, Model.Name))
+    model_total_time <- as.numeric(Sys.time())
+    model_err1 <- 0
+    model_err2 <- 0
+
+    df_items <- LoadItems()
 
     for (MicroSegment in All.Microsegments) {
+        logger(sprintf("\nTraining microsegment/user [%d]", MicroSegment))
         SGD_BEST_COST <<- 1e10
         SGD_CURRENT_ID <<- MicroSegment
 
@@ -1255,8 +1413,25 @@ if (DEMO) {
 
         Predictor.Fields <- setdiff(colnames(df_micro), NonPredictors.Fields)
 
-        #df_micro <- df_micro[order(df_micro$ItemId),]
+
+        timeit(" Finding zero variance columns... ", bad_cols1 <- ZeroVar(df_micro[, Predictor.Fields]))
+        #timeit(" CaNZV ", bad_cols2 <- ZeroVarCaret(df_micro[, Predictor.Fields]))
+
+        All.Predictor.Fields <- Predictor.Fields
+        if (REDUCE_FEATS)
+            Predictor.Fields <- setdiff(All.Predictor.Fields, bad_cols1)
+
+        logger(sprintf("Total columns: %d, ZeroVar: %d, Final: %d",
+                            length(All.Predictor.Fields),
+                            length(bad_cols1),
+                            length(Predictor.Fields)))
+
+        logger("Converting to numeric...")
         df_micro[, Predictor.Fields] <- sapply(df_micro[, Predictor.Fields], as.numeric)
+
+
+
+
         obj_size <- object.size(df_micro) / (1024 * 1024)
         total_loaded <- total_loaded + obj_size
         #df_micro[, Target.Field] <- df_micro[, Target.Field] * SCALE_FACTOR
@@ -1268,18 +1443,83 @@ if (DEMO) {
                 status_prc * 100, nr_step, Nr.Microsegments, obj_size, total_loaded,
                 MicroSegment, nr_observations))
 
+        #####
+        #####
+        #####
+        #####
+        #####
+        #####
+        #####
+        ##### XGB TRAIN CARENT CROSS VALID NEEDED!!!!
+        #####
+        #####
+        #####
+        #####
+        #####
+        #####
+        logger("Training XGB...")
+        xgb <- xgboost(data = as.matrix(df_micro[, Predictor.Fields]),
+                                label = df_micro[, Target.Field],
+                                missing = 0,
+                                verbose = 0,
+                                nround = 200)
+        xgb_yhat <- predict(xgb, as.matrix(df_micro[, Predictor.Fields]))
+        y <- df_micro[, Target.Field]
+        xgb_r2 <- R2(xgb_yhat, y)
+
+        feat_imp <- xgb.importance(feature_names = Predictor.Fields, model = xgb)
+
+        A1 <- feat_imp[1][[1]]
+        A2 <- feat_imp[2][[1]]
+        A3 <- feat_imp[3][[1]]
+        A4 <- feat_imp[4][[1]]
+        A5 <- feat_imp[5][[1]]
+        A6 <- feat_imp[6][[1]]
+        A7 <- feat_imp[7][[1]]
+        A8 <- feat_imp[8][[1]]
+        A9 <- feat_imp[9][[1]]
+        A10 <- feat_imp[10][[1]]
+
+        fA1 <- feat_imp[1][[2]]
+        fA2 <- feat_imp[2][[2]]
+        fA3 <- feat_imp[3][[2]]
+        fA4 <- feat_imp[4][[2]]
+        fA5 <- feat_imp[5][[2]]
+        fA6 <- feat_imp[6][[2]]
+        fA7 <- feat_imp[7][[2]]
+        fA8 <- feat_imp[8][[2]]
+        fA9 <- feat_imp[9][[2]]
+        fA10 <- feat_imp[10][[2]]
+
+        print(head(feat_imp))
+
+        logger(sprintf("XGB R2: %.2f", xgb_r2))
+
         if (DEBUG) {
+            Micro3 <- NULL
+            Micro4 <- NULL
+
             regr_fomula <- get_formula_nobias(Target.Field, Predictor.Fields)
-            t3 <- timeit("\nTraining LM micromodel nobias...",
+            if (ENABLE_LMN) {
+                t3 <- timeit("\nTraining LM micromodel nobias...",
                     Micro3 <- lm(formula = regr_fomula, data = df_micro),
                     NODATE = TRUE)
-            Model3 <- Micro3$coefficients
+                Model3 <- Micro3$coefficients
+            } else {
+                Model3 <- c(0, 0, 0)
+            }
 
-            regr_fomula <- get_formula(Target.Field, Predictor.Fields)
-            t4 <- timeit("\nTraining LM micromodel with bias...",
+            if (ENABLE_LMB) {
+                regr_fomula <- get_formula(Target.Field, Predictor.Fields)
+                t4 <- timeit("\nTraining LM micromodel with bias...",
                     Micro4 <- lm(formula = regr_fomula, data = df_micro),
                     NODATE = TRUE)
-            Model4 <- Micro4$coefficients
+                Model4 <- Micro4$coefficients
+            } else {
+                Model4 <- c(0, 0, 0)
+            }
+
+
 
             #
             # grid-search cross validation
@@ -1319,38 +1559,49 @@ if (DEMO) {
                                                                        Predictor.Fields),
                                          NODATE = TRUE)
                             }
+                            Model0 <- NULL
+                            Model1 <- NULL
+                            Model2 <- NULL
+                            if (ENABLE_SGD) {
 
-                            t0 <- timeit("\nTraining SGD micromodel...",
+                                t0 <- timeit("\nTraining SGD micromodel...",
                                          Model0 <- TrainMicromodelSGD(df_micro,
                                                                       Target.Field,
                                                                       Predictor.Fields),
                                          NODATE = TRUE)
+                            }
 
-                            t1 <- timeit("\nTraining STD micromodel...",
+                            if (ENABLE_STD) {
+                                t1 <- timeit("\nTraining STD micromodel...",
                                          Model1 <- TrainMicromodelSTD(df_micro,
                                                                       Target.Field,
                                                                       Predictor.Fields),
                                          NODATE = TRUE)
+                            }
 
-                            t2 <- timeit("\nTraining CNF micromodel...",
+                            if (ENABLE_CNF) {
+
+                                t2 <- timeit("\nTraining CNF micromodel...",
                                          Model2 <- TrainMicromodelCONF(df_micro,
                                                                        Target.Field,
                                                                        Predictor.Fields),
                                          NODATE = TRUE)
-
-                            prin_cols <- 10
-                            cat(" NEQ:\n")
-                            print(round(ModelN[1:prin_cols], digits = 3))
-                            cat(" LMwbias:\n")
-                            print(Model4[1:prin_cols])
-                            cat(" SGD:\n")
-                            print(Model0[1:prin_cols])
-                            cat(" STD:\n")
-                            print(Model1[1:prin_cols])
-                            cat(" CNF:\n")
-                            print(Model2[1:prin_cols])
-                            cat(" LMnobias:\n")
-                            print(c(0, Model3[1:(prin_cols - 1)]))
+                            }
+                            if (FULL_DEBUG) {
+                                prin_cols <- c(1, 2, 50, 100, 200, 500)
+                                cat(" NEQ:\n")
+                                print(round(ModelN[prin_cols], digits = 3))
+                                cat(" LMwbias:\n")
+                                print(Model4[prin_cols])
+                                cat(" SGD:\n")
+                                print(Model0[prin_cols])
+                                cat(" STD:\n")
+                                print(Model1[prin_cols])
+                                cat(" CNF:\n")
+                                print(Model2[prin_cols])
+                                cat(" LMnobias:\n")
+                                print(c(0, Model3[1:(prin_cols - 1)]))
+                            }
 
                             if (FULL_DEBUG) {
                                 cat(" DFcounts: ")
@@ -1366,18 +1617,19 @@ if (DEMO) {
                             CheckPreds(MicroSegment,
                                         coefs = list(ModelN, Model0, Model1, Model2)
                                         , data = df_micro
-                                        , lm = list(Micro3, Micro4)
-                                        , col_names = c("NORMEQ",
-                                                        "SGD_SC",
-                                                        "STD_SC",
-                                                        "CNF_SC",
-                                                        "LMn_SC",
-                                                        "LMb_SC")
+                                        , lm = list(Micro3, Micro4, xgb)
+                                        , col_names = c("NEQ",
+                                                        "SGD",
+                                                        "STD",
+                                                        "CNF",
+                                                        "LMn",
+                                                        "LMb",
+                                                        "XGB")
                                         , UserInfo = info
                             #, times = c(t0,t1,t2,t3,t4)
                                         )
 
-                            ModelCoefficients <- Model0
+                            ModelCoefficients <- ModelN
 
                         }
                     }
@@ -1389,25 +1641,49 @@ if (DEMO) {
             timeit(" Training micromodel ..",
                 ModelCoefficients <- TrainNormalEquation(df_micro, Target.Field, Predictor.Fields),
                 NODATE = TRUE)
-          
+
+
         }
 
-        xgb <- xgboost(data = df_micro[, Predictor.Fields],
-                                label = df_micro[, Target.Field],
-                                missing = 0,
-                                verbose = 1,
-                                nround = 5)
+        yhat <- GetScores(df_micro[, Predictor.Fields], ModelCoefficients)
 
-        xgb_res <- predict(xgb, df_micro[, Predictor.Fields])
-        XG_RMSE <- sqrt(mean((df_micro[, Predictor.Fields] - xgb_res) ** 2))
+        rsq <- RSquared(y = df_micro[, Target.Field], yhat = yhat)
+        rmse <- GetRMSE(y = df_micro[, Target.Field], yhat = yhat)
 
-        feat_imp <- xgb.importance(feature_names = sparse_matrix@Dimnames[[2]], model = xgb)
+        SaveSubmodelMeta(Model.ID, MicroSegment,
+                         A1, A2, A3, A4, A5, A6, A7, A8, A9, A10,
+                         "N_R2", rsq, "X_R2", xgb_r2,
+                         fA1, fA2, fA3, fA4, fA5, fA6, fA7, fA8, fA9, fA10)
 
-        head(feat_imp)
+        ### 
+        ### NOW GENERATE PREDICTIONS FOR NEQ & XGB MODELS AND SAVE BOTH !!!
+        ### 
+        nr_o <- nrow(df_items)
+        logger(sprintf("Generating predictions for %d products...", nr_o))
+        preds_n <- GetScores(df_items[, Predictor.Fields], ModelCoefficients)
+        logger(sprintf("Generating adv predictions..."))
+        preds_x <- predict(xgb, as.matrix(df_items[, Predictor.Fields]))
+        df_preds <- data.frame(ITEM_ID = df_items[, Product.Field],
+                                PRED_LOW = preds_n, PRED_HIGH = preds_x)
 
-        #logger("XGB RMSE: %.2f w BEST PREDS: %s", XG_RMSE, paste(best_preds[1:5], collapse = ","))
+        df_gt <- df_micro[, c(Product.Field, Target.Field)]
+        colnames(df_gt) <- c(Product.Field, "GT")
 
-        #SaveSubmodelMeta(Model.ID, MicroSegment, A1, A2, A3, A4, A5, MSE)
+        df_preds <- merge(df_preds, df_gt, by = Product.Field, all.x = TRUE)
+
+        df_preds[, Model.Field] <- rep(Model.ID, nr_o)
+        df_preds[, "UID"] <- as.integer(rep(MicroSegment, nr_o))
+
+        df_preds <- df_preds[c(Model.Field, "UID", Product.Field, "PRED_LOW", "PRED_HIGH", "GT")]
+
+        #save_df(df_preds, sfn=sprintf("PRED_MICRO_%d",MicroSegment))
+
+
+        logger("Saving predictions to SQL Server ...")
+        UploadToSQL(Preds.Table, df_preds)
+        logger("Done saving predictions to SQL Server.")
+
+
 
         if (INSPECT_RESULTS) {
             NonZeroCoef <- show_non_zero(ModelCoefficients)
@@ -1417,33 +1693,54 @@ if (DEMO) {
                         DifProds = as.vector(NonZeroCols),
                         Coeff = as.vector(NonZeroCoef))
         }
-        
 
+        KeyFields <- c(Model.Field, OutputID.Field)
+        df_output <- data.frame()
+        df_output <- rbind(df_output, c(as.integer(Model.ID), as.integer(MicroSegment), ModelCoefficients))
+        colnames(df_output) <- c(KeyFields, names(ModelCoefficients))
+        #save_df(df_output, sfn="COEFS")
 
-        df_output <- rbind(df_output, c(MicroSegment, ModelCoefficients))
-        colnames(df_output) <- c("MicroSegmentId", names(ModelCoefficients))
-        save_df(df_output)
+        df_output_melted <- melt(df_output,
+            id = KeyFields)
+
+        colnames(df_output_melted) <- c(KeyFields, "PROP_CODE", "PROP_VAL")
+
+        df_output_melted[, KeyFields] <-
+            sapply(df_output_melted[, KeyFields],
+                    as.integer)
+
+        df_output_melted[, "PROP_VAL"] <- as.double(df_output_melted[, "PROP_VAL"])
+
+        logger("Saving behavior vector to SQL Server ...")
+        UploadToSQL(Coefs.Table, df_output_melted)
+        logger("Done saving behavior vector to SQL Server.")
+
+        model_err1 = model_err1 + rsq
+        model_err2 = model_err2 + xgb_r2
+
     }
 
-    if (!DEBUG) {
-        df_output <- df_output[order(df_output[, User.Field]),]
-        save_df(df_output, FILE.MATRIX)
-        timeit("Melting properties...",
-            df_melt_output <- melt(df_output, id = c("MicroSegmentId"))
-                 )
-        save_df(df_melt_output, sfn = "MELTED_VECTORS")
+    ###
+    ###
+    ### now update overall model with average N_R2 and X_R2
+    ###
+    ###
+    model_err1_name <- "N_R2"
+    model_err2_name <- "X_R2"
+    model_err1 <- model_err1 / Nr.Microsegments
+    model_err2 <- model_err2 / Nr.Microsegments
+    model_total_time <- as.numeric(Sys.time()) - model_total_time
 
-        dfo <- df_output[complete.cases(df_output),]
-        df_scores <- generate_recommendations(dfo)
-        timeit("Melting scores...",
-            df_melt_scores <- melt(df_scores, id = c("ProductID", "ProductName"))
-              )
-        save_df(df_melt_scores, sfn = "MELTED_SCORES")
+    logger(sprintf("Model done in %.2fs. Saving overall model metadata %s=%.2f %s=%.2f...",
+                                model_total_time,
+                                model_err1_name, model_err1,
+                                model_err2_name, model_err2
+                                ))
 
-    }
-
-
-
+    UpdateModelMetadata(model_id = Model.ID,
+                        err1_name = model_err1_name, err1_val = model_err1,
+                        err2_name = model_err2_name, err2_val = model_err2,
+                        model_time = model_total_time)
 
     ### CLOSING SECTION
 
