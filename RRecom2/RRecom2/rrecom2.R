@@ -1358,7 +1358,7 @@ if (DEMO) {
         Microsegments.Bad <- c(315, 247, 200, 2, 3)
         Microsegments.Good <- c(13, 35, 162, 353)
         #All.Microsegments <- c(Microsegments.Bad, Microsegments.Good)
-        All.Microsegments <- c(150) #,1, 100,150,200,250,300,350,399)
+        All.Microsegments <- c(399) #,1, 100,150,200,250,300,350,399)
 
     } else {
         All.Microsegments <- unique(df_microlist[, User.Field])
@@ -1458,12 +1458,84 @@ if (DEMO) {
         #####
         #####
         logger("Training XGB...")
-        xgb <- xgboost(data = as.matrix(df_micro[, Predictor.Fields]),
-                                label = df_micro[, Target.Field],
-                                missing = 0,
-                                verbose = 0,
-                                nround = 200)
+        if (DEBUG) {
+            logger(" Using caret for XGB cross-val")
+            nrounds = 50
+            xgb.grid <- expand.grid(nrounds=c(nrounds),
+                                    max_depth=c(2,3,4),
+                                    eta = c(0.15,0.2,0.3,0.5),
+                                    gamma = c(0.001, 0.005, 0.01, 0.05, 0.1),
+                                    colsample_bytree = c(0.5, 1),
+                                    min_child_weight = c(1, 2, 5, 10))
+
+            trCtrl <- trainControl('adaptive_cv', number=5, repeats=5,verboseIter = TRUE)
+            timeit(" Tuning ...",                                   
+                    best_fit <- train(x = df_micro[, Predictor.Fields],
+                                        y = df_micro[, Target.Field],
+                                        method = "xgbTree",
+                                        tuneGrid = xgb.grid,
+                                        trControl = trCtrl)
+                    )
+
+            xgb1 <- best_fit$finalModel
+
+            #nrounds = best_fit$bestTune[1,1]
+            cv_max_depth = best_fit$bestTune[1, 2]
+            cv_eta = best_fit$bestTune[1, 3]
+            cv_gamma = best_fit$bestTune[1, 4]
+            cv_colsample_bytree = best_fit$bestTune[1, 5]
+            cv_min_child_weight = best_fit$bestTune[1, 6]
+            nrounds = 500
+            timeit(sprintf(" Directly training SIMPLE XGB for %d rounds", nrounds),
+                            xgb2 <- xgboost(data = as.matrix(df_micro[, Predictor.Fields]),
+                                                label = df_micro[, Target.Field],
+                                                missing = 0,
+                                                verbose = 0,
+                                                nround = nrounds))
+
+            timeit(sprintf(" Directly training TUNED XGB for %d rounds", nrounds),
+                            xgb3 <- xgboost(data = as.matrix(df_micro[, Predictor.Fields]),
+                                                label = df_micro[, Target.Field],
+                                                missing = 0,
+                                                verbose = 0,
+                                                nround = nrounds,
+                                                eta = cv_eta,
+                                                gamma = cv_gamma,
+                                                colsample_bytree = cv_colsample_bytree,
+                                                min_child_weight = cv_min_child_weight))
+
+            p1 <- predict(xgb1, as.matrix(df_micro[, Predictor.Fields]))
+            p2 <- predict(xgb2, as.matrix(df_micro[, Predictor.Fields]))
+            p3 <- predict(xgb3, as.matrix(df_micro[, Predictor.Fields]))
+            y <- df_micro[, Target.Field]
+            xgb1_r2 <- R2(p1, y)
+            xgb2_r2 <- R2(p2, y)
+            xgb3_r2 <- R2(p3, y)
+            logger(sprintf("XGB1 R2: %.3f  XGB2 R2: %.3f  XGB3 R2: %.3f", xgb1_r2, xgb2_r2, xgb3_r2))
+            logger("Done XGB cross-validation")
+
+            
+        } else {
+            nrounds = 500
+            cv_max_depth = 3
+            cv_eta = 0.2
+            cv_gamma = 0.05
+            cv_colsample_bytree = 0.5
+            cv_min_child_weight = 1
+            timeit(sprintf(" Directly training XGB for %d rounds", nrounds),
+                            xgb <- xgboost(data = as.matrix(df_micro[, Predictor.Fields]),
+                                                label = df_micro[, Target.Field],
+                                                missing = 0,
+                                                verbose = 0,
+                                                nround = nrounds,
+                                                eta = cv_eta,
+                                                gamma = cv_gamma,
+                                                colsample_bytree = cv_colsample_bytree,
+                                                min_child_weight = cv_min_child_weight))
+        }
+        
         xgb_yhat <- predict(xgb, as.matrix(df_micro[, Predictor.Fields]))
+        raw_xgb <- xgb.save.raw(xgb) # this is for DB-saving purposes
         y <- df_micro[, Target.Field]
         xgb_r2 <- R2(xgb_yhat, y)
 
