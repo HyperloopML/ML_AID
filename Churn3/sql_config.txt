@@ -1,0 +1,8 @@
+{
+	"server" : "VSQL08\\HYPERLOOP",
+	"database" : "AIDB",
+	"username" : "andreidi",
+	"password" : "hyp2017!!",
+	"driver" : "{ODBC Driver 13 for SQL Server}",
+	"datafolder" : "D:/GoogleDrive/_hyperloop_data/churn_v3"
+}

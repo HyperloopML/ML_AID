@@ -4,6 +4,7 @@
 ## @script:       Churn Prediction System
 ## @v1_created:   2017.03.23
 ## @v2_created:   2017.06.19
+## @v3_created:   2017.08.09
 ## @lastmodified: 2017.08.10
 ## @project:      Hyperloop
 ## @subproject:   Machine Learning module
@@ -877,18 +878,19 @@ InstallKeras <- function() {
 GetNNInfo <- function(model)
 {
   str_res <- ""
-  for(l in 0:length(model$layers)) 
+  for(l in 1:length(model$layers)) 
   {
     pre <- "->"
-    layer <- get_layer(model, index = l)
+    sunits <-0
+    layer <- model$layers[[l]] #get_layer(model, index = l) # works only for Seq
     sname <- toString(layer)
     if(l==0) {
       pre <- ""
       sunits <- layer$input_shape[[2]]
-    }else if(sname=="Dropout")
+    }else if(sname=="Drop")
     {
       sunits <- toString(layer$rate)  
-    } else
+    }else if(sname=="Dense")
       {
         sunits <- toString(layer$units) 
       }
@@ -898,46 +900,51 @@ GetNNInfo <- function(model)
   return(str_res)
 }
 
-ChurnClassifier <- function(hidden_layers = c(128), nr_inputs, dropout_level = 1) {
+ChurnClassifier <- function(hidden_layers = c(128), nr_inputs, dropout_level = 1, 
+                            BN = TRUE, act = 'elu', opt ='rmsprop' ) 
+{
   logger(sprintf("Preparing NN (input:%s layers:[%s])",
                  toString(nr_inputs), toString(hidden_layers)))
   nr_hiddens = length(hidden_layers)
-  model <- keras_model_sequential()
+  
+  input_layer <- layer_input(shape=c(nr_inputs))
+  last_layer <- input_layer
   h1_units = hidden_layers[1]
   
-  layer_dense(model,
-              units = hidden_layers[1],
-              activation = "elu",
-              input_shape = c(nr_inputs))
   
-  if(nr_hiddens>1)
+  for(hid in 1:nr_hiddens)
   {
-    for (nr_hidden in 2:nr_hiddens) 
-      {
-        if(dropout_level>=1)
-        {
-          layer_dropout(model, rate = 0.5)
-        }
-        layer_dense(model,
-                    units = hidden_layers[nr_hidden],
-                    activation = "elu")
-      }
+    if(dropout_level>=1 && hid>1)
+    {
+      last_layer <- layer_dropout(last_layer, 0.5)
+    }
+    last_layer <- layer_dense(last_layer,units = hidden_layers[hid])
+    if(BN)
+    {
+      last_layer <- layer_batch_normalization(last_layer)
+    }
+    if(act!='')
+    {
+      last_layer <- layer_activation(last_layer,activation = act)
+    }
   }
   
+
   if(dropout_level>=2)
   {
-    layer_dropout(model, rate = 0.5)
+    last_layer <- layer_dropout(last_layer, rate = 0.5)
   }
+  output_layer <- layer_dense(last_layer, units = 1, activation = "sigmoid") 
+  
+  model <- keras_model(inputs = input_layer, outputs = output_layer)
   model %>%
-    layer_dense(units = 1, activation = "sigmoid") %>%
     compile(
-      optimizer = 'rmsprop',
+      optimizer = opt,
       loss = 'binary_crossentropy',
       metrics = c('accuracy')
     )
   if (FULL_DEBUG) {
-    logger(sprintf("Neural Network layout>>"))
-    summary(model)
+    logger(sprintf("Neural Network layout:\n%s",GetObjectOuput(summary(model))))
   }else logger(sprintf("Model: %s", GetNNInfo(model)))
   return(model)
 }
@@ -960,11 +967,15 @@ ResetConfusionStats <- function() {
   i_conf <<- 0
 }
 
+conf_mat_train <- NULL
+conf_mat_test <- NULL
+
 GetPredStats <- function(id_model, yhat, y, yhat_train = NULL, y_train = NULL, hiddens = NULL) {
   logger(sprintf(" Computing confusion matrix for %d observations", length(y)))
   if(FULL_DEBUG)
     logger(sprintf("   yhat_test:[%s] y_test:[%s]", toString(yhat[1:5]), toString(y[1:5])))
   cf_test <- confusionMatrix(yhat, y, positive = "1")
+  conf_mat_test <<- cf_test
   i_conf <<- i_conf + 1
   conf_mats[[i_conf]] <<- cf_test
   
@@ -981,7 +992,7 @@ GetPredStats <- function(id_model, yhat, y, yhat_train = NULL, y_train = NULL, h
   if (!is.null(yhat_train)) {
     logger(sprintf(" Computing confusion matrix for %d observations", length(y_train)))
     cf_train <- confusionMatrix(yhat_train, y_train, positive = "1")
-
+    conf_mat_train <<- cf_train
     v_kappa_train <- cf_train$overall["Kappa"]
     v_accuracy_train <- cf_train$overall["Accuracy"]
     v_recall_train <- cf_train$byClass['Recall']
@@ -1016,20 +1027,6 @@ Get_DNN_Layouts <- function(nr_hid, QUICK = FALSE) {
   ## x2 /2
   ## x2 x1
   ##
-
-#    ModelID CnfMatID TestF1 TestPrec TestRecall TestKappa TestAcc TrainAcc TrainKappa TrainRecall    Layout NPRED THRS DROP PREP
-#14       14       14  0.528    0.389      0.821     0.324   0.674    0.672      0.322       0.820    98, 24    49 0.40    1    0
-#9         9        9  0.529    0.392      0.811     0.327   0.679    0.677      0.326       0.811    92, 46    46 0.40    1    0
-#18       18       18  0.529    0.479      0.591     0.376   0.766    0.765      0.374       0.590    92, 23    46 0.40    0    0
-#83       11       83  0.529    0.459      0.626     0.367   0.753    0.751      0.367       0.628    23, 11    46 0.45    1    0
-#85       13       85  0.533    0.400      0.797     0.336   0.689    0.687      0.334       0.796    98, 49    49 0.45    1    0
-#11       11       11  0.536    0.423      0.730     0.354   0.719    0.717      0.352       0.730    23, 11    46 0.40    1    0
-#87       15       87  0.536    0.412      0.769     0.347   0.704    0.702      0.345       0.769    24, 12    49 0.45    1    0
-#81        9       81  0.537    0.437      0.697     0.363   0.733    0.732      0.362       0.698    92, 46    46 0.45    1    0
-#157      13      157  0.538    0.451      0.667     0.371   0.745    0.744      0.370       0.668    98, 49    49 0.50    1    0
-#86       14       86  0.540    0.432      0.720     0.363   0.727    0.726      0.362       0.720    98, 24    49 0.45    1    0
-    
-  
 # ModelID TestAcc TestKappa TestRecall TrainAcc TrainKappa TrainRecall     Layout NPRED THRS  
 #       6   0.696     0.340     0.7775    0.697      0.340      0.7769     23, 11    46 0.40
 #       9   0.689     0.336     0.7940    0.690      0.337      0.7935     49, 24    49 0.40
@@ -1149,521 +1146,143 @@ logger("Dropping zero-var cols...")
 df_full <- df_full[, setdiff(colnames(df_full), zero_var_cols)]
 
 Predictor.Fields <- GetPredictors(df_full)
+
+#
+##
+## the whole grid-search and cross-validation has been moved to 
+## churn3.py 
+##
+##
+
+#Predictor.Fields <-  setdiff(Predictor.Fields, Overall.Fields)
+
 Nr.Predictors <- length(Predictor.Fields)
-
-if (DEBUG_ONLY_FINAL_STAGE) {
-  PredictorSelector <- list(
-                          setdiff(Predictor.Fields, Overall.Fields)
-                          )
-} else {
-  PredictorSelector <- list(
-                          setdiff(Predictor.Fields, Overall.Fields)
-                          , Predictor.Fields
-                           #,Short.Predictor.Fields
-                          )
-}
+df_res<- data.frame()
 
 
-logger(sprintf("Preparing train/test data on %d obs...", nrow(X_full)))
+logger(sprintf("Preparing train/test data on %d obs...", nrow(df_full)))
 set.seed(12345)
 train_part <- createDataPartition(as.numeric(df_full[, Target.Field]), p = 0.85, list = FALSE)
 
+X_full <- df_full[, Predictor.Fields]
+y_full <- as.numeric(df_full[, Target.Field])
+X_train_f <- X_full[train_part,]
+X_test_f <- X_full[-train_part,]
+y_train <- y_full[train_part]
+y_test <- y_full[-train_part]
 
+
+logger(sprintf(" Train: %d, Test: %d", nrow(X_train_f), nrow(X_test_f)))
+
+#    ModelID CnfMatID TestF1 TestPrec TestRecall TestKappa TestAcc TrainAcc TrainKappa TrainRecall    Layout NPRED THRS DROP PREP
+#14       14       14  0.528    0.389      0.821     0.324   0.674    0.672      0.322       0.820    98, 24    49 0.40    1    0
+#9         9        9  0.529    0.392      0.811     0.327   0.679    0.677      0.326       0.811    92, 46    46 0.40    1    0
+#18       18       18  0.529    0.479      0.591     0.376   0.766    0.765      0.374       0.590    92, 23    46 0.40    0    0
+#83       11       83  0.529    0.459      0.626     0.367   0.753    0.751      0.367       0.628    23, 11    46 0.45    1    0
+#85       13       85  0.533    0.400      0.797     0.336   0.689    0.687      0.334       0.796    98, 49    49 0.45    1    0
+#11       11       11  0.536    0.423      0.730     0.354   0.719    0.717      0.352       0.730    23, 11    46 0.40    1    0
+#87       15       87  0.536    0.412      0.769     0.347   0.704    0.702      0.345       0.769    24, 12    49 0.45    1    0
+#81        9       81  0.537    0.437      0.697     0.363   0.733    0.732      0.362       0.698    92, 46    46 0.45    1    0
+#157      13      157  0.538    0.451      0.667     0.371   0.745    0.744      0.370       0.668    98, 49    49 0.50    1    0
+#86       14       86  0.540    0.432      0.720     0.363   0.727    0.726      0.362       0.720    98, 24    49 0.45    1    0
+
+###
+### Parameters
+###
 PRE_PROCESSING <- 0 # 0 nothing, 1 minmax, 2 normaliz
+nr_epochs = 5
+c_dropout = 1
+nn_layers = c(98, 24)
+batch_norm = FALSE
+c_act = 'elu'
+c_opt = 'adam'
 
-if(DEBUG_ONLY_FINAL_STAGE) 
-{
-  #PRE_PROCESSING <- 0
-  logger("\nFAST TRACK DEBUGGING FOR FINAL STAGE !\n")
-}
-
-
-logger(sprintf(" Train: %d, test %d", nrow(X_train), nrow(X_test)))
-
-
-# XGB RESULTS:
-#  max_depth = 9, eta = 0.15, gamma = 0.2, colsample_bytree = 0.6, 
-#  min_child_weight = 5, subsample = 0.9 on full training set
-v_max_depth = 9 #5
-v_eta = 015 #0.1
-v_gamma = 0.2 #0.5
-v_colsample_bytree = 0.6 #0.9
-v_min_child_weight = 5 #1
-v_nrounds = 200
-v_subsample = 0.9 #0.8
-
-dropout_values <- c(2,1,0)
-
-IS_QUICK = FALSE
-
-if(DEBUG_ONLY_FINAL_STAGE) IS_QUICK <- TRUE
-
-if (DEBUG && (Current.Machine.Name == HPC.Machine.Name)) {
-  max_tests = length(PredictorSelector)
-  nr_epochs = 10
-  PREPROCESSING_RANGE <- 0:2
-} else {
-  max_tests = 1
-  PREPROCESSING_RANGE <- 0
-  if (!IS_QUICK)
-    nr_epochs = 5 else nr_epochs = 1
-  }
-
+nr_preds = Nr.Predictors
 s_results <- c()
 
-RUN_NN <- TRUE
-
-if (RUN_NN) {
-
-  nn_start_time <- Sys.time()
-
-
-  logger(sprintf("Running a total of %d predictor selection tests for NN",
-                 max_tests))
-
-  dnn_res_train <- list()
-  dnn_res_test <- list()
-  dnn_res_preds <- list()
-  dnn_res_layouts <- list()
-  dnn_res_models <- list()
-  dnn_res_fieldslist <- list()
-  dnn_res_dropout <- list()
-  dnn_res_preproc <- list()
-
-  Selection.Fields <- Predictor.Fields
-  curr_iter <- 0
+Churn.Threshold <- 0.40
+###
+###
+###
 
 
-  for(PRE_PROCESSING in PREPROCESSING_RANGE) ## preprocessing testing
-  {
-    logger(sprintf("\nPREPROCESSING STEP ..."))
-    
-    X_full <- df_full[, Predictor.Fields]
-    y_full <- as.numeric(df_full[, Target.Field])
-    X_train_f <- X_full[train_part,]
-    X_test_f <- X_full[-train_part,]
-    y_train <- y_full[train_part]
-    y_test <- y_full[-train_part]
-
-    if (PRE_PROCESSING == 2) {
-      timeit("Preprocessing norm training...",
-             pp_model <- preProcess(X_train_f, method = c("center", "scale")))
-      timeit("Trasforming norm training data ...",
-             X_train_f <- predict(pp_model, X_train_f))
-      timeit("Trasforming norm testing data ...",
-             X_test_f <- predict(pp_model, X_test_f))
-      
-      timeit("Trasforming full data ...",
-             X_full <- predict(pp_model, X_full))
-      
-    } else if (PRE_PROCESSING == 1) {
-      timeit("Preprocessing MinMax training...",
-             pp_model <- preProcess(X_train_f, method = c("range")))
-      timeit("Trasforming MinMax training data ...",
-             X_train_f <- predict(pp_model, X_train_f))
-      timeit("Trasforming MinMax testing data ...",
-             X_test_f <- predict(pp_model, X_test_f))
-      timeit("Trasforming MinMax full data ...",
-             X_full <- predict(pp_model, X_full)) 
-    } else if (PRE_PROCESSING == 0) {
-      logger("NO PreProcessing!")
-    }
-
-    for(c_dropout in dropout_values) ## dropout testing
-    { 
-      for (i in 1:max_tests) { ## predictor testing
-        Selection.Fields <- PredictorSelector[[i]]
-        nr_preds = length(Selection.Fields)
-        X_train <- X_train_f[, Selection.Fields]
-        X_test <- X_test_f[, Selection.Fields]
-        
-        ##
-        ##
-        ##
-        nr_hid <- ncol(X_train)
-        logger(sprintf("\nPreparing and training DNN on %d preds, dropout:%d, prep:%d",
-                       ncol(X_train), c_dropout, PRE_PROCESSING))
-        
-        nn_tests <- Get_DNN_Layouts(nr_hid = nr_hid, QUICK = IS_QUICK)
-        nr_nn_tests <- length(nn_tests)
-        
-        logger(sprintf("Running %d tests...", length(nn_tests)))
-        nn_t = 0
-        for (nn_test_layers in nn_tests) {
-          nn_t <- nn_t + 1
-          curr_iter <- curr_iter + 1 
-          logger(sprintf("\nTrain %d/%d pred_iter %d/%d  [test %d/%d]",
-                         nn_t, nr_nn_tests, i, max_tests, curr_iter, 
-                         max_tests * nr_nn_tests * length(dropout_values)*length(PREPROCESSING_RANGE)))
-          nr_preds <- ncol(X_train)
-          nn_clf <- ChurnClassifier(nn_test_layers, nr_preds, dropout_level = c_dropout)
-          
-          timeit(sprintf("Fitting (%s) for %d epochs...", GetNNInfo(nn_clf), nr_epochs),
-                 nn_clf %>% fit(x = as.matrix(X_train), y = y_train,
-                                batch_size = 512, epochs = nr_epochs, verbose = 1,
-                                validation_data = list(as.matrix(X_test), y_test),
-                                callbacks = list(callback_early_stopping(patience = 1,verbose = 1))
-                 )
-          )
-          
-          timeit("Predicting on training data...",
-                 yhat_nn_train <- round(predict(nn_clf, as.matrix(X_train)), digits = 3)
-          )
-          
-          timeit("Predicting on testing data...",
-                 yhat_nn_test <- round(predict(nn_clf, as.matrix(X_test)), digits = 3)
-          )
-          c_item <- length(dnn_res_train) + 1
-          dnn_res_train[[c_item]] <- yhat_nn_train
-          dnn_res_test[[c_item]] <- yhat_nn_test
-          dnn_res_layouts[[c_item]] <- nn_test_layers
-          dnn_res_preds[[c_item]] <- ncol(X_train)
-          dnn_res_models[[c_item]] <- nn_clf
-          dnn_res_fieldslist[[c_item]] <- Selection.Fields
-          dnn_res_dropout[[c_item]] <- c_dropout
-          dnn_res_preproc[[c_item]] <- PRE_PROCESSING
-        } # end layout testing
-      } # end predictor list testing
-    }# end dropout search
-  } ### end preprocessing grid
+if (PRE_PROCESSING == 2) {
+  timeit("Preprocessing norm training...",
+         pp_model <- preProcess(X_train_f, method = c("center", "scale")))
+  timeit("Trasforming norm training data ...",
+         X_train <- predict(pp_model, X_train_f))
+  timeit("Trasforming norm testing data ...",
+         X_test <- predict(pp_model, X_test_f))
   
+  timeit("Trasforming full data ...",
+         X_full <- predict(pp_model, X_full))
   
-  
-  # end all NN tests
-
-
-
-
-  rm(yhat_nn_test)
-  rm(yhat_nn_train)
-  rm(nn_test_layers)
-
-  ResetConfusionStats()
-  df_res <- data.frame()
-  
-  Churn.Threshold.List <- c(0.40, 0.45, 0.5)
-
-
-  best_train_recall <- 0
-  best_train_conf <- NULL
-  best_test_recall <- 0
-  best_test_conf <- NULL
-  best_model <- -1
-
-  nr_iter <- 0
-  for (Churn.Threshold in Churn.Threshold.List) {
-    logger(sprintf("Using Churn.Threshold of %1.2f%%", Churn.Threshold * 100))
-    for (i in 1:length(dnn_res_test)) {
-      nr_iter <- nr_iter + 1
-      logger(sprintf("\nComputing confusion matrices %d/%d (cnf:%d)", nr_iter, 
-                     length(Churn.Threshold.List)*length(dnn_res_test),i_conf+1))
-      yh_train <- dnn_res_train[[i]]
-      yh_test <- dnn_res_test[[i]]
-      cnn_layers <- dnn_res_layouts[[i]]
-      cnr_preds <- dnn_res_preds[[i]]
-      if (FULL_DEBUG) {
-        logger("Preparing ROC for training ...")
-        nn_train_roc <- roc(predictor = as.vector(yh_train),
-                            response = as.vector(y_train))
-        logger("Preparing ROC for testing...")
-        nn_test_roc <- roc(predictor = as.vector(yh_test),
-                            response = as.vector(y_test))
-        plot(nn_test_roc, main = sprintf("ROC NN layout: [%s]", toString(cnn_layers)))
-        plot(hist)
-      }
-
-      p_nn_test <- as.numeric(yh_test > Churn.Threshold)
-      p_nn_train <- as.numeric(yh_train > Churn.Threshold)
-
-      nn_res <- GetPredStats(id_model = i, yhat = p_nn_test, y = y_test,
-                             yhat_train = p_nn_train, y_train = y_train,
-                             hiddens = cnn_layers)
-      nn_res["NPRED"] <- cnr_preds
-      nn_res["THRS"] <- Churn.Threshold
-      nn_res["DROP"] <- dnn_res_dropout[[i]]
-      nn_res["PREP"] <- dnn_res_preproc[[i]]
-
-      df_res <- rbind(df_res, nn_res)
-
-      s <-sprintf("TestRec: %.3f TestKap: %.3f TrainRec: %.3f TrainKap: %.3f on NN ([%s], %.1f thr)",
-                   nn_res["TestRecall"], nn_res["TestKappa"],
-                   nn_res["TrainRecall"], nn_res["TrainKappa"],
-                   toString(cnn_layers), Churn.Threshold)
-
-      if (best_train_recall < nn_res["TrainRecall"]) {
-        best_train_recall <- nn_res["TrainRecall"]
-        best_train_kappa <- nn_res["TrainKappa"]
-        best_train_layers <- cnn_layers
-      }
-      
-      if (best_test_recall < nn_res["TestRecall"]) {
-        best_test_recall <- nn_res["TestRecall"]
-        best_test_kappa <- nn_res["TestKappa"]
-        best_test_layers <- cnn_layers
-        best_test_conf <- i_conf
-        best_model <- i
-        BestFieldsSelection <- dnn_res_fieldslist[[i]]
-      }
-
-
-      logger(s)
-      s_results = c(s_results, s)
-    } # end grid search of models
-  } # end grid search of thresholds
-  rownames(df_res) <- NULL
-  
-
-  nn_end_time <- Sys.time()
-  nn_time <- difftime(nn_end_time, nn_start_time, units = "sec")
-
-  logger(sprintf("DNN processing time: %.1f min", nn_time / 60))
-
-  logger("Summing results")
-  for (s in s_results) {
-    logger(s)
-  }
-
-  #display best train and test - show best test confusion matrix
-
-  logger(sprintf("Best train Recall: %.3f Kappa: %.3f for %s",
-                 best_train_recall, best_train_kappa, toString(best_train_layers)))
-  logger(sprintf("Best test  Recall: %.3f Kappa: %.3f for %s",
-                 best_test_recall, best_test_kappa, toString(best_test_layers)))
-
-  logger(sprintf("NN Results:\n%s", GetObjectOuput(tail(df_res[order(df_res$TestF1),],50))))
-  logger(sprintf("Best NN Confusion Matrix:\n%s", GetObjectOuput(conf_mats[[best_test_conf]])))
-  rm(nn_res)
-  ##
-  ##
-  ##
-} else {
-  logger("Bypassing NN procedure")
+} else if (PRE_PROCESSING == 1) {
+  timeit("Preprocessing MinMax training...",
+         pp_model <- preProcess(X_train_f, method = c("range")))
+  timeit("Trasforming MinMax training data ...",
+         X_train <- predict(pp_model, X_train_f))
+  timeit("Trasforming MinMax testing data ...",
+         X_test <- predict(pp_model, X_test_f))
+  timeit("Trasforming MinMax full data ...",
+         X_full <- predict(pp_model, X_full)) 
+} else if (PRE_PROCESSING == 0) {
+  logger("NO PreProcessing!")
+  X_train <- X_train_f
+  X_test <- X_test_f
 }
 
 
-Churn.Threshold <- 0.4
-CHECK_PREDS <- FALSE
-
-if (Current.Machine.Name == HPC.Machine.Name && CHECK_PREDS) {
-  logger("Running grid-search of predictors with XGB...")
-  Selection.Fields <- Predictor.Fields
-  for (i in 1:max_tests) {
-    Selection.Fields <- PredictorSelector[[i]]
-    nr_preds = length(Selection.Fields)
-    X_train <- X_full[train_part, Selection.Fields]
-    X_test <- X_full[-train_part, Selection.Fields]
-    timeit(sprintf("\nTraining XGB Rnds:%d Md:%d Eta:%.2f Gamma:%.3f Cols:%.1f MinCh:%d",
-                   v_nrounds, v_max_depth, v_eta, v_gamma, v_colsample_bytree,
-                   v_min_child_weight),
-           xgb0 <- xgboost(data = as.matrix(X_train),
-                           label = y_train,
-                           missing = 0,
-                           verbose = 0,
-                           nround = v_nrounds,
-                           objective = "binary:logistic",
-                           max_depth = v_max_depth,
-                           eta = v_eta,
-                           gamma = v_gamma,
-                           colsample_bytree = v_colsample_bytree,
-                           min_child_weight = v_min_child_weight,
-                           subsample = v_subsample
-    #,nthread = 30
-                           ))
-
-    yhat_train <- round(predict(xgb0, as.matrix(X_train)), digits = 3)
-    p_train <- as.numeric(yhat_train > Churn.Threshold)
-    train_roc <- roc(predictor = yhat_train, response = y_train)
-
-    yhat_test <- round(predict(xgb0, as.matrix(X_test)), digits = 3)
-    p_test <- as.numeric(yhat_test > Churn.Threshold)
-    test_roc <- roc(predictor = yhat_test, response = y_test)
-
-    xg_res <- GetPredStats(id_model = 100, yhat = p_test, y = y_test,
-                           yhat_train = p_train, y_train = y_train,
-                           hiddens = "XGB1")
-    xg_res["NPRED"] <- nr_preds
-    xg_res["THRS"] <- Churn.Threshold
-    xg_res["DROP"] <- -1
-    xg_res["PREP"] <- -1
-    
-    df_res <- rbind(df_res, xg_res)
+logger(sprintf("\nPreparing/training DNN on %d preds, drop:%d, BN:%d prep:%d",
+               ncol(X_train), c_dropout, batch_norm, PRE_PROCESSING))
 
 
-    s<-sprintf("%d preds: TestRec: %.3f TestKap: %.3f TrainRec: %.3f TrainKap: %.3f on XGB (%.1f thr)",
-                 nr_preds,
-                 xg_res["TestRecall"], xg_res["TestKappa"],
-                 xg_res["TrainRecall"], xg_res["TrainKappa"],
-                 Churn.Threshold)
-    logger(s)
-    rm(xg_res)
 
-    plot(train_roc, main = sprintf("XGB Training ROC th:%.1f p:%d",
-                                   Churn.Threshold, nr_preds))
-    plot(test_roc, main = sprintf("XGB Testing ROC th:%.1f p:%d",
-                                  Churn.Threshold, nr_preds))
-  }
-} else {
-  logger("Bypassing grid-search of predictors.")
-}
+nn_clf <- ChurnClassifier(nn_layers, nr_preds, dropout_level = c_dropout, 
+                          BN = batch_norm, act = c_act, opt = c_opt)
 
+logger(sprintf("Network layout:\n%s", GetObjectOuput(summary(nn_clf))))
 
-RUN_GRID_SEARCH <- FALSE
+timeit(sprintf("Fitting (%s) for %d epochs...", GetNNInfo(nn_clf), nr_epochs),
+       nn_clf %>% fit(x = as.matrix(X_train), y = y_train,
+                      batch_size = 512, epochs = nr_epochs, verbose = 1,
+                      validation_data = list(as.matrix(X_test), y_test),
+                      callbacks = list(callback_early_stopping(patience = 1,verbose = 1))
+                      , shuffle = FALSE # this must be disabled after tests !
+                      )
+      )
 
-if (Current.Machine.Name == HPC.Machine.Name && RUN_GRID_SEARCH) {
-  Selection.Fields <- PredictorSelector[[1]]
-  nr_preds = length(Selection.Fields)
-  X_train <- X_full[train_part, Selection.Fields]
-  X_test <- X_full[-train_part, Selection.Fields]
-  Churn.Threshold <- 0.4
+timeit("Predicting on training data...",
+       yhat_nn_train <- round(predict(nn_clf, as.matrix(X_train)), digits = 3)
+)
 
-  logger(sprintf("\nRunning grid-search cv on machine [%s]: fields: %d",
-                 Current.Machine.Name, nr_preds))
+timeit("Predicting on testing data...",
+       yhat_nn_test <- round(predict(nn_clf, as.matrix(X_test)), digits = 3)
+)
 
-  #Train and Tune the SVM
-  RUN_SVM = FALSE
-  if (RUN_SVM) {
-    logger(sprintf("Running SVM grid..."))
-    svm_trCtrl <- trainControl(method = "repeatedcv", # 10fold cross validation
-                               repeats = 5, # do 5 repetitions of cv
-                               summaryFunction = twoClassSummary, # Use AUC to pick the best model
-                               classProbs = TRUE)
-    timeit(" Tuning SVM ...",
-           svm_tuner <- train(x = X_full,
-                              y = as.factor(make.names(y_full)),
-                              method = "svmRadial", # Radial kernel
-                              tuneLength = 9, # 9 values of the cost function
-                              preProc = c("center", "scale"), # Center and scale data
-                              metric = "ROC",
-                              trControl = svm_trCtrl)
-    )
-
-    final_svm <- sv_tuner$finalModel
-
-    timeit("Test predict with SVM",
-           yhat_svm_test <- predict(final_svm, X_test))
-    timeit("Train predict with SVM",
-           yhat_svm_train <= predict(final_svm, X_train))
-
-    sv_res <- GetPredStats(id_model = 200, yhat = yhat_svm_test, y = y_test,
-                           yhat_train = yhat_svm_train, y_train = y_train,
-                           hiddens = "SVM1")
-    sv_res["NPRED"] <- nr_preds
-    sv_res["THRS"] <- Churn.Threshold
-    sv_res["DROP"] <- -1
-    sv_res["PREP"] <- -1
-    
-    df_res <- rbind(df_res, sv_res)
-
-    s <- sprintf("TestRec: %.3f TestKap: %.3f TrainRec: %.3f TrainKap: %.3f on XGB (%.1f thr)",
-                 sv_res["TestRecall"], sv_res["TestKappa"],
-                 sv_res["TrainRecall"], sv_res["TrainKappa"],
-                 Churn.Threshold)
-    logger(s)
-    rm(sv_res)
-  }
-
-  #Train and Tune the XGB
-  xgb.grid <- expand.grid(
-        nrounds = c(25),
-        max_depth = c(3, 6, 9),
-        eta = c(0.15), #, 0.2, 0.3, 0.5),
-        gamma = c(0.0, 0.2), # 1, 2, 4),
-        colsample_bytree = c(0.6, 0.9),
-        min_child_weight = c(1, 2, 5),
-        subsample = c(0.6, 0.9))
-
-  xgb_trCtrl <- trainControl("cv", #'adaptive_cv', 
-                             number = 5,
-  #repeats = 3,
-                             summaryFunction = twoClassSummary,
-                             classProbs = TRUE,
-                             verboseIter = TRUE,
-                             allowParallel = TRUE)
-  timeit(" Tuning XGB ...",
-         xgb_tuner <- train(x = X_full,
-                            y = as.factor(make.names(y_full)),
-                            method = "xgbTree",
-                            tuneGrid = xgb.grid,
-                            trControl = xgb_trCtrl,
-                            metric = "kappa"))
-  plot(xgb_tuner, main = "Train results for XGB")
-
-  logger(sprintf("XGB tuning results:\n %s", toString(xgb_tuner$bestTune)))
-  xgb1 <- xgb_tuner$finalModel
-  cv_max_depth = xgb_tuner$bestTune[1, 2]
-  cv_eta = xgb_tuner$bestTune[1, 3]
-  cv_gamma = xgb_tuner$bestTune[1, 4]
-  cv_colsample_bytree = xgb_tuner$bestTune[1, 5]
-  cv_min_child_weight = xgb_tuner$bestTune[1, 6]
-  cv_subsample = xgb_tuner$bestTune[1, 7]
-  cv_nrounds = 500
-
-  timeit(sprintf(" Directly training TUNED XGB for %d rounds", cv_nrounds),
-         xgb2 <- xgboost(data = as.matrix(X_full),
-                         label = y_full,
-                         missing = 0,
-  #verbose = 0,
-                         objective = "binary:logistic",
-                         nround = cv_nrounds,
-                         max_depth = cv_max_depth,
-                         eta = cv_eta,
-                         gamma = cv_gamma,
-                         colsample_bytree = cv_colsample_bytree,
-                         min_child_weight = cv_min_child_weight,
-                         subsample = cv_subsample))
-
-  yhat_xgb1_train <- predict(xgb1, as.matrix(X_train))
-  x1_train_pred <- as.numeric(yhat_xgb1_train > Churn.Threshold)
-
-  yhat_xgb2_train <- predict(xgb2, as.matrix(X_train))
-  x2_train_pred <- as.numeric(yhat_xgb2_train > Churn.Threshold)
-
-  yhat_xgb1_test <- predict(xgb1, as.matrix(X_test))
-  x1_test_pred <- as.numeric(yhat_xgb1_test > Churn.Threshold)
-
-  yhat_xgb2_test <- predict(xgb2, as.matrix(X_test))
-  x2_test_pred <- as.numeric(yhat_xgb2_test > Churn.Threshold)
-
-  x1_res <- GetPredStats(id_model = 500, yhat = x1_test_pred, y = y_test,
-                         yhat_train = x1_train_pred, y_train = y_train,
-                         hiddens = "XGB_C")
-  x1_res["NPRED"] <- nr_preds
-  x1_res["THRS"] <- Churn.Threshold
-  x1_res["DROP"] <- -1
-  x1_res["PREP"] <- -1
-  
-  df_res <- rbind(df_res, x1_res)
-
-  s1 <- sprintf("TestRec: %.3f TestKap: %.3f TrainRec: %.3f TrainKap: %.3f on XGB (%.1f thr)",
-               x1_res["TestRecall"], x1_res["TestKappa"],
-               x1_res["TrainRecall"], x1_res["TrainKappa"],
-               Churn.Threshold)
-  rm(x1_res)
-
-  x2_res <- GetPredStats(id_model = 500, yhat = x2_test_pred, y = y_test,
-                         yhat_train = x2_train_pred, y_train = y_train,
-                         hiddens = "XGB_D")
-  x2_res["NPRED"] <- nr_preds
-  x2_res["THRS"] <- Churn.Threshold
-  x2_res["DROP"] <- -1
-  x2_res["PREP"] <- -1
-  
-  df_res <- rbind(df_res, x2_res)
-
-  s2 <- sprintf("TestRec: %.3f TestKap: %.3f TrainRec: %.3f TrainKap: %.3f on XGB (%.1f thr)",
-               x2_res["TestRecall"], x2_res["TestKappa"],
-               x2_res["TrainRecall"], x2_res["TrainKappa"],
-               Churn.Threshold)
-  rm(x2_res)
+p_nn_test <- as.numeric(yhat_nn_test >= Churn.Threshold)
+p_nn_train <- as.numeric(yhat_nn_train >= Churn.Threshold)
 
 
-  logger(sprintf("Caret : %s", s1))
-  logger(sprintf("Direct: %s", s2))
-} else {
-  logger("Bypassing grid-search of classifiers.")
-}
+nn_res <- GetPredStats(id_model = 0, yhat = p_nn_test, y = y_test,
+                       yhat_train = p_nn_train, y_train = y_train,
+                       hiddens = nn_layers)
+nn_res["NPRED"] <- nr_preds
+nn_res["THRS"] <- Churn.Threshold
+nn_res["DROP"] <- c_dropout
+nn_res["PREP"] <- PRE_PROCESSING
 
-logger("Script done.")
+df_res <- rbind(df_res, nn_res)
+
+s <-sprintf("TestRec: %.3f TestKap: %.3f TrainRec: %.3f TrainKap: %.3f on NN ([%s], %.1f thr)",
+            nn_res["TestRecall"], nn_res["TestKappa"],
+            nn_res["TrainRecall"], nn_res["TrainKappa"],
+            toString(nn_layers), Churn.Threshold)
+
+logger(s)
+logger(sprintf("Train Confusion Matrix:\n%s", GetObjectOuput(conf_mat_train)))
+logger(sprintf("Test  Confusion Matrix:\n%s", GetObjectOuput(conf_mat_test)))
+logger(sprintf(" opt:%s act:%s",c_opt,c_act))
 
 
 
@@ -1678,16 +1297,15 @@ logger("Script done.")
 # select top 25% micros
 
 # generate RRecom2 
-SHOW_PIPELINE <- TRUE
+SHOW_PIPELINE <- FALSE
 
 SHOW_CLUSTERING <-TRUE
 
 if (SHOW_PIPELINE) {
-  logger(sprintf("\nLoading final model with layout [%s]...", toString(best_test_layers)))
-  final_model <- dnn_res_models[[best_model]]
   logger(sprintf("Computing full predictions on data with shape (%s)...",
-                  toString(dim(df_full[, BestFieldsSelection]))))
-  yhat_full <- predict(final_model, as.matrix(df_full[, BestFieldsSelection]))
+                  toString(dim(df_full[, Predictor.Fields]))))
+  yhat_full <- predict(nn_clf, as.matrix(df_full[, BestFieldsSelection]))
+  
   Churn.Threshold <- 0.4
 
   pred_full <- as.integer(yhat_full >= Churn.Threshold)

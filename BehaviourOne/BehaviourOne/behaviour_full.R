@@ -486,7 +486,7 @@ for (i in 1:nr_input_fields) {
 
     min_c <- min(df[, new_col])
     max_c <- max(df[, new_col]) + 1e-1 # add "epsilon" for numerical safety
-    df[, new_col] <- (df[, new_col] - min_c) / max_c
+    df[, new_col] <- (df[, new_col] - min_c) / (max_c - min_c)
 }
 
 ## add 20170405 - truncate input column fields
