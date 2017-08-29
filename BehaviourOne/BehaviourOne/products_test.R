@@ -28,9 +28,9 @@ SQL_CONNECT = 3
 ###
 
 svr <- "server=VSQL08\\HYPERLOOP;"
-db  <- "database=StatisticalStore;"
+db  <- "database=temp_ML;"
 uid <- "uid=andreidi;"
-pwd <- "pwd=HypML2017"
+pwd <- "pwd=hyp2017!!"
 sqls <- "SELECT * FROM _TextItems"
 
 text_column  <- "AllText"

@@ -1,0 +1,16 @@
+ [2017-08-27 21:50:48] BEGIN Products Exploration script v0.2.7 SQL_CONNECT=3
+Current workind directory: D:/Dropbox/11. HYPERLOOP/BehaviourOne/BehaviourOne
+XDF File: D:/Dropbox/11. HYPERLOOP/BehaviourOne/BehaviourOne/hyperloop_saved_products.xdf
+Microsoft RevoScaleR connect to SQL Server...
+RxOdbcData [SELECT * FROM _TextItems] executed in 0.00 min
+rxImport  executed in 0.03 min
+RevoScaleR loading dataframe...
+rxDataStep:  executed in 0.01 min
+Done data downloading.
+Deleting xdf file...
+Object df [data.frame] size: 8.9MB (25,869 rows by 3 cols)
+Object df [data.frame] size: 8.9MB (25,869 rows by 3 cols)
+Removing unknown chars Text:  executed in 0.01 min
+Removing unknown chars Name:  executed in 0.00 min
+Begin text preprocessing v0.0.2 ...
+

@@ -1,3 +1,10 @@
+
+###
+### Script explorare si analiza descriptiva a proiectului Hyperloop
+### Data creere:  2017-07-05
+### Ultima modif: 2017-08-28
+###
+
 library(caret)
 
 
@@ -136,18 +143,96 @@ df_train[,"TARGET"] <- as.factor(df_train[,"TARGET"])
 tree <- rpart(formula = TARGET~PREDICTOR_1+PREDICTOR_2+PREDICTOR_3+PREDICTOR_4,
               data = df_train)
 
-#df_train_check <- df_train[c(27,25000,50000), predictors_names]
 predictions <- predict(tree, df_train, type = c("class"))
-confusionMatrix(data = predictions, reference = df_train[,"TARGET"])
+cnf <- confusionMatrix(data = predictions, reference = df_train[,"TARGET"])
+cat(sprintf("Acuratetea  modelului: %.1f%%\n", cnf$overall["Accuracy"]*100))
+cat(sprintf("Capacitatea modelului: %.1f%%\n", cnf$overall["Kappa"]*100))
+cat("Tabela de confuzie:\n")
+print(cnf$table)
+cat("Recall, precizie, medie armonica F1:\n")
+print(cnf$byClass[,c("Recall","Precision","F1")])
+
+### abordare corecta de validare 
+
+train_partition <- createDataPartition(df_train[,"TARGET"], p = 0.85, list = FALSE)
+df_new_train <- df_train[train_partition, ]
+df_new_test <- df_train[-train_partition, ]
+
+tree2 <- rpart(formula = TARGET~PREDICTOR_1+PREDICTOR_2+PREDICTOR_3+PREDICTOR_4,
+               data = df_new_train)
+cat("Rulam predictia pe datele de training:\n")
+predictions <- predict(tree, df_new_train, type = c("class"))
+cnf1 <- confusionMatrix(data = predictions, reference = df_new_train[,"TARGET"])
+cat(sprintf("Acuratetea  modelului: %.1f%%\n", cnf1$overall["Accuracy"]*100))
+cat(sprintf("Capacitatea modelului: %.1f%%\n", cnf1$overall["Kappa"]*100))
+cat("Tabela de confuzie:\n")
+print(cnf1$table)
+cat("Recall, precizie, medie armonica F1:\n")
+print(cnf1$byClass[,c("Recall","Precision","F1")])
+
+cat("Rulam predictia pe datele de test:\n")
+predictions <- predict(tree, df_new_test, type = c("class"))
+cnf2 <- confusionMatrix(data = predictions, reference = df_new_test[,"TARGET"])
+cat(sprintf("Acuratetea  modelului: %.1f%%\n", cnf2$overall["Accuracy"]*100))
+cat(sprintf("Capacitatea modelului: %.1f%%\n", cnf2$overall["Kappa"]*100))
+cat("Tabela de confuzie:\n")
+print(cnf2$table)
+cat("Recall, precizie, medie armonica F1:\n")
+print(cnf2$byClass[,c("Recall","Precision","F1")])
 
 
-#lin_model <- glm(formula = TARGET~PREDICTOR_1+PREDICTOR_2+PREDICTOR_3+PREDICTOR_4,
-#                 family = binomial(link='logit'),
-#                 data = df_train)
-
-#predictions <- predict(lin_model, df_train)
 
 
-### de facut corect train-test split
+
+# NLP processing, BoW, tokenization, etc
+library(tm)
+cat("\nIncarcare dataset produse/descrieri...\n")
+df_desc <- read.csv("D:\\GoogleDrive\\_hyperloop_data\\text_items.csv")
+cat(sprintf("Dimensiunea initiala %.1f MB", object.size(df_desc) / (1024*1024)))
+cat("Done incarcare dataset produse/descrieri.\n")
+
+timeit("Removing unknown chars Text: ", df_desc$AllText <- iconv(df$AllText, 'Latin-9'))
+timeit("Removing unknown chars Name: ", df_desc$ItemName <- iconv(df$ItemName, 'Latin-9'))
+
+toMatch <- c("invalid", "inactiv")
+excluded_filter <- paste(toMatch, collapse = "|")
+cat(paste0("Curatam toate produsele invalide/inactive ",excluded_filter,"...\n"))
+excluded_recs <- grep(excluded_filter, df_desc$ItemName)
+df_desc <- df_desc[-excluded_recs,]
+cat(sprintf("Dimensiunea finala %.1f\n", object.size(df_desc)/(1024*1024)))
+
+vector_src <- VectorSource(df_desc[, "AllText"])
+corpus <- Corpus(vector_src)
+dtm <- DocumentTermMatrix(corpus)
+mtxt1 <- as.matrix(dtm)
+cat(sprintf("Total produse %d cu total de %d atribute\n",nrow(mtxt1),ncol(mtxt1)))
+sparsitate = 0.001
+cat(sprintf("Inlaturam atributele care apar la mai putin de %.1f%% din produse\n",sparsitate*100))
+dtm <- removeSparseTerms(dtm, 1-sparsitate)
+mtxt2 <- as.matrix(dtm)
+cat(sprintf("Total produse %d cu total de %d atribute\n",nrow(mtxt2),ncol(mtxt2)))
+
+
+df_items <- data.frame(ID = df_desc$ItemId, Name = df_desc$ItemName, mtxt2)
+
+s_atribute <- "cosm"
+s_produs <- "chapter"
+coloane_gasite = grep(s_atribute, colnames(df_items), ignore.case = T)
+
+df_subset <- df_items[grep(s_produs, df_items$Name, ignore.case = T),]
+
+print(df_subset[1:20, c(1,2,coloane_gasite)])
+
+
+### construirea dataset-ului de tranzactii per microsegment
+### se asociaza proprietatile cu valoarea agregata a microsegmentului (per produs)
+### incarcam datele (sample) si urmeaza sa construim modelul de regresie
+
+# incarcam sample 2
+# concatenam date
+# construim model liniar si vedem de este varza
+# construim model non-liniar si ne bucuram
+# analiza rezultatelor cu R2 si explicam ce inseamna analiza regresiei
+
 
 

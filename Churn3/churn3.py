@@ -22,7 +22,7 @@ from sql_azure_helper import MSSQLHelper
 import numpy as np
 import pandas as pd
 
-output_folder = "D:\\GoogleDrive\\_hyperloop_data\\churn_v3"
+output_folder = "c:\\GoogleDrive\\_hyperloop_data\\churn_v3"
 
 global_logger = Logger(lib_name = "CHRN3", base_folder = output_folder)
 
@@ -62,6 +62,8 @@ def get_nn_model(opt = 'adam',
                  hid  = []):
   """
   returns a keras model based on input dataframe
+  drp: 0 none, 1 only between hidden layers, 2 include drop before readout
+  bn: 0 none, 1 after liniarity, 2 after activation 
   """   
   global CURRENT_ITERATION
   global current_nn_design
@@ -84,12 +86,16 @@ def get_nn_model(opt = 'adam',
     else:
       model.add(Dense(units = nr_hid, kernel_initializer=w))
     s_layers +="->F({})".format(nr_hid)
-    if bn:
-      # add BN if needed
+    if bn==1:
+      # add BN after liniarity if needed
       model.add(BatchNormalization())
       s_layers +="->B"
     model.add(Activation(activation = act))
-    s_layers +="->A({})".format(act)
+    s_layers +="->A({})".format(act[:3])
+    if bn==2:
+      # add BN after liniarity if needed
+      model.add(BatchNormalization())
+      s_layers +="->B"
     
   if drp>=2:
     # add dropout before readout if needed
@@ -103,7 +109,7 @@ def get_nn_model(opt = 'adam',
                 loss="binary_crossentropy", 
                 metrics = ["accuracy"]
                 )  
-  s_layers += " [{}]".format(opt)
+  s_layers += " [{}/{}]".format(opt,w[:3])
   global_logger.VerboseLog(s_layers)
   current_nn_design = s_layers
   if FULL_DEBUG:
@@ -114,8 +120,8 @@ def get_nn_model(opt = 'adam',
 
 
 if __name__ == '__main__':
-  
-  s_sql = "EXEC [SP_GET_CHURN] @TRAN_PER_ID = 2, @CHURN_PER_ID = 3"
+  new_params = ", @CUST_ID = NULL, @SGM_ID = 22"
+  s_sql = "EXEC [SP_GET_CHURN] @TRAN_PER_ID = 2, @CHURN_PER_ID = 3, @SGM_ID=22" # + new_params
   sql_eng = MSSQLHelper(parent_log = global_logger)
   
   df = sql_eng.Select(s_sql)
@@ -123,42 +129,72 @@ if __name__ == '__main__':
   
   fields_overall = ["R", "F", "M"]
   
-  ##
-  ## GRID PARAMETERS
-  ##
-  optimizers = ['rmsprop', 'adam']
-  init = ['glorot_uniform', ]#'he_uniform'] 
-  epochs = [2] #, 10,]
-  batches = [512] #, 128, 512,]
-  grid_layers = [
-           [98, 24],
-           #[64, 16],
-           #[128, 32],
-           #[32, 16, 8],
-           #[24, 12],
-          ]
-  grid_activ = ['elu'] # 'relu',]
-  droputs = [1] #,2]
-  batch_norm_opt = [False,]# True]
-  ##
-  ## DONE GRID PARAMETERS
-  ##
+  NewFields =  ['SGM_NO', 'MICRO_SGM_ID', 'SEX', 'AGE', 'GFK_SGM', 'C_R', 'C_F', 'C_M', 
+                'C_MARGIN', 'C_PHARMA', 'C_COSMETICE', 'C_DERMOCOSMETICE', 'C_BABY', 
+                'C_NEASOCIATE', 'C_DR_HART', 'C_NUROFEN', 'C_APIVITA', 'C_AVENE', 'C_L_OCCITANE', 
+                'C_VICHY', 'C_BIODERMA', 'C_LA_ROCHE_POSAY', 'C_L_ERBOLARIO', 'C_PARASINUS', 'C_TRUSSA', 
+                'C_SORTIS', 'C_NESTLE', 'C_OXYANCE', 'C_TERTENSIF', 'C_ASPENTER', 'C_ALPHA', 'C_BATISTE', 
+                'C_STREPSILS', 'C_CHAPTER', 'C_DR_ORGANIC', 'C_FARMEC', 'C_HERBOSOPHY', 'C_IVATHERM', 'C_KLORANE_BEBE', 
+                'C_MELVITA', 'C_SPLAT', 'C_ZDROVITAL',
+                'MARGIN']
+  AllExtraFields = list(NewFields)
+  AllExtraFields.extend(fields_overall)
   
   
-  fields_selection = list(df.columns[(df.var()>0).values])
-  fields_zerovar = [x for x in list(df.columns) if x not in fields_selection ]
+  
+  initial_fields = list(df.columns)
+  global_logger.VerboseLog("Generating dummy variables...")
+  df = pd.get_dummies(df, prefix_sep = "__")
+  new_fields = list(df.columns)
+  removed_fields = list(set(initial_fields)-set(new_fields))
+  added_fields = list(set(new_fields) - set(initial_fields))
+  AllExtraFields.extend(added_fields)
+  global_logger.VerboseLog("Removed {} and added {}".format(removed_fields,
+                                                                added_fields))
+  
+  global_logger.VerboseLog("Removing zero var columns...")
+  zero_var_result = df.var()==0
+  zero_var_cols = list(df.columns[zero_var_result.values])
+  all_cols = list(df.columns)
+  fields_selection = list(set(all_cols) - set(zero_var_cols))
   
   target = "CHURN"
   fields_nonpred = [target, "CUST_ID",]
   
   fields_selection = [x for x in fields_selection if x not in fields_nonpred]
   
-  global_logger.VerboseLog("Removed {} zero-var: {}".format(len(fields_zerovar),fields_zerovar))
+  global_logger.VerboseLog("Removed {} zero-var: {}".format(len(zero_var_cols),zero_var_cols))
   global_logger.VerboseLog("Total {} preds: {}".format(len(fields_selection),fields_selection))
   
-  f_sels = [[x for x in fields_selection if x not in fields_overall],
-            fields_selection,
+  f_sels = [#[x for x in fields_selection if x not in AllExtraFields],
+            [x for x in fields_selection if x not in fields_overall],
+            #fields_selection,
            ]
+
+
+  ##
+  ## GRID PARAMETERS
+  ##
+  optimizers = ['rmsprop',]# 'adam']
+  init = ['he_uniform', ]  #'glorot_uniform', 
+  epochs = [5] #, 10,]
+  batches = [512, 256] #, 128, 512,]
+  grid_layers = [
+           #[98, 24],
+           #[64, 16],
+           #[46, 23],
+           [256, 64, 16],
+           [512, 256, 128, 64, 32, 16],
+           #[100, 20],
+           #[32, 16, 8],
+           #[24, 12],
+          ]
+  grid_activ = ['elu',]# 'relu',]
+  droputs = [1,]#2]
+  batch_norm_opt = [0,]#1,2]
+  ##
+  ## DONE GRID PARAMETERS
+  ##
 
   param_grid = dict(opt=optimizers, #
                     epochs=epochs, #
@@ -203,7 +239,7 @@ if __name__ == '__main__':
     grid = GridSearchCV(estimator=keras_clf, 
                         param_grid=param_grid,
                         scoring = _my_binary_recall_scorer, #clf_scoring,
-                        #n_jobs=-1,
+                        n_jobs=1,
                         verbose = 100000)
     
     grid_result = grid.fit(X_full, y_full)
@@ -212,7 +248,7 @@ if __name__ == '__main__':
                                                         grid_result.best_params_))
     best_nn_clf = grid_result.best_estimator_
     global_logger.VerboseLog("Best NN design so far:")
-    best_nn_clf.model.summary()
+    global_logger.LogKerasModel(best_nn_clf.model)
     best_clfs.append(best_nn_clf)
     best_params.append(grid_result.best_params_)
     means = grid_result.cv_results_['mean_test_score']
@@ -221,26 +257,29 @@ if __name__ == '__main__':
     df_partials = pd.DataFrame({
                                 "mean_sc":means,
                                 "std":stds,
-                                "layout":["{}".format(x["hidden_layers"]) for x in params],
-                                "opt":["{}".format(x["optimizer"]) for x in params],
-                                "w_init":["{}".format(x["weight_init"]) for x in params],
-                                "dropout":["{}".format(x["dropout"]) for x in params],
-                                "BN":["{}".format(x["batch_norm"]) for x in params],
-                                "activ":["{}".format(x["activation"]) for x in params],
-                                "nr_inp":["{}".format(x["nr_inputs"]) for x in params],
+                                "layout":["{}".format(x["hid"]) for x in params],
+                                "opt":["{}".format(x["opt"]) for x in params],
+                                "w_init":["{}".format(x["w"]) for x in params],
+                                "dropout":["{}".format(x["drp"]) for x in params],
+                                "BN":["{}".format(x["bn"]) for x in params],
+                                "activ":["{}".format(x["act"]) for x in params],
+                                "nr_inp":["{}".format(x["nri"]) for x in params],
+                                "batch":["{}".format(x["batch_size"]) for x in params],
                                 })
     
     df_results = df_results.append(df_partials)
+    global_logger.SaveDataframe(df_results, fn='py_cv_res')
+    # end for each field selection tests
   
   pd.set_option('display.max_rows', 1000)
   pd.set_option('display.max_columns', 500)
   pd.set_option('display.width', 1000)
-  global_logger.VerboseLog("\nFinal results:\n{}".format(df_results))
+  global_logger.VerboseLog("\nFinal results:\n{}".format(df_results.sort_values(by="mean_sc")))
   
   ChurnThreshold = 0.4
   
   for fields_list, c_best_params,c_best_clf in zip(f_sels, best_params,best_clfs):
-    global_logger.VerboseLog("Full pred prob w best: {}".format(c_best_params))
+    global_logger.VerboseLog("Full pred for {} fields w best: {}".format(len(fields_list),c_best_params))
     X_full = np.array(df[fields_list])
     y_full = np.array(df[target])
     y_probs = c_best_clf.predict_proba(X_full)

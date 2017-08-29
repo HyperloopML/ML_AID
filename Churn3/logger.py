@@ -28,7 +28,7 @@ class Logger:
     self.results = list()
     self.printed = list()
     self.MACHINE_NAME = self.GetMachineName()
-    self.__version__ = "2.1_tf_gpu"
+    self.__version__ = "3.1_tfg_pd"
     self.SHOW_TIME = SHOW_TIME
     self.file_prefix = dt.now().strftime("%Y%m%d_%H%M%S") 
     self.log_file = self.file_prefix + '_log.txt'
@@ -63,6 +63,12 @@ class Logger:
       if not self.printed[i]:
         print(self.app_log[i], flush = True)
         self.printed[i] = True
+    return
+  
+  def SaveDataframe(self, df, fn = ''):
+    file_prefix = self.file_prefix + "_"
+    csvfile = os.path.join(self._outp_dir,file_prefix+fn+'.csv')
+    df.to_csv(csvfile)
     return
   
   def ShowResults(self):

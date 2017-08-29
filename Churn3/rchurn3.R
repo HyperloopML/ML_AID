@@ -16,8 +16,21 @@
 ##
 ##
 
+
+
+#install.packages("Rcpp")
+#install.packages("devtools")
+#devtools::install_github("rstudio/reticulate", force=TRUE)
+#devtools::install_github("r-lib/processx")
+#library(processx)
+#devtools::install_github("rstudio/tfruns")
+#devtools::install_github("rstudio/tensorflow")
+#devtools::install_github("rstudio/keras")
+
+
 LIBS <- c("e1071", "reshape2", "reshape2",
-  "xgboost", "caret", "MASS", "plyr", "pROC", "Rtsne", "keras", "ggplot2")
+  "xgboost", "caret", "MASS", "plyr", "pROC", "Rtsne", "keras", "ggplot2",
+  "dummies")
 
 
 
@@ -27,7 +40,7 @@ User.Field <- "CUST_ID"
 
 
 # use predefined repository folder or just "" for automatic current folder
-USE_REPOSITORY <- "d:/GoogleDrive/_hyperloop_data/churn_v2"
+USE_REPOSITORY <- "d:/GoogleDrive/_hyperloop_data/churn_v3"
 USED_PROCESSING_POWER <- 0.85
 
 DEBUG = FALSE
@@ -63,16 +76,16 @@ if (Current.Machine.Name == Debug.Machine.Name) {
 
 if (Current.Machine.Name == Debug.Machine2.Name) {
   DEBUG <- TRUE
-  USE_REPOSITORY <- "C:/Users/slash/Google Drive/_hyperloop_data/churn_v2"
+  USE_REPOSITORY <- "C:/Users/slash/Google Drive/_hyperloop_data/churn_v3"
 }
 
 if (Current.Machine.Name == Debug.Machine3.Name) {
   DEBUG <- TRUE
-  USE_REPOSITORY <- "C:/GoogleDrive/_hyperloop_data/churn_v2"
+  USE_REPOSITORY <- "C:/GoogleDrive/_hyperloop_data/churn_v3"
 }
 
 
-SQL.GETCHURN <- "EXEC [SP_GET_CHURN] @TRAN_PER_ID = %d, @CHURN_PER_ID = %d"
+SQL.GETCHURN <- "EXEC [SP_GET_CHURN] @TRAN_PER_ID = %d, @CHURN_PER_ID = %d, @SGM_ID = 22"
 SQL.GETSTATS <- "EXEC [SP_CUST_LIST] @TRAN_PER_ID = %d"
 
 
@@ -88,11 +101,26 @@ NonPredictors.Fields <- c(
                         , Target.Field
                         )
 
+
+New.Fields <- c('SGM_NO', 'MICRO_SGM_ID', 'SEX', 'AGE', 'GFK_SGM', 'C_R', 'C_F', 'C_M', 
+                'C_MARGIN', 'C_PHARMA', 'C_COSMETICE', 'C_DERMOCOSMETICE', 'C_BABY', 
+                'C_NEASOCIATE', 'C_DR_HART', 'C_NUROFEN', 'C_APIVITA', 'C_AVENE', 'C_L_OCCITANE', 
+                'C_VICHY', 'C_BIODERMA', 'C_LA_ROCHE_POSAY', 'C_L_ERBOLARIO', 'C_PARASINUS', 'C_TRUSSA', 
+                'C_SORTIS', 'C_NESTLE', 'C_OXYANCE', 'C_TERTENSIF', 'C_ASPENTER', 'C_ALPHA', 'C_BATISTE', 
+                'C_STREPSILS', 'C_CHAPTER', 'C_DR_ORGANIC', 'C_FARMEC', 'C_HERBOSOPHY', 'C_IVATHERM', 'C_KLORANE_BEBE', 
+                'C_MELVITA', 'C_SPLAT', 'C_ZDROVITAL',
+                'MARGIN')
+
+
+
 Short.Predictor.Fields <- c("R_1", "M_1", "F_1",
                             "R_2", "M_2", "F_2",
                             "R_3", "M_3", "F_3",
                             "R_4", "M_4", "F_4"
                             )
+
+Margin.Field <- "MARGIN"
+Revenue.Field <-"R"
 
 
 Churn.Threshold <- 0.4
@@ -104,9 +132,9 @@ conns <- paste0("driver={ODBC Driver 13 for SQL Server};",
 
 
 
-MODULE.VERSION <- "1.2.1.10"
-MODULE.NAME <- "CHURN_V2"
-MODULE.NAME.SHORT <- "CHURN2"
+MODULE.VERSION <- "3.1.1.9"
+MODULE.NAME <- "CHURN_V3"
+MODULE.NAME.SHORT <- "CHURN3"
 
 
 
@@ -124,6 +152,8 @@ NR_ROWS <- 2e7
 ## HELPER FUNCTIONS
 ##
 ##
+
+PlotTimeStamp <- format(Sys.time(), "%Y%m%d%H%M")
 
 SQL_CONNECT = 3
 
@@ -155,7 +185,7 @@ nonzero <- function(v) {
   non_zero_list <- v[non_zero_ind]
 }
 
-get_scriptpath <- function() {
+get_script_file <- function() {
   # location of script can depend on how it was invoked:
   # source() and knit() put it in sys.calls()
   path <- NULL
@@ -176,22 +206,27 @@ get_scriptpath <- function() {
   return(path)
 }
 
-get_data_dir <- function() {
+SCRIPT_FILE <- get_script_file()
+SCRIPT_PATH <- dirname(SCRIPT_FILE)
+
+get_data_dir <- function(new_subfolder = NULL) {
   s_data_dir <- ""
   if (USE_REPOSITORY != "") {
     s_data_dir <- USE_REPOSITORY
+    if(!is.null(new_subfolder))
+      s_data_dir <- file.path(s_data_dir,new_subfolder)
     dir.create(s_data_dir, recursive = TRUE, showWarnings = FALSE)
   } else {
-    s_data_dir <- dirname(dirname(get_scriptpath()))
+    s_data_dir <- dirname(get_script_file())
   }
   return(s_data_dir)
 }
 
 all_log <- ""
 log_fnpath <- get_data_dir()
-log_ctime <- format(Sys.time(), "%Y%m%d%H%M%S")
-log_FN <- paste0("_log_", MODULE.NAME, "_", log_ctime, ".txt")
-LogFileName <- file.path(log_fnpath, log_FN)
+log_ctime <- format(Sys.time(), "%Y%m%d_%H%M%S")
+log_FN <- paste0(log_ctime,"_log_R_", MODULE.NAME, ".txt")
+LogFileName <- file.path(log_fnpath, "_logs",log_FN)
 
 logger <- function(stext) {
   prefix <- ""
@@ -355,7 +390,7 @@ setup_paralel_env <- function() {
 save_df <- function(df, sfn = "", simple_name = FALSE) {
   if (FULL_DEBUG)
     logger("\nSaving data...\n")
-  file_db_path <- get_data_dir()
+  file_db_path <- get_data_dir('_output')
   if (FULL_DEBUG)
     logger(sprintf(" Used data directory: %s\n", file_db_path))
   FN <- paste0(MODULE.NAME, "_v", gsub("\\.", "_", MODULE.VERSION), "_",
@@ -363,12 +398,16 @@ save_df <- function(df, sfn = "", simple_name = FALSE) {
   if (sfn != "")
     if (simple_name)
       FN <- sfn else
-        FN <- paste0(sfn, "_", log_ctime, "_data.csv")
+        FN <- paste0(log_ctime,"_",sfn, "_data.csv")
       FileName <- file.path(file_db_path, FN)
   timeit(sprintf(" Saving File:[%s] ...", FileName),
            write.csv(x = df, file = FileName, row.names = TRUE))
 }
 
+SaveResults <- function(df_r)
+{
+  save_df(df_r, sfn = "r_cv_res")
+}
 
 GetMaxes = function(dfd, newfield, categ1, categ2) {
   t0_maxes <- proc.time()
@@ -483,6 +522,14 @@ rx_load_sql <- function(str_sql) {
   return(data.frame(df_in))
 }
 
+UploadToSQL <- function(dest_table, source_df) {
+  svrTable <- RxSqlServerData(table = dest_table, connectionString = conns)
+  logger(sprintf(" rxDataStep Uploading dataframe with size (%s) to table [%s] ...", toString(dim(source_df)), dest_table))
+  rxDataStep(inData = source_df, outFile = svrTable, append = "rows")
+  logger(" Done uploading.")
+}
+
+
 normalize <- function(x) {
   mx <- max(x)
   mn <- min(x)
@@ -490,13 +537,17 @@ normalize <- function(x) {
   return((x - mn) / (mx - mn))
 }
 
+
+
 save_plot <- function(sfn) {
+  
+    sfn <- gsub("[- .%/\\\n]+","_", sfn)
 
     file_db_path <- get_data_dir()
-    stime <- format(Sys.time(), "%Y%m%d%H%M%S")
-    FN <- file.path(file_db_path, paste0(stime, "_", sfn, "_PLOT.png"))
+    stime <- PlotTimeStamp 
+    FN <- file.path(file_db_path,'_output', paste0(stime, "_", sfn, ".png"))
     logger(sprintf(" Saving plot: %s\n", FN))
-    dev.print(device = png, file = FN, width = 1024, height = 768)
+    dev.print(device = png, file = FN, width = 800, height = 600)
 
   return(FN)
 }
@@ -816,7 +867,7 @@ PlotClustering <- function(df_micro, field1, field2, seg_field, overall_field = 
 SaveLastPlot <- function(sfn)
 {
   file_db_path <- get_data_dir()
-  stime <- format(Sys.time(), "%Y%m%d%H%M%S")
+  stime <- PlotTimeStamp
   FN <- file.path(file_db_path, paste0(stime, "_", sfn, "_PLOT.png"))
   logger(sprintf(" Saving ggplot: %s...", FN))
   ggsave(FN)
@@ -884,10 +935,10 @@ GetNNInfo <- function(model)
     sunits <-0
     layer <- model$layers[[l]] #get_layer(model, index = l) # works only for Seq
     sname <- toString(layer)
-    if(l==0) {
+    if(l==1) {
       pre <- ""
       sunits <- layer$input_shape[[2]]
-    }else if(sname=="Drop")
+    }else if(sname=="Dropout")
     {
       sunits <- toString(layer$rate)  
     }else if(sname=="Dense")
@@ -1101,7 +1152,228 @@ Get_DNN_Layouts <- function(nr_hid, QUICK = FALSE) {
   return(dnn_tests)
 }
 
+## CONFUSION MATRIX PLOT
 
+PlotChurnConfusion <- function(cm, class1="Not Churn", class2="Churn", plot_title = 'Matricea confuziei modelului de churn') {
+  
+  layout(matrix(c(1,1,2)))
+  par(mar=c(2,2,2,2))
+  plot(c(100, 345), c(300, 450), type = "n", xlab="", ylab="", xaxt='n', yaxt='n')
+  title(plot_title, cex.main=2)
+  
+  # create the matrix 
+  rect(150, 430, 240, 370, col='#3F97D0')
+  text(195, 435, class1, cex=1.5)
+  rect(250, 430, 340, 370, col='#F7AD50')
+  text(295, 435, class2, cex=1.5)
+  text(125, 370, 'Predicted', cex=1.6, srt=90, font=2)
+  text(245, 450, 'Actual', cex=1.6, font=2)
+  rect(150, 305, 240, 365, col='#F7AD50')
+  rect(250, 305, 340, 365, col='#3F97D0')
+  text(140, 400, class1, cex=1.5, srt=90)
+  text(140, 335, class2, cex=1.5, srt=90)
+  
+  # add in the cm results 
+  res <- as.numeric(cm$table)
+  text(195, 400, res[1], cex=1.6, font=2, col='white')
+  text(195, 335, res[2], cex=1.6, font=2, col='white')
+  text(295, 400, res[3], cex=1.6, font=2, col='white')
+  text(295, 335, res[4], cex=1.6, font=2, col='white')
+  
+  # add in the specifics 
+  plot(c(100, 0), c(100, 0), type = "n", xlab="", ylab="", main = "DETAILS", xaxt='n', yaxt='n')
+  text(10, 85, names(cm$byClass[1]), cex=1.5, font=2)
+  text(10, 70, round(as.numeric(cm$byClass[1]), 3), cex=1.5)
+  text(30, 85, names(cm$byClass[2]), cex=1.5, font=2)
+  text(30, 70, round(as.numeric(cm$byClass[2]), 3), cex=1.5)
+  text(50, 85, names(cm$overall[2]), cex=1.5, font=2)
+  text(50, 70, round(as.numeric(cm$overall[2]), 3), cex=1.5)
+  text(70, 85, names(cm$overall[1]), cex=1.5, font=2)
+  text(70, 70, round(as.numeric(cm$overall[1]), 3), cex=1.5)
+  text(90, 85, names(cm$byClass[7]), cex=1.5, font=2)
+  text(90, 70, round(as.numeric(cm$byClass[7]), 3), cex=1.5)
+  
+  # add in the accuracy information 
+  text(30, 35, names(cm$byClass[6]), cex=1.8, font=2)
+  text(30, 20, round(as.numeric(cm$byClass[6]), 3), cex=1.7)
+  text(70, 35, names(cm$byClass[5]), cex=1.8, font=2)
+  text(70, 20, round(as.numeric(cm$byClass[5]), 3), cex=1.7)
+  save_plot(plot_title)
+} 
+##
+
+
+## 
+## PLOTS !!!
+##
+
+
+
+ShowSavePlot <- function(plot_title,gplot = NULL)
+{
+  if(is.null(gplot))
+  {
+    gplot = last_plot()
+  }
+  plot_title <- gsub("[- .%/\\\n]+","_", plot_title)
+  FN <- file.path(USE_REPOSITORY, "_output") 
+  stime <- PlotTimeStamp
+  FN <- file.path(FN,paste0(stime,"_",plot_title,".png"))
+  logger(sprintf("Plotting/saving %s", FN))
+  print(gplot)
+  ggsave(FN, gplot, device="png")
+  
+}
+
+PlotBarChart <- function(df_in, col, plot_title = "", show_prc = TRUE)
+{
+  if (plot_title=="")
+  {
+    plot_title <- sprintf("Barplot of %s",col)
+  }
+  df_sub <- as.data.frame(df_in[,c(User.Field,col)])
+  df_sub[,col] <- as.factor(df_sub[,col])
+  df_tab <- as.data.frame(table(df_sub[,col]))
+  colnames(df_tab)[1] <- col
+  df_tab$lab <- paste0(as.character(round(100 * df_tab$Freq / sum(df_tab$Freq),1)),"%")
+  gplot <- ggplot(data = df_sub, aes_string(x=col, fill=col))
+  gplot <- gplot + geom_bar(aes( y=(..count..))) #aes_string(x = col))
+  if (show_prc)
+  {
+    gplot <- gplot + geom_text(data=df_tab,aes_string(x=col,y="Freq",label="lab"),vjust=0)
+  }else
+  {
+    gplot <- gplot + geom_text(stat="count", aes(label=(..count..), y=(..count..)), vjust=0, color = "black")
+  }
+  gplot <- gplot + ggtitle(plot_title)
+  ShowSavePlot(plot_title = plot_title, gplot = gplot)
+  #return(gplot)
+}
+
+PlotValuesChart <- function(df_in, col, sum_col, plot_title = "")
+{
+  if(plot_title=="")
+  {
+    plot_title <- sprintf("Levels of %s",col)
+  }
+  df_in$label <- paste0(as.character(round(df_in[,sum_col] / 1000000,2)),"M")
+  gplot <- ggplot(data=df_in, aes_string(x=col, y=sum_col, fill=col))
+  gplot <- gplot + geom_bar(stat="identity")
+  gplot <- gplot + geom_text(aes_string(label="label"), vjust=1.5, colour="white")
+  gplot <- gplot + ggtitle(plot_title)
+  
+  ShowSavePlot(plot_title = plot_title, gplot = gplot)
+  
+  #return(gplot)
+}
+
+PlotHistChart <- function(df_in, col, plot_title="", show_numbers = T)
+{
+  if (plot_title=="")
+  {
+    plot_title <- sprintf("Histogram of %s",col)
+  }
+  #gplot <- qplot(df_in[,col],geom="histogram",binwidth = 0.5, xlab = col,fill=I("blue"))
+  
+  gplot <- ggplot(data=df_in, aes_string(x=col))
+  gplot <- gplot + geom_histogram(#breaks=seq(20, 50, by =2), 
+                                  col="blue"
+                                  ,aes(fill=..count..)
+                                  )
+  if(show_numbers)
+    gplot <- gplot + stat_bin(binwidth=1, geom="text", aes(label=..count..), vjust=-1.5) 
+  gplot <- gplot + ggtitle(plot_title)
+
+  ShowSavePlot(plot_title = plot_title, gplot = gplot)
+  
+  #return(gplot)
+}
+
+
+##
+## Keras Model Checkpoint helper functions
+##
+
+CurrentModelPrefix <- format(Sys.time(), "%Y%m%d%H%M%S")
+
+GetSummaryData <- function(df_in, by_col, sum_col)
+{
+  df_t <- aggregate(x=df_in[,sum_col], by=list(df_in[,by_col]), FUN="sum")
+  colnames(df_t) <-c(by_col, paste0(sum_col,"_SUM"))
+  return(df_t)
+}
+
+GetModelsDir <- function()
+{
+  return(get_data_dir(new_subfolder = "_models"))
+}
+
+
+
+model_prefix <- "_rk_"
+
+GetModels <- function()
+{
+  return(list.files(path=GetModelsDir(), pattern = model_prefix,  full.names = TRUE))
+}
+
+MoveFile <- function(from, to) {
+  todir <- dirname(to)
+  if (!isTRUE(file.info(todir)$isdir)) dir.create(todir, recursive=TRUE)
+  file.rename(from = from,  to = to)
+}
+
+EmptyModelsDir <- function()
+{
+  
+  model_files <- GetModels()
+  target_dir <- file.path(GetModelsDir(),"_archive")
+  nr_models <- length(model_files)
+  if(nr_models>0)
+  {
+    logger(sprintf("Moving %d models to archive...",nr_models))
+    for(model_file in model_files)
+    {
+      moved <- file.path(target_dir,basename(model_file))
+      MoveFile(model_file, moved)
+    }    
+  }
+
+}
+
+GetModelFileTemplate <- function(info = '')
+{
+  fn <-paste0(CurrentModelPrefix,sprintf("%s%s_ep_{epoch:02d}_vl_{val_loss:.4f}.hdf5", 
+                                         model_prefix, info))
+  return(file.path(GetModelsDir(),fn))
+}
+
+GetRepositoryDir <- function()
+{
+  return(get_data_dir(new_subfolder = "_best_models"))
+}
+
+CopyModelToRepository <- function(source_file, dest_file)
+{
+  logger(sprintf("Copying %s to %s", source_file,dest_file))
+  src_fn <- file.path(GetModelsDir(),source_file)
+  dst_fn <- file.path(GetRepositoryDir(), dest_file)
+  file.copy(src_fn,dst_fn)
+}
+
+SaveBestModel <-function(model_file, test_recall, input_size) 
+{
+  dest_fn <- sprintf("R_KERAS_REC_%.3f_INP_%d.hdf5",test_recall,input_size)
+  CopyModelToRepository(model_file,dest_fn)
+  return(dest_fn)
+}
+
+LoadBestModel <- function(model_file)
+{
+  logger(sprintf("Loading best model %s", model_file))
+  model_fn <- file.path(GetRepositoryDir(), model_file)
+  return(load_model_hdf5(filepath = model_fn))
+}
 
 ##
 ## end ChurnV2 lib
@@ -1124,11 +1396,27 @@ Get_DNN_Layouts <- function(nr_hid, QUICK = FALSE) {
 #df_stats_2015 <- LoadCustomerStatInfo(2)
 #df_stats_2016 <- LoadCustomerStatInfo(3)
 
-setup_paralel_env()
-
+#setup_paralel_env()
 DEBUG_ONLY_FINAL_STAGE <- FALSE
 
 df_full <- LoadChurnData(2, 3) #load_file("CHURN_2016.csv") #
+initial_fields <- colnames(df_full)
+
+
+
+sgm_zero <- df_full$SGM_NO == 0
+if(sum(sgm_zero)>0)
+{
+  logger(sprintf("Removing %d zero segment observations...",sum(sgm_zero)))
+  df_full <- df_full[!sgm_zero,]
+}
+
+
+if(SHOW_PLOTS)
+{
+  df_gsk_sex <- df_full[,c(User.Field,"SEX", "GFK_SGM")]
+}
+
 
 
 #Check Columns Variability !!!! 
@@ -1145,7 +1433,22 @@ logger(sprintf("Found %d cols with zero-var: [%s]",
 logger("Dropping zero-var cols...")
 df_full <- df_full[, setdiff(colnames(df_full), zero_var_cols)]
 
+
 Predictor.Fields <- GetPredictors(df_full)
+Old.Predictors <- setdiff(Predictor.Fields, New.Fields)
+Standard.Predictors <-setdiff(Old.Predictors, Overall.Fields)
+
+
+
+logger("Transforming factor variables to dummies...")
+df_full <- dummy.data.frame(df_full, sep="__")
+All.Predictors <- GetPredictors(df_full)
+
+Predictor.Configs <- c(
+                        Standard.Predictors,
+                        Old.Predictors,
+                        All.Predictors
+)
 
 #
 ##
@@ -1153,26 +1456,6 @@ Predictor.Fields <- GetPredictors(df_full)
 ## churn3.py 
 ##
 ##
-
-#Predictor.Fields <-  setdiff(Predictor.Fields, Overall.Fields)
-
-Nr.Predictors <- length(Predictor.Fields)
-df_res<- data.frame()
-
-
-logger(sprintf("Preparing train/test data on %d obs...", nrow(df_full)))
-set.seed(12345)
-train_part <- createDataPartition(as.numeric(df_full[, Target.Field]), p = 0.85, list = FALSE)
-
-X_full <- df_full[, Predictor.Fields]
-y_full <- as.numeric(df_full[, Target.Field])
-X_train_f <- X_full[train_part,]
-X_test_f <- X_full[-train_part,]
-y_train <- y_full[train_part]
-y_test <- y_full[-train_part]
-
-
-logger(sprintf(" Train: %d, Test: %d", nrow(X_train_f), nrow(X_test_f)))
 
 #    ModelID CnfMatID TestF1 TestPrec TestRecall TestKappa TestAcc TrainAcc TrainKappa TrainRecall    Layout NPRED THRS DROP PREP
 #14       14       14  0.528    0.389      0.821     0.324   0.674    0.672      0.322       0.820    98, 24    49 0.40    1    0
@@ -1189,21 +1472,60 @@ logger(sprintf(" Train: %d, Test: %d", nrow(X_train_f), nrow(X_test_f)))
 ###
 ### Parameters
 ###
+SHOW_PLOTS <- FALSE
+
+Predictor.Fields <- Standard.Predictors
+
 PRE_PROCESSING <- 0 # 0 nothing, 1 minmax, 2 normaliz
-nr_epochs = 5
+
+c_batch_size = c(256,512)
+
+nn_layers <- c(46,23)
+
+
+nr_epochs = 20
 c_dropout = 1
-nn_layers = c(98, 24)
+
+Test.One.Segment = 0
+
 batch_norm = FALSE
 c_act = 'elu'
-c_opt = 'adam'
-
-nr_preds = Nr.Predictors
-s_results <- c()
+c_opt = 'rmsprop'
 
 Churn.Threshold <- 0.40
 ###
 ###
 ###
+
+
+if(Test.One.Segment>0)
+{
+  logger(sprintf("Testing ONLY segment %d", Test.One.Segment))
+  df_full <- df_full[df_full$SGM_NO==Test.One.Segment,]
+}
+
+Nr.Predictors <- length(Predictor.Fields)
+df_res<- data.frame()
+
+logger(sprintf("Excluded variables: %s", toString(setdiff(initial_fields, Predictor.Fields))))
+logger(sprintf("Final predictors: %s",toString(Predictor.Fields)))
+logger(sprintf("Preparing train/test data on %d obs (shape=[%s])...", nrow(df_full), toString(dim(df_full))))
+set.seed(12345)
+train_part <- createDataPartition(as.numeric(df_full[, Target.Field]), p = 0.85, list = FALSE)
+
+X_full <- df_full[, Predictor.Fields]
+y_full <- as.numeric(df_full[, Target.Field])
+X_train_f <- X_full[train_part,]
+X_test_f <- X_full[-train_part,]
+y_train <- y_full[train_part]
+y_test <- y_full[-train_part]
+
+
+logger(sprintf(" Train: (%s), Test: (%s)", toString(dim(X_train_f)), toString(dim(X_test_f))))
+
+
+nr_preds = Nr.Predictors
+s_results <- c()
 
 
 if (PRE_PROCESSING == 2) {
@@ -1243,46 +1565,283 @@ nn_clf <- ChurnClassifier(nn_layers, nr_preds, dropout_level = c_dropout,
 
 logger(sprintf("Network layout:\n%s", GetObjectOuput(summary(nn_clf))))
 
-timeit(sprintf("Fitting (%s) for %d epochs...", GetNNInfo(nn_clf), nr_epochs),
-       nn_clf %>% fit(x = as.matrix(X_train), y = y_train,
-                      batch_size = 512, epochs = nr_epochs, verbose = 1,
-                      validation_data = list(as.matrix(X_test), y_test),
-                      callbacks = list(callback_early_stopping(patience = 1,verbose = 1))
-                      , shuffle = FALSE # this must be disabled after tests !
-                      )
-      )
+EmptyModelsDir()
+for(c_batch in c_batch_size)
+{
+  sbatch <- sprintf("Batch_%d",c_batch)
+  logger(sprintf("Training with batch size %d", c_batch))  
+  timeit(sprintf("Fitting (%s) for %d epochs...", GetNNInfo(nn_clf), nr_epochs),
+         nn_clf %>% fit(x = as.matrix(X_train), y = y_train,
+                        batch_size = c_batch, epochs = nr_epochs, verbose = 1,
+                        validation_data = list(as.matrix(X_test), y_test),
+                        callbacks = list(#callback_early_stopping(patience = 3,verbose = 1),
+                          callback_model_checkpoint(filepath = GetModelFileTemplate(info=sbatch),
+                                                    verbose = 1,
+                                                    save_best_only = FALSE))
+                        #, shuffle = FALSE # this must be disabled after tests !
+         )
+  )
+  
+  
+  
+  timeit("Predicting on FULL data...",
+         yhat_nn_full <- round(predict(nn_clf, as.matrix(X_full)), digits = 3)
+  )
+  
+  timeit("Predicting on testing data...",
+         yhat_nn_test <- round(predict(nn_clf, as.matrix(X_test)), digits = 3)
+  )
+  
+  p_nn_test <- as.numeric(yhat_nn_test >= Churn.Threshold)
+  p_nn_full <- as.numeric(yhat_nn_full >= Churn.Threshold)
+  
+  
+  nn_res <- GetPredStats(id_model = 0, yhat = p_nn_test, y = y_test,
+                         yhat_train = p_nn_full, y_train = y_full,
+                         hiddens = nn_layers)
+  nn_res["NPRED"] <- nr_preds
+  nn_res["THRS"] <- Churn.Threshold
+  nn_res["DROP"] <- c_dropout
+  nn_res["PREP"] <- PRE_PROCESSING
+  nn_res["CHKP"] <- paste0("FIT_RESULT_",sbatch) #basename(model_file)
+  
+  df_res <- rbind(df_res, nn_res)
+  
+  s <-sprintf("TestRec: %.3f TestKap: %.3f TrainRec: %.3f TrainKap: %.3f on NN ([%s], %.1f thr)",
+              nn_res["TestRecall"], nn_res["TestKappa"],
+              nn_res["TrainRecall"], nn_res["TrainKappa"],
+              toString(nn_layers), Churn.Threshold)
+  logger(s)
+}
 
-timeit("Predicting on training data...",
-       yhat_nn_train <- round(predict(nn_clf, as.matrix(X_train)), digits = 3)
-)
 
-timeit("Predicting on testing data...",
-       yhat_nn_test <- round(predict(nn_clf, as.matrix(X_test)), digits = 3)
-)
-
-p_nn_test <- as.numeric(yhat_nn_test >= Churn.Threshold)
-p_nn_train <- as.numeric(yhat_nn_train >= Churn.Threshold)
+TEST_ALL_MODELS <- TRUE
 
 
-nn_res <- GetPredStats(id_model = 0, yhat = p_nn_test, y = y_test,
-                       yhat_train = p_nn_train, y_train = y_train,
-                       hiddens = nn_layers)
-nn_res["NPRED"] <- nr_preds
-nn_res["THRS"] <- Churn.Threshold
-nn_res["DROP"] <- c_dropout
-nn_res["PREP"] <- PRE_PROCESSING
+if(TEST_ALL_MODELS)
+{
+  model_files <- GetModels()
+  i_clf = 0
+  clf_list = list()  
+  for(model_file in model_files)
+  {
+    mfn <- basename(model_file)
+    i_clf <- i_clf + 1
+    test_clf <- load_model_hdf5(filepath = model_file)
+    clf_list[[i_clf]] <- test_clf
+    
+    timeit(sprintf("Predicting on FULL data with model %s...",mfn),
+           yhat_nn_full <- round(predict(test_clf, as.matrix(X_full)), digits = 3)
+    )
+    
+    timeit(sprintf("Predicting on testing data with model %s...",mfn),
+           yhat_nn_test <- round(predict(test_clf, as.matrix(X_test)), digits = 3)
+    )
+    
+    p_nn_test <- as.numeric(yhat_nn_test >= Churn.Threshold)
+    p_nn_full <- as.numeric(yhat_nn_full >= Churn.Threshold)
+    
+    
+    nn_res <- GetPredStats(id_model = 0, yhat = p_nn_test, y = y_test,
+                           yhat_train = p_nn_full, y_train = y_full,
+                           hiddens = nn_layers)
+    nn_res["NPRED"] <- nr_preds
+    nn_res["THRS"] <- Churn.Threshold
+    nn_res["DROP"] <- c_dropout
+    nn_res["PREP"] <- PRE_PROCESSING
+    nn_res["CHKP"] <- mfn
+    test_recall <- nn_res["TestRecall"]
 
-df_res <- rbind(df_res, nn_res)
+    df_res <- rbind(df_res, nn_res)
+    
+    s <-sprintf("TestRec: %.3f TestKap: %.3f TrainRec: %.3f TrainKap: %.3f on NN ([%s], %.1f thr) M:%s",
+                nn_res["TestRecall"], nn_res["TestKappa"],
+                nn_res["TrainRecall"], nn_res["TrainKappa"],
+                toString(nn_layers), Churn.Threshold, mfn)
+    logger(s)
+    
+    
+  }
+} else
+{
+  # predict only with best epoch
+}
 
-s <-sprintf("TestRec: %.3f TestKap: %.3f TrainRec: %.3f TrainKap: %.3f on NN ([%s], %.1f thr)",
-            nn_res["TestRecall"], nn_res["TestKappa"],
-            nn_res["TrainRecall"], nn_res["TrainKappa"],
-            toString(nn_layers), Churn.Threshold)
+df_res_sorted <- df_res[order(df_res$TrainRecall),]
+last_model <- nrow(df_res_sorted)
+best_model_chkp_file <- df_res_sorted[last_model,"CHKP"]
+best_test_recall <- df_res_sorted[last_model,"TestRecall"]
+nr_inputs <- df_res_sorted[last_model, "NPRED"]
+best_model_file <- SaveBestModel(best_model_chkp_file, test_recall = best_test_recall, input_size = nr_inputs)
 
-logger(s)
-logger(sprintf("Train Confusion Matrix:\n%s", GetObjectOuput(conf_mat_train)))
-logger(sprintf("Test  Confusion Matrix:\n%s", GetObjectOuput(conf_mat_test)))
-logger(sprintf(" opt:%s act:%s",c_opt,c_act))
+
+
+rownames(df_res_sorted) <- NULL
+logger(sprintf("Results dataframe:\n%s", GetObjectOuput(df_res_sorted)))
+SaveResults(df_res_sorted)
+
+# perform inference with best model
+nn_best_clf <- LoadBestModel(best_model_file)
+timeit(sprintf("Predicting on FULL data with model %s...",best_model_file),
+           yhat_nn_full <- round(predict(nn_best_clf, as.matrix(X_full)), digits = 3)
+    )
+p_nn_full <- as.numeric(yhat_nn_full >= Churn.Threshold)
+
+conf_mat_full <- confusionMatrix(p_nn_full, y_full, positive = "1")
+  
+logger(sprintf("FULL %s Confusion Matrix:\n%s", best_model_file,GetObjectOuput(conf_mat_full)))
+
+
+df_full$PREDICTED <- p_nn_full
+
+#
+# Begin uploading results
+#
+Table.Models <- "MODEL_DATA"
+Table.Results <- "MODEL_RESULTS"
+Field.ModelName <- "MODEL_NAME"
+Field.ModelDesc <- "MODEL_DESC"
+Field.ModelData <- "MODEL_RAW"
+
+Fields.ModelsTable <- c(Field.ModelName,Field.ModelDesc,Field.ModelData)
+
+# add new model to db
+Value.ModelName <- "Churn Prediction"
+Value.ModelDesc <- "Churn period"
+Value.ModelData <- serialize_model(nn_best_clf)
+df_new_model <- data.frame(f1=Value.ModelName,f2=Value.ModelDesc,f3=Value.ModelData)
+colnames(df_new_model) <- Fields.ModelsTable
+#UploadToSQL(dest_table = Table.Models, source_df = df_new_model)
+
+#
+# output dataset preparation and uploading
+#
+df_output <- data.frame(uid = df_full[,User.Field])
+colnames(df_output) <- c(User.Field)
+max_proba <- max(yhat_nn_full)
+offset <- (0.99 - max_proba)
+df_output$PREDICTED <- p_nn_full
+df_output$PROBA <- yhat_nn_full + offset
+df_output$MODEL_ID <- model_id
+#UploadToSQL(out_table, df_output)
+#
+# DONE UPLOADING RESULTS
+#
+
+
+if(SHOW_PLOTS)
+{
+  
+  df_churned <- df_full[df_full[,Target.Field]==1,]
+  df_pred <- df_full[df_full$PREDICTED==1,]
+  
+  df_TP <- df_full[df_full$PREDICTED==1 & df_full[,Target.Field]==1,]
+  
+  df_FN <- df_full[df_full$PREDICTED==0 & df_full[,Target.Field]==1,]
+  
+  ca_TP <- sum(df_TP$M)
+  ca_FN <- sum(df_FN$M)
+  ca_GT <- sum(df_churned$M)
+  
+  mg_TP <- sum(df_TP$MARGIN)
+  mg_FN <- sum(df_FN$MARGIN)
+  mg_GT <- sum(df_churned$MARGIN)
+  
+  df_stats <- data.frame(LAB=c("CORECTE","FALS NEG","REAL"),CA=c(ca_TP,ca_FN,ca_GT), PROFIT=c(mg_TP,mg_FN,mg_GT))  
+  
+  
+  PlotBarChart(df_full, "SGM_NO", plot_title="Fig.01 - Distributia pe segmente\n pentru anul 2015")
+  
+  PlotBarChart(df_gsk_sex, "SEX",plot_title = "Fig.02 - Distributia pe sexe\n pentru anul 2015")
+  
+  PlotBarChart(df_gsk_sex, "GFK_SGM", plot_title = "Fig.03 - Distributia pe segmentele GFK\n pentru anul 2015")
+  
+  PlotHistChart(df_full, "AGE", plot_title = "Fig.04 - Distributia pe varste\n pentru anul 2015", show_numbers = F)
+  
+  PlotValuesChart(GetSummaryData(df_full,by_col = "SGM_NO", sum_col = "M"), 
+                  col = "SGM_NO", sum_col = "M_SUM",
+                  plot_title = "Fig.05 - Cifra totala per segment\n pentru anul 2015")
+  
+  PlotValuesChart(GetSummaryData(df_full,by_col = "SGM_NO", sum_col = "MARGIN"), 
+                  col = "SGM_NO", sum_col = "MARGIN_SUM",
+                  plot_title = "Fig.06 - Marja totala per segment\n pentru anul 2015")
+  
+  
+  
+  PlotBarChart(df_churned, "SGM_NO", 
+               plot_title="Fig.07.1 - Distributia pe segmente a churn-ului\n  pentru anul 2015 (identificat in 2016)",
+               show_prc = FALSE)  
+  PlotBarChart(df_pred, "SGM_NO", 
+               plot_title="Fig.07.2 - Distributia pe segmente a churn-ului prezis\n  pentru anul 2015",
+               show_prc = FALSE)  
+  PlotBarChart(df_TP, "SGM_NO", 
+               plot_title="Fig.07.3 - Distributia pe segmente a churn-ului prezis corect\n  pentru anul 2015",
+               show_prc = FALSE)  
+  
+  
+  
+  PlotBarChart(df_churned, "SGM_NO", 
+               plot_title="Fig.08.1 - Distributia procentuala pe segmente a churn-ului\n  pentru anul 2015 (identificat in 2016)")
+  PlotBarChart(df_pred, "SGM_NO", 
+               plot_title="Fig.08.2 - Distributia procentuala pe segmente a churn-ului prezis\n  pentru anul 2015")
+  PlotBarChart(df_TP, "SGM_NO", 
+               plot_title="Fig.08.3 - Distributia procentuala pe segmente a churn-ului prezis corect\n  pentru anul 2015")
+  
+  
+  PlotValuesChart(GetSummaryData(df_churned,by_col = "SGM_NO", sum_col = "M"), 
+                  col = "SGM_NO", sum_col = "M_SUM",
+                  plot_title = "Fig.09.1 - Evaluarea veniturilor pierdute din churn \n per segment in 2016 (replicare venituri 2015)")
+  PlotValuesChart(GetSummaryData(df_pred,by_col = "SGM_NO", sum_col = "M"), 
+                  col = "SGM_NO", sum_col = "M_SUM",
+                  plot_title = "Fig.09.2 - Evaluarea veniturilor pierdute din churn prezis \n per segment in 2016 (replicare venituri 2015)")
+  PlotValuesChart(GetSummaryData(df_TP,by_col = "SGM_NO", sum_col = "M"), 
+                  col = "SGM_NO", sum_col = "M_SUM",
+                  plot_title = "Fig.09.3 - Evaluarea veniturilor pierdute din churn \n prezis corect per segment in 2016 (replicare venituri 2015)")
+  
+  
+  
+  PlotValuesChart(GetSummaryData(df_churned,by_col = "SGM_NO", sum_col = "MARGIN"), 
+                  col = "SGM_NO", sum_col = "MARGIN_SUM",
+                  plot_title = "Fig.10.1 - Evaluarea marjei totala pierdute din churn \n per segment in 2016 (replicare venituri 2015)")
+  PlotValuesChart(GetSummaryData(df_pred,by_col = "SGM_NO", sum_col = "MARGIN"), 
+                  col = "SGM_NO", sum_col = "MARGIN_SUM",
+                  plot_title = "Fig.10.2 - Evaluarea marjei totala pierdute din churn prezis \n per segment in 2016 (replicare venituri 2015)")
+  PlotValuesChart(GetSummaryData(df_TP,by_col = "SGM_NO", sum_col = "MARGIN"), 
+                  col = "SGM_NO", sum_col = "MARGIN_SUM",
+                  plot_title = "Fig.10.3 - Evaluarea marjei totala aferente adevarat pozitivelor \n corect verificate per segment in 2016 (replicare venituri 2015)")
+  
+  
+  plot_title =  "Fig.11 - Matricea confuziei churn 2015 (iesit 2016)"
+  PlotChurnConfusion(conf_mat_full, plot_title = plot_title)
+  
+  
+
+  PlotValuesChart(df_stats,col="LAB",sum_col="CA",
+                  plot_title = "Fig.12 - Cifra totala de afaceri (estimata) a clientilor churn \n prezisa / ratata / reala")
+  PlotValuesChart(df_stats,col="LAB",sum_col="PROFIT",
+                  plot_title = "Fig.13 - Marja totala (estimata) a clientilor churn \n prezisa / ratata / reala")
+
+  PlotBarChart(df_FN, "SGM_NO", 
+               plot_title="Fig.14.1 - Distributia pe segmente a falselor negative\n  pentru anul 2015 (identificat in 2016)",
+               show_prc = FALSE)  
+  
+  PlotValuesChart(GetSummaryData(df_FN,by_col = "SGM_NO", sum_col = "M"), 
+                  col = "SGM_NO", sum_col = "M_SUM",
+                  plot_title = "Fig.14.2 - Evaluarea veniturilor aferente falselor negative \n per segment in 2016 (replicare venituri 2015)")
+
+  PlotValuesChart(GetSummaryData(df_FN,by_col = "SGM_NO", sum_col = "MARGIN"), 
+                  col = "SGM_NO", sum_col = "MARGIN_SUM",
+                  plot_title = "Fig.14.3 - Evaluarea profitului aferent falselor negative \n per segment in 2016 (replicare venituri 2015)")
+  
+  
+  
+}
+
+
+
+
+
+
 
 
 
