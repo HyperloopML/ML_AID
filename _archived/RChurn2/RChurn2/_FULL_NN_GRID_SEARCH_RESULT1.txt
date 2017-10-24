@@ -1,0 +1,773 @@
+[CHURN2][2017-07-26 09:06:38] Preparing helper lib v1.5.3...
+[CHURN2][2017-07-26 09:06:38] Loading package: e1071
+[CHURN2][2017-07-26 09:06:39] Loading package: reshape2
+[CHURN2][2017-07-26 09:06:39] Loading package: reshape2
+[CHURN2][2017-07-26 09:06:39] Loading package: xgboost
+[CHURN2][2017-07-26 09:06:40] Loading package: caret
+[CHURN2][2017-07-26 09:06:41] Loading package: MASS
+[CHURN2][2017-07-26 09:06:41] Loading package: plyr
+[CHURN2][2017-07-26 09:06:41] Loading package: pROC
+[CHURN2][2017-07-26 09:06:41] Loading package: Rtsne
+[CHURN2][2017-07-26 09:06:41] Loading package: keras
+[CHURN2][2017-07-26 09:06:41] Loading package: ggplot2
+[CHURN2][2017-07-26 09:06:41] Loading period 2 churn data (trans=2, churn=3)...
+[CHURN2][2017-07-26 09:06:41]  LoadBatch: Trying to load from cache...
+[CHURN2][2017-07-26 09:06:41]   Current dbcache directory: C:/GoogleDrive/_hyperloop_data/churn_v2/_dbcache
+[CHURN2][2017-07-26 09:06:41]   XDF File: C:/GoogleDrive/_hyperloop_data/churn_v2/_dbcache/EXEC__SP_GET_CHURN__@TRAN_PER_ID_=_2__@CHURN_PER_ID_=_3.xdf
+[CHURN2][2017-07-26 09:06:41]   Bypassing SQL Server. Loading data directly from XDF file...
+[CHURN2][2017-07-26 09:06:41]   RevoScaleR loading dataframe [rxDataStep]... 
+[CHURN2][2017-07-26 09:06:54]   executed in 12.53s
+[CHURN2][2017-07-26 09:06:58]   [Object df_in [data.frame] size: 733.8MB (1,630,085 rows by 61 cols)]
+[CHURN2][2017-07-26 09:06:58] Done loading period 2 churn data (trans=2, churn=3).
+[CHURN2][2017-07-26 09:06:58] Preparing train/test data on 1630085 obs...
+[CHURN2][2017-07-26 09:07:02]  Train: 1385573, test 244512
+[CHURN2][2017-07-26 09:07:02] Running a total of 3 predictor selection tests for NN
+
+[CHURN2][2017-07-26 09:07:04] Preparing and training Neural Networks on 56 predictors
+[CHURN2][2017-07-26 09:07:04] Running 12 tests...
+[CHURN2][2017-07-26 09:07:04] Preparing NN (input:56 layers:[448, 224, 112, 56])
+[CHURN2][2017-07-26 09:07:11] Running fit/training ...
+[CHURN2][2017-07-26 09:09:00]   executed in 108.03s
+[CHURN2][2017-07-26 09:09:00] Predicting on training data...
+[CHURN2][2017-07-26 09:10:12]   executed in 70.66s
+[CHURN2][2017-07-26 09:10:12] Predicting on testing data...
+[CHURN2][2017-07-26 09:10:25]   executed in 12.57s
+[CHURN2][2017-07-26 09:10:25] Preparing NN (input:56 layers:[448, 112])
+[CHURN2][2017-07-26 09:10:25] Running fit/training ...
+[CHURN2][2017-07-26 09:11:28]   executed in 62.68s
+[CHURN2][2017-07-26 09:11:28] Predicting on training data...
+[CHURN2][2017-07-26 09:12:26]   executed in 56.98s
+[CHURN2][2017-07-26 09:12:26] Predicting on testing data...
+[CHURN2][2017-07-26 09:12:37]   executed in 10.52s
+[CHURN2][2017-07-26 09:12:37] Preparing NN (input:56 layers:[56, 28])
+[CHURN2][2017-07-26 09:12:38] Running fit/training ...
+[CHURN2][2017-07-26 09:14:20]   executed in 102.01s
+[CHURN2][2017-07-26 09:14:20] Predicting on training data...
+[CHURN2][2017-07-26 09:15:21]   executed in 59.78s
+[CHURN2][2017-07-26 09:15:21] Predicting on testing data...
+[CHURN2][2017-07-26 09:15:32]   executed in 10.22s
+[CHURN2][2017-07-26 09:15:32] Preparing NN (input:56 layers:[112, 56])
+[CHURN2][2017-07-26 09:15:32] Running fit/training ...
+[CHURN2][2017-07-26 09:16:32]   executed in 59.49s
+[CHURN2][2017-07-26 09:16:32] Predicting on training data...
+[CHURN2][2017-07-26 09:17:33]   executed in 60.03s
+[CHURN2][2017-07-26 09:17:33] Predicting on testing data...
+[CHURN2][2017-07-26 09:17:44]   executed in 10.60s
+[CHURN2][2017-07-26 09:17:44] Preparing NN (input:56 layers:[112, 28])
+[CHURN2][2017-07-26 09:17:44] Running fit/training ...
+[CHURN2][2017-07-26 09:18:45]   executed in 59.91s
+[CHURN2][2017-07-26 09:18:45] Predicting on training data...
+[CHURN2][2017-07-26 09:19:43]   executed in 57.61s
+[CHURN2][2017-07-26 09:19:43] Predicting on testing data...
+[CHURN2][2017-07-26 09:19:50]   executed in 5.89s
+[CHURN2][2017-07-26 09:19:50] Preparing NN (input:56 layers:[112, 56, 28])
+[CHURN2][2017-07-26 09:19:50] Running fit/training ...
+[CHURN2][2017-07-26 09:20:58]   executed in 73.23s
+[CHURN2][2017-07-26 09:20:58] Predicting on training data...
+[CHURN2][2017-07-26 09:22:01]   executed in 62.59s
+[CHURN2][2017-07-26 09:22:01] Predicting on testing data...
+[CHURN2][2017-07-26 09:22:13]   executed in 11.00s
+[CHURN2][2017-07-26 09:22:13] Preparing NN (input:56 layers:[56, 28, 14])
+[CHURN2][2017-07-26 09:22:13] Running fit/training ...
+[CHURN2][2017-07-26 09:23:36]   executed in 81.77s
+[CHURN2][2017-07-26 09:23:36] Predicting on training data...
+[CHURN2][2017-07-26 09:24:39]   executed in 62.98s
+[CHURN2][2017-07-26 09:24:39] Predicting on testing data...
+[CHURN2][2017-07-26 09:24:51]   executed in 11.03s
+[CHURN2][2017-07-26 09:24:51] Preparing NN (input:56 layers:[28, 14])
+[CHURN2][2017-07-26 09:24:51] Running fit/training ...
+[CHURN2][2017-07-26 09:25:39]   executed in 47.80s
+[CHURN2][2017-07-26 09:25:40] Predicting on training data...
+[CHURN2][2017-07-26 09:26:38]   executed in 57.84s
+[CHURN2][2017-07-26 09:26:38] Predicting on testing data...
+[CHURN2][2017-07-26 09:26:49]   executed in 10.34s
+[CHURN2][2017-07-26 09:26:49] Preparing NN (input:56 layers:[112, 56, 28, 14])
+[CHURN2][2017-07-26 09:26:49] Running fit/training ...
+[CHURN2][2017-07-26 09:29:07]   executed in 136.65s
+[CHURN2][2017-07-26 09:29:07] Predicting on training data...
+[CHURN2][2017-07-26 09:30:12]   executed in 65.12s
+[CHURN2][2017-07-26 09:30:12] Predicting on testing data...
+[CHURN2][2017-07-26 09:30:25]   executed in 12.00s
+[CHURN2][2017-07-26 09:30:25] Preparing NN (input:56 layers:[28, 14, 7])
+[CHURN2][2017-07-26 09:30:25] Running fit/training ...
+[CHURN2][2017-07-26 09:31:58]   executed in 92.46s
+[CHURN2][2017-07-26 09:31:58] Predicting on training data...
+[CHURN2][2017-07-26 09:33:01]   executed in 62.61s
+[CHURN2][2017-07-26 09:33:02] Predicting on testing data...
+[CHURN2][2017-07-26 09:33:15]   executed in 12.14s
+[CHURN2][2017-07-26 09:33:15] Preparing NN (input:56 layers:[14, 7])
+[CHURN2][2017-07-26 09:33:15] Running fit/training ...
+[CHURN2][2017-07-26 09:34:34]   executed in 78.74s
+[CHURN2][2017-07-26 09:34:34] Predicting on training data...
+[CHURN2][2017-07-26 09:35:38]   executed in 62.72s
+[CHURN2][2017-07-26 09:35:38] Predicting on testing data...
+[CHURN2][2017-07-26 09:35:49]   executed in 10.59s
+[CHURN2][2017-07-26 09:35:49] Preparing NN (input:56 layers:[112, 56, 28, 14, 7])
+[CHURN2][2017-07-26 09:35:49] Running fit/training ...
+[CHURN2][2017-07-26 09:37:12]   executed in 82.22s
+[CHURN2][2017-07-26 09:37:12] Predicting on training data...
+[CHURN2][2017-07-26 09:38:26]   executed in 72.89s
+[CHURN2][2017-07-26 09:38:26] Predicting on testing data...
+[CHURN2][2017-07-26 09:38:39]   executed in 12.73s
+
+[CHURN2][2017-07-26 09:38:41] Preparing and training Neural Networks on 59 predictors
+[CHURN2][2017-07-26 09:38:41] Running 12 tests...
+[CHURN2][2017-07-26 09:38:41] Preparing NN (input:59 layers:[472, 236, 118, 59])
+[CHURN2][2017-07-26 09:38:42] Running fit/training ...
+[CHURN2][2017-07-26 09:40:04]   executed in 82.08s
+[CHURN2][2017-07-26 09:40:04] Predicting on training data...
+[CHURN2][2017-07-26 09:41:16]   executed in 70.51s
+[CHURN2][2017-07-26 09:41:16] Predicting on testing data...
+[CHURN2][2017-07-26 09:41:29]   executed in 12.38s
+[CHURN2][2017-07-26 09:41:29] Preparing NN (input:59 layers:[472, 118])
+[CHURN2][2017-07-26 09:41:29] Running fit/training ...
+[CHURN2][2017-07-26 09:43:15]   executed in 105.50s
+[CHURN2][2017-07-26 09:43:15] Predicting on training data...
+[CHURN2][2017-07-26 09:44:21]   executed in 65.03s
+[CHURN2][2017-07-26 09:44:21] Predicting on testing data...
+[CHURN2][2017-07-26 09:44:33]   executed in 11.50s
+[CHURN2][2017-07-26 09:44:33] Preparing NN (input:59 layers:[59, 29])
+[CHURN2][2017-07-26 09:44:33] Running fit/training ...
+[CHURN2][2017-07-26 09:45:35]   executed in 61.38s
+[CHURN2][2017-07-26 09:45:35] Predicting on training data...
+[CHURN2][2017-07-26 09:46:39]   executed in 62.62s
+[CHURN2][2017-07-26 09:46:39] Predicting on testing data...
+[CHURN2][2017-07-26 09:46:50]   executed in 10.44s
+[CHURN2][2017-07-26 09:46:50] Preparing NN (input:59 layers:[118, 59])
+[CHURN2][2017-07-26 09:46:50] Running fit/training ...
+[CHURN2][2017-07-26 09:47:40]   executed in 49.04s
+[CHURN2][2017-07-26 09:47:40] Predicting on training data...
+[CHURN2][2017-07-26 09:48:41]   executed in 60.44s
+[CHURN2][2017-07-26 09:48:41] Predicting on testing data...
+[CHURN2][2017-07-26 09:48:52]   executed in 10.58s
+[CHURN2][2017-07-26 09:48:52] Preparing NN (input:59 layers:[118, 29])
+[CHURN2][2017-07-26 09:48:52] Running fit/training ...
+[CHURN2][2017-07-26 09:49:42]   executed in 48.97s
+[CHURN2][2017-07-26 09:49:42] Predicting on training data...
+[CHURN2][2017-07-26 09:50:44]   executed in 61.05s
+[CHURN2][2017-07-26 09:50:44] Predicting on testing data...
+[CHURN2][2017-07-26 09:50:55]   executed in 10.78s
+[CHURN2][2017-07-26 09:50:55] Preparing NN (input:59 layers:[118, 59, 29])
+[CHURN2][2017-07-26 09:50:55] Running fit/training ...
+[CHURN2][2017-07-26 09:52:46]   executed in 109.76s
+[CHURN2][2017-07-26 09:52:46] Predicting on training data...
+[CHURN2][2017-07-26 09:53:54]   executed in 67.68s
+[CHURN2][2017-07-26 09:53:54] Predicting on testing data...
+[CHURN2][2017-07-26 09:54:07]   executed in 11.86s
+[CHURN2][2017-07-26 09:54:07] Preparing NN (input:59 layers:[59, 29, 14])
+[CHURN2][2017-07-26 09:54:07] Running fit/training ...
+[CHURN2][2017-07-26 09:55:24]   executed in 76.09s
+[CHURN2][2017-07-26 09:55:24] Predicting on training data...
+[CHURN2][2017-07-26 09:56:31]   executed in 66.44s
+[CHURN2][2017-07-26 09:56:31] Predicting on testing data...
+[CHURN2][2017-07-26 09:56:43]   executed in 11.58s
+[CHURN2][2017-07-26 09:56:43] Preparing NN (input:59 layers:[29, 14])
+[CHURN2][2017-07-26 09:56:44] Running fit/training ...
+[CHURN2][2017-07-26 09:57:33]   executed in 49.36s
+[CHURN2][2017-07-26 09:57:34] Predicting on training data...
+[CHURN2][2017-07-26 09:58:36]   executed in 62.16s
+[CHURN2][2017-07-26 09:58:36] Predicting on testing data...
+[CHURN2][2017-07-26 09:58:48]   executed in 10.81s
+[CHURN2][2017-07-26 09:58:48] Preparing NN (input:59 layers:[118, 59, 29, 14])
+[CHURN2][2017-07-26 09:58:48] Running fit/training ...
+[CHURN2][2017-07-26 09:59:52]   executed in 63.23s
+[CHURN2][2017-07-26 09:59:52] Predicting on training data...
+[CHURN2][2017-07-26 10:01:03]   executed in 70.80s
+[CHURN2][2017-07-26 10:01:03] Predicting on testing data...
+[CHURN2][2017-07-26 10:01:17]   executed in 12.47s
+[CHURN2][2017-07-26 10:01:17] Preparing NN (input:59 layers:[29, 14, 7])
+[CHURN2][2017-07-26 10:01:17] Running fit/training ...
+[CHURN2][2017-07-26 10:03:44]   executed in 146.69s
+[CHURN2][2017-07-26 10:03:44] Predicting on training data...
+[CHURN2][2017-07-26 10:04:51]   executed in 66.69s
+[CHURN2][2017-07-26 10:04:51] Predicting on testing data...
+[CHURN2][2017-07-26 10:05:04]   executed in 11.77s
+[CHURN2][2017-07-26 10:05:04] Preparing NN (input:59 layers:[14, 7])
+[CHURN2][2017-07-26 10:05:04] Running fit/training ...
+[CHURN2][2017-07-26 10:06:10]   executed in 65.58s
+[CHURN2][2017-07-26 10:06:10] Predicting on training data...
+[CHURN2][2017-07-26 10:07:12]   executed in 60.73s
+[CHURN2][2017-07-26 10:07:12] Predicting on testing data...
+[CHURN2][2017-07-26 10:07:24]   executed in 11.28s
+[CHURN2][2017-07-26 10:07:24] Preparing NN (input:59 layers:[118, 59, 29, 14, 7])
+[CHURN2][2017-07-26 10:07:25] Running fit/training ...
+[CHURN2][2017-07-26 10:10:36]   executed in 191.23s
+[CHURN2][2017-07-26 10:10:36] Predicting on training data...
+[CHURN2][2017-07-26 10:11:54]   executed in 76.34s
+[CHURN2][2017-07-26 10:11:54] Predicting on testing data...
+[CHURN2][2017-07-26 10:12:07]   executed in 13.15s
+
+[CHURN2][2017-07-26 10:12:08] Preparing and training Neural Networks on 12 predictors
+[CHURN2][2017-07-26 10:12:08] Running 9 tests...
+[CHURN2][2017-07-26 10:12:08] Preparing NN (input:12 layers:[96, 48, 24, 12])
+[CHURN2][2017-07-26 10:12:08] Running fit/training ...
+[CHURN2][2017-07-26 10:13:31]   executed in 82.58s
+[CHURN2][2017-07-26 10:13:32] Predicting on training data...
+[CHURN2][2017-07-26 10:14:43]   executed in 70.45s
+[CHURN2][2017-07-26 10:14:43] Predicting on testing data...
+[CHURN2][2017-07-26 10:14:56]   executed in 12.30s
+[CHURN2][2017-07-26 10:14:56] Preparing NN (input:12 layers:[96, 24])
+[CHURN2][2017-07-26 10:14:56] Running fit/training ...
+[CHURN2][2017-07-26 10:15:54]   executed in 57.45s
+[CHURN2][2017-07-26 10:15:54] Predicting on training data...
+[CHURN2][2017-07-26 10:16:55]   executed in 61.13s
+[CHURN2][2017-07-26 10:16:55] Predicting on testing data...
+[CHURN2][2017-07-26 10:17:08]   executed in 11.59s
+[CHURN2][2017-07-26 10:17:08] Preparing NN (input:12 layers:[12, 6])
+[CHURN2][2017-07-26 10:17:08] Running fit/training ...
+[CHURN2][2017-07-26 10:18:06]   executed in 57.00s
+[CHURN2][2017-07-26 10:18:06] Predicting on training data...
+[CHURN2][2017-07-26 10:19:12]   executed in 65.43s
+[CHURN2][2017-07-26 10:19:12] Predicting on testing data...
+[CHURN2][2017-07-26 10:19:24]   executed in 11.54s
+[CHURN2][2017-07-26 10:19:24] Preparing NN (input:12 layers:[24, 12])
+[CHURN2][2017-07-26 10:19:24] Running fit/training ...
+[CHURN2][2017-07-26 10:20:23]   executed in 58.49s
+[CHURN2][2017-07-26 10:20:23] Predicting on training data...
+[CHURN2][2017-07-26 10:21:27]   executed in 62.60s
+[CHURN2][2017-07-26 10:21:27] Predicting on testing data...
+[CHURN2][2017-07-26 10:21:38]   executed in 10.84s
+[CHURN2][2017-07-26 10:21:38] Preparing NN (input:12 layers:[24, 6])
+[CHURN2][2017-07-26 10:21:38] Running fit/training ...
+[CHURN2][2017-07-26 10:23:05]   executed in 86.05s
+[CHURN2][2017-07-26 10:23:05] Predicting on training data...
+[CHURN2][2017-07-26 10:24:13]   executed in 66.85s
+[CHURN2][2017-07-26 10:24:13] Predicting on testing data...
+[CHURN2][2017-07-26 10:24:25]   executed in 11.29s
+[CHURN2][2017-07-26 10:24:25] Preparing NN (input:12 layers:[24, 12, 6])
+[CHURN2][2017-07-26 10:24:25] Running fit/training ...
+[CHURN2][2017-07-26 10:27:40]   executed in 194.58s
+[CHURN2][2017-07-26 10:27:40] Predicting on training data...
+[CHURN2][2017-07-26 10:28:49]   executed in 68.43s
+[CHURN2][2017-07-26 10:28:49] Predicting on testing data...
+[CHURN2][2017-07-26 10:29:03]   executed in 12.36s
+[CHURN2][2017-07-26 10:29:03] Preparing NN (input:12 layers:[12, 6, 3])
+[CHURN2][2017-07-26 10:29:03] Running fit/training ...
+[CHURN2][2017-07-26 10:32:05]   executed in 181.38s
+[CHURN2][2017-07-26 10:32:05] Predicting on training data...
+[CHURN2][2017-07-26 10:33:14]   executed in 68.19s
+[CHURN2][2017-07-26 10:33:14] Predicting on testing data...
+[CHURN2][2017-07-26 10:33:26]   executed in 11.75s
+[CHURN2][2017-07-26 10:33:26] Preparing NN (input:12 layers:[6, 3])
+[CHURN2][2017-07-26 10:33:26] Running fit/training ...
+[CHURN2][2017-07-26 10:34:40]   executed in 73.65s
+[CHURN2][2017-07-26 10:34:41] Predicting on training data...
+[CHURN2][2017-07-26 10:35:46]   executed in 64.69s
+[CHURN2][2017-07-26 10:35:46] Predicting on testing data...
+[CHURN2][2017-07-26 10:35:57]   executed in 11.06s
+[CHURN2][2017-07-26 10:35:57] Preparing NN (input:12 layers:[24, 12, 6, 3])
+[CHURN2][2017-07-26 10:35:58] Running fit/training ...
+[CHURN2][2017-07-26 10:39:03]   executed in 184.79s
+[CHURN2][2017-07-26 10:39:03] Predicting on training data...
+[CHURN2][2017-07-26 10:40:16]   executed in 71.87s
+[CHURN2][2017-07-26 10:40:16] Predicting on testing data...
+[CHURN2][2017-07-26 10:40:29]   executed in 12.56s
+[CHURN2][2017-07-26 10:40:29] Using Churn.Threshold of 40.00%
+[CHURN2][2017-07-26 10:40:29]  Computing confusion matrix for 244512 observations
+[CHURN2][2017-07-26 10:40:29]  Computing confusion matrix for 1385573 observations
+[CHURN2][2017-07-26 10:40:32] TestRec: 0.539 TestKap: 0.365 TrainRec: 0.542 TrainKap: 0.367 on NN ([448, 224, 112, 56], 0.4 thr)
+[CHURN2][2017-07-26 10:40:32]  Computing confusion matrix for 244512 observations
+[CHURN2][2017-07-26 10:40:32]  Computing confusion matrix for 1385573 observations
+[CHURN2][2017-07-26 10:40:35] TestRec: 0.424 TestKap: 0.331 TrainRec: 0.428 TrainKap: 0.336 on NN ([448, 112], 0.4 thr)
+[CHURN2][2017-07-26 10:40:35]  Computing confusion matrix for 244512 observations
+[CHURN2][2017-07-26 10:40:36]  Computing confusion matrix for 1385573 observations
+[CHURN2][2017-07-26 10:40:38] TestRec: 0.847 TestKap: 0.306 TrainRec: 0.847 TrainKap: 0.305 on NN ([56, 28], 0.4 thr)
+[CHURN2][2017-07-26 10:40:38]  Computing confusion matrix for 244512 observations
+[CHURN2][2017-07-26 10:40:39]  Computing confusion matrix for 1385573 observations
+[CHURN2][2017-07-26 10:40:41] TestRec: 0.795 TestKap: 0.332 TrainRec: 0.795 TrainKap: 0.332 on NN ([112, 56], 0.4 thr)
+[CHURN2][2017-07-26 10:40:41]  Computing confusion matrix for 244512 observations
+[CHURN2][2017-07-26 10:40:42]  Computing confusion matrix for 1385573 observations
+[CHURN2][2017-07-26 10:40:44] TestRec: 0.743 TestKap: 0.355 TrainRec: 0.743 TrainKap: 0.355 on NN ([112, 28], 0.4 thr)
+[CHURN2][2017-07-26 10:40:44]  Computing confusion matrix for 244512 observations
+[CHURN2][2017-07-26 10:40:45]  Computing confusion matrix for 1385573 observations
+[CHURN2][2017-07-26 10:40:47] TestRec: 0.619 TestKap: 0.370 TrainRec: 0.621 TrainKap: 0.370 on NN ([112, 56, 28], 0.4 thr)
+[CHURN2][2017-07-26 10:40:47]  Computing confusion matrix for 244512 observations
+[CHURN2][2017-07-26 10:40:48]  Computing confusion matrix for 1385573 observations
+[CHURN2][2017-07-26 10:40:50] TestRec: 0.671 TestKap: 0.370 TrainRec: 0.671 TrainKap: 0.369 on NN ([56, 28, 14], 0.4 thr)
+[CHURN2][2017-07-26 10:40:51]  Computing confusion matrix for 244512 observations
+[CHURN2][2017-07-26 10:40:51]  Computing confusion matrix for 1385573 observations
+[CHURN2][2017-07-26 10:40:54] TestRec: 0.834 TestKap: 0.270 TrainRec: 0.832 TrainKap: 0.268 on NN ([28, 14], 0.4 thr)
+[CHURN2][2017-07-26 10:40:54]  Computing confusion matrix for 244512 observations
+[CHURN2][2017-07-26 10:40:54]  Computing confusion matrix for 1385573 observations
+[CHURN2][2017-07-26 10:40:57] TestRec: 0.533 TestKap: 0.364 TrainRec: 0.536 TrainKap: 0.366 on NN ([112, 56, 28, 14], 0.4 thr)
+[CHURN2][2017-07-26 10:40:57]  Computing confusion matrix for 244512 observations
+[CHURN2][2017-07-26 10:40:57]  Computing confusion matrix for 1385573 observations
+[CHURN2][2017-07-26 10:41:00] TestRec: 0.931 TestKap: 0.231 TrainRec: 0.931 TrainKap: 0.231 on NN ([28, 14, 7], 0.4 thr)
+[CHURN2][2017-07-26 10:41:00]  Computing confusion matrix for 244512 observations
+[CHURN2][2017-07-26 10:41:00]  Computing confusion matrix for 1385573 observations
+[CHURN2][2017-07-26 10:41:03] TestRec: 0.648 TestKap: 0.352 TrainRec: 0.649 TrainKap: 0.352 on NN ([14, 7], 0.4 thr)
+[CHURN2][2017-07-26 10:41:03]  Computing confusion matrix for 244512 observations
+[CHURN2][2017-07-26 10:41:03]  Computing confusion matrix for 1385573 observations
+[CHURN2][2017-07-26 10:41:06] TestRec: 0.543 TestKap: 0.365 TrainRec: 0.545 TrainKap: 0.367 on NN ([112, 56, 28, 14, 7], 0.4 thr)
+[CHURN2][2017-07-26 10:41:06]  Computing confusion matrix for 244512 observations
+[CHURN2][2017-07-26 10:41:06]  Computing confusion matrix for 1385573 observations
+[CHURN2][2017-07-26 10:41:09] TestRec: 0.507 TestKap: 0.358 TrainRec: 0.509 TrainKap: 0.360 on NN ([472, 236, 118, 59], 0.4 thr)
+[CHURN2][2017-07-26 10:41:09]  Computing confusion matrix for 244512 observations
+[CHURN2][2017-07-26 10:41:09]  Computing confusion matrix for 1385573 observations
+[CHURN2][2017-07-26 10:41:12] TestRec: 0.585 TestKap: 0.371 TrainRec: 0.587 TrainKap: 0.372 on NN ([472, 118], 0.4 thr)
+[CHURN2][2017-07-26 10:41:12]  Computing confusion matrix for 244512 observations
+[CHURN2][2017-07-26 10:41:12]  Computing confusion matrix for 1385573 observations
+[CHURN2][2017-07-26 10:41:15] TestRec: 0.729 TestKap: 0.360 TrainRec: 0.729 TrainKap: 0.358 on NN ([59, 29], 0.4 thr)
+[CHURN2][2017-07-26 10:41:15]  Computing confusion matrix for 244512 observations
+[CHURN2][2017-07-26 10:41:16]  Computing confusion matrix for 1385573 observations
+[CHURN2][2017-07-26 10:41:18] TestRec: 0.829 TestKap: 0.318 TrainRec: 0.829 TrainKap: 0.317 on NN ([118, 59], 0.4 thr)
+[CHURN2][2017-07-26 10:41:18]  Computing confusion matrix for 244512 observations
+[CHURN2][2017-07-26 10:41:19]  Computing confusion matrix for 1385573 observations
+[CHURN2][2017-07-26 10:41:21] TestRec: 0.656 TestKap: 0.366 TrainRec: 0.659 TrainKap: 0.368 on NN ([118, 29], 0.4 thr)
+[CHURN2][2017-07-26 10:41:21]  Computing confusion matrix for 244512 observations
+[CHURN2][2017-07-26 10:41:22]  Computing confusion matrix for 1385573 observations
+[CHURN2][2017-07-26 10:41:24] TestRec: 0.514 TestKap: 0.359 TrainRec: 0.517 TrainKap: 0.361 on NN ([118, 59, 29], 0.4 thr)
+[CHURN2][2017-07-26 10:41:24]  Computing confusion matrix for 244512 observations
+[CHURN2][2017-07-26 10:41:25]  Computing confusion matrix for 1385573 observations
+[CHURN2][2017-07-26 10:41:27] TestRec: 0.588 TestKap: 0.365 TrainRec: 0.589 TrainKap: 0.366 on NN ([59, 29, 14], 0.4 thr)
+[CHURN2][2017-07-26 10:41:27]  Computing confusion matrix for 244512 observations
+[CHURN2][2017-07-26 10:41:28]  Computing confusion matrix for 1385573 observations
+[CHURN2][2017-07-26 10:41:30] TestRec: 0.893 TestKap: 0.273 TrainRec: 0.892 TrainKap: 0.271 on NN ([29, 14], 0.4 thr)
+[CHURN2][2017-07-26 10:41:30]  Computing confusion matrix for 244512 observations
+[CHURN2][2017-07-26 10:41:31]  Computing confusion matrix for 1385573 observations
+[CHURN2][2017-07-26 10:41:33] TestRec: 0.532 TestKap: 0.362 TrainRec: 0.535 TrainKap: 0.365 on NN ([118, 59, 29, 14], 0.4 thr)
+[CHURN2][2017-07-26 10:41:33]  Computing confusion matrix for 244512 observations
+[CHURN2][2017-07-26 10:41:34]  Computing confusion matrix for 1385573 observations
+[CHURN2][2017-07-26 10:41:36] TestRec: 0.490 TestKap: 0.354 TrainRec: 0.492 TrainKap: 0.356 on NN ([29, 14, 7], 0.4 thr)
+[CHURN2][2017-07-26 10:41:36]  Computing confusion matrix for 244512 observations
+[CHURN2][2017-07-26 10:41:37]  Computing confusion matrix for 1385573 observations
+[CHURN2][2017-07-26 10:41:39] TestRec: 0.775 TestKap: 0.334 TrainRec: 0.777 TrainKap: 0.333 on NN ([14, 7], 0.4 thr)
+[CHURN2][2017-07-26 10:41:39]  Computing confusion matrix for 244512 observations
+[CHURN2][2017-07-26 10:41:40]  Computing confusion matrix for 1385573 observations
+[CHURN2][2017-07-26 10:41:42] TestRec: 0.483 TestKap: 0.352 TrainRec: 0.486 TrainKap: 0.355 on NN ([118, 59, 29, 14, 7], 0.4 thr)
+[CHURN2][2017-07-26 10:41:42]  Computing confusion matrix for 244512 observations
+[CHURN2][2017-07-26 10:41:43]  Computing confusion matrix for 1385573 observations
+[CHURN2][2017-07-26 10:41:45] TestRec: 0.559 TestKap: 0.329 TrainRec: 0.560 TrainKap: 0.329 on NN ([96, 48, 24, 12], 0.4 thr)
+[CHURN2][2017-07-26 10:41:45]  Computing confusion matrix for 244512 observations
+[CHURN2][2017-07-26 10:41:46]  Computing confusion matrix for 1385573 observations
+[CHURN2][2017-07-26 10:41:48] TestRec: 0.732 TestKap: 0.357 TrainRec: 0.731 TrainKap: 0.356 on NN ([96, 24], 0.4 thr)
+[CHURN2][2017-07-26 10:41:48]  Computing confusion matrix for 244512 observations
+[CHURN2][2017-07-26 10:41:49]  Computing confusion matrix for 1385573 observations
+[CHURN2][2017-07-26 10:41:51] TestRec: 0.739 TestKap: 0.344 TrainRec: 0.738 TrainKap: 0.342 on NN ([12, 6], 0.4 thr)
+[CHURN2][2017-07-26 10:41:51]  Computing confusion matrix for 244512 observations
+[CHURN2][2017-07-26 10:41:52]  Computing confusion matrix for 1385573 observations
+[CHURN2][2017-07-26 10:41:54] TestRec: 0.803 TestKap: 0.325 TrainRec: 0.804 TrainKap: 0.325 on NN ([24, 12], 0.4 thr)
+[CHURN2][2017-07-26 10:41:54]  Computing confusion matrix for 244512 observations
+[CHURN2][2017-07-26 10:41:55]  Computing confusion matrix for 1385573 observations
+[CHURN2][2017-07-26 10:41:57] TestRec: 0.723 TestKap: 0.362 TrainRec: 0.722 TrainKap: 0.360 on NN ([24, 6], 0.4 thr)
+[CHURN2][2017-07-26 10:41:57]  Computing confusion matrix for 244512 observations
+[CHURN2][2017-07-26 10:41:58]  Computing confusion matrix for 1385573 observations
+[CHURN2][2017-07-26 10:42:01] TestRec: 0.566 TestKap: 0.367 TrainRec: 0.566 TrainKap: 0.367 on NN ([24, 12, 6], 0.4 thr)
+[CHURN2][2017-07-26 10:42:01]  Computing confusion matrix for 244512 observations
+[CHURN2][2017-07-26 10:42:01]  Computing confusion matrix for 1385573 observations
+[CHURN2][2017-07-26 10:42:04] TestRec: 0.620 TestKap: 0.358 TrainRec: 0.618 TrainKap: 0.356 on NN ([12, 6, 3], 0.4 thr)
+[CHURN2][2017-07-26 10:42:04]  Computing confusion matrix for 244512 observations
+[CHURN2][2017-07-26 10:42:04]  Computing confusion matrix for 1385573 observations
+[CHURN2][2017-07-26 10:42:07] TestRec: 0.646 TestKap: 0.339 TrainRec: 0.647 TrainKap: 0.339 on NN ([6, 3], 0.4 thr)
+[CHURN2][2017-07-26 10:42:07]  Computing confusion matrix for 244512 observations
+[CHURN2][2017-07-26 10:42:07]  Computing confusion matrix for 1385573 observations
+[CHURN2][2017-07-26 10:42:10] TestRec: 0.562 TestKap: 0.367 TrainRec: 0.563 TrainKap: 0.368 on NN ([24, 12, 6, 3], 0.4 thr)
+[CHURN2][2017-07-26 10:42:10] Using Churn.Threshold of 45.00%
+[CHURN2][2017-07-26 10:42:10]  Computing confusion matrix for 244512 observations
+[CHURN2][2017-07-26 10:42:10]  Computing confusion matrix for 1385573 observations
+[CHURN2][2017-07-26 10:42:13] TestRec: 0.483 TestKap: 0.351 TrainRec: 0.487 TrainKap: 0.355 on NN ([448, 224, 112, 56], 0.4 thr)
+[CHURN2][2017-07-26 10:42:13]  Computing confusion matrix for 244512 observations
+[CHURN2][2017-07-26 10:42:13]  Computing confusion matrix for 1385573 observations
+[CHURN2][2017-07-26 10:42:16] TestRec: 0.312 TestKap: 0.279 TrainRec: 0.314 TrainKap: 0.281 on NN ([448, 112], 0.4 thr)
+[CHURN2][2017-07-26 10:42:16]  Computing confusion matrix for 244512 observations
+[CHURN2][2017-07-26 10:42:16]  Computing confusion matrix for 1385573 observations
+[CHURN2][2017-07-26 10:42:19] TestRec: 0.750 TestKap: 0.354 TrainRec: 0.749 TrainKap: 0.352 on NN ([56, 28], 0.4 thr)
+[CHURN2][2017-07-26 10:42:19]  Computing confusion matrix for 244512 observations
+[CHURN2][2017-07-26 10:42:19]  Computing confusion matrix for 1385573 observations
+[CHURN2][2017-07-26 10:42:22] TestRec: 0.666 TestKap: 0.370 TrainRec: 0.666 TrainKap: 0.369 on NN ([112, 56], 0.4 thr)
+[CHURN2][2017-07-26 10:42:22]  Computing confusion matrix for 244512 observations
+[CHURN2][2017-07-26 10:42:22]  Computing confusion matrix for 1385573 observations
+[CHURN2][2017-07-26 10:42:25] TestRec: 0.615 TestKap: 0.371 TrainRec: 0.617 TrainKap: 0.371 on NN ([112, 28], 0.4 thr)
+[CHURN2][2017-07-26 10:42:25]  Computing confusion matrix for 244512 observations
+[CHURN2][2017-07-26 10:42:25]  Computing confusion matrix for 1385573 observations
+[CHURN2][2017-07-26 10:42:28] TestRec: 0.499 TestKap: 0.355 TrainRec: 0.502 TrainKap: 0.358 on NN ([112, 56, 28], 0.4 thr)
+[CHURN2][2017-07-26 10:42:28]  Computing confusion matrix for 244512 observations
+[CHURN2][2017-07-26 10:42:28]  Computing confusion matrix for 1385573 observations
+[CHURN2][2017-07-26 10:42:31] TestRec: 0.510 TestKap: 0.359 TrainRec: 0.513 TrainKap: 0.362 on NN ([56, 28, 14], 0.4 thr)
+[CHURN2][2017-07-26 10:42:31]  Computing confusion matrix for 244512 observations
+[CHURN2][2017-07-26 10:42:31]  Computing confusion matrix for 1385573 observations
+[CHURN2][2017-07-26 10:42:34] TestRec: 0.703 TestKap: 0.327 TrainRec: 0.707 TrainKap: 0.329 on NN ([28, 14], 0.4 thr)
+[CHURN2][2017-07-26 10:42:34]  Computing confusion matrix for 244512 observations
+[CHURN2][2017-07-26 10:42:34]  Computing confusion matrix for 1385573 observations
+[CHURN2][2017-07-26 10:42:37] TestRec: 0.351 TestKap: 0.299 TrainRec: 0.355 TrainKap: 0.303 on NN ([112, 56, 28, 14], 0.4 thr)
+[CHURN2][2017-07-26 10:42:37]  Computing confusion matrix for 244512 observations
+[CHURN2][2017-07-26 10:42:37]  Computing confusion matrix for 1385573 observations
+[CHURN2][2017-07-26 10:42:40] TestRec: 0.844 TestKap: 0.308 TrainRec: 0.843 TrainKap: 0.306 on NN ([28, 14, 7], 0.4 thr)
+[CHURN2][2017-07-26 10:42:40]  Computing confusion matrix for 244512 observations
+[CHURN2][2017-07-26 10:42:40]  Computing confusion matrix for 1385573 observations
+[CHURN2][2017-07-26 10:42:43] TestRec: 0.505 TestKap: 0.331 TrainRec: 0.506 TrainKap: 0.332 on NN ([14, 7], 0.4 thr)
+[CHURN2][2017-07-26 10:42:43]  Computing confusion matrix for 244512 observations
+[CHURN2][2017-07-26 10:42:44]  Computing confusion matrix for 1385573 observations
+[CHURN2][2017-07-26 10:42:46] TestRec: 0.390 TestKap: 0.317 TrainRec: 0.392 TrainKap: 0.319 on NN ([112, 56, 28, 14, 7], 0.4 thr)
+[CHURN2][2017-07-26 10:42:46]  Computing confusion matrix for 244512 observations
+[CHURN2][2017-07-26 10:42:47]  Computing confusion matrix for 1385573 observations
+[CHURN2][2017-07-26 10:42:49] TestRec: 0.402 TestKap: 0.322 TrainRec: 0.406 TrainKap: 0.326 on NN ([472, 236, 118, 59], 0.4 thr)
+[CHURN2][2017-07-26 10:42:49]  Computing confusion matrix for 244512 observations
+[CHURN2][2017-07-26 10:42:50]  Computing confusion matrix for 1385573 observations
+[CHURN2][2017-07-26 10:42:52] TestRec: 0.527 TestKap: 0.364 TrainRec: 0.529 TrainKap: 0.366 on NN ([472, 118], 0.4 thr)
+[CHURN2][2017-07-26 10:42:52]  Computing confusion matrix for 244512 observations
+[CHURN2][2017-07-26 10:42:53]  Computing confusion matrix for 1385573 observations
+[CHURN2][2017-07-26 10:42:55] TestRec: 0.600 TestKap: 0.369 TrainRec: 0.599 TrainKap: 0.368 on NN ([59, 29], 0.4 thr)
+[CHURN2][2017-07-26 10:42:55]  Computing confusion matrix for 244512 observations
+[CHURN2][2017-07-26 10:42:56]  Computing confusion matrix for 1385573 observations
+[CHURN2][2017-07-26 10:42:58] TestRec: 0.684 TestKap: 0.369 TrainRec: 0.684 TrainKap: 0.368 on NN ([118, 59], 0.4 thr)
+[CHURN2][2017-07-26 10:42:58]  Computing confusion matrix for 244512 observations
+[CHURN2][2017-07-26 10:42:59]  Computing confusion matrix for 1385573 observations
+[CHURN2][2017-07-26 10:43:01] TestRec: 0.565 TestKap: 0.364 TrainRec: 0.569 TrainKap: 0.368 on NN ([118, 29], 0.4 thr)
+[CHURN2][2017-07-26 10:43:01]  Computing confusion matrix for 244512 observations
+[CHURN2][2017-07-26 10:43:02]  Computing confusion matrix for 1385573 observations
+[CHURN2][2017-07-26 10:43:04] TestRec: 0.421 TestKap: 0.329 TrainRec: 0.424 TrainKap: 0.333 on NN ([118, 59, 29], 0.4 thr)
+[CHURN2][2017-07-26 10:43:04]  Computing confusion matrix for 244512 observations
+[CHURN2][2017-07-26 10:43:05]  Computing confusion matrix for 1385573 observations
+[CHURN2][2017-07-26 10:43:07] TestRec: 0.542 TestKap: 0.360 TrainRec: 0.544 TrainKap: 0.362 on NN ([59, 29, 14], 0.4 thr)
+[CHURN2][2017-07-26 10:43:07]  Computing confusion matrix for 244512 observations
+[CHURN2][2017-07-26 10:43:08]  Computing confusion matrix for 1385573 observations
+[CHURN2][2017-07-26 10:43:11] TestRec: 0.797 TestKap: 0.331 TrainRec: 0.798 TrainKap: 0.330 on NN ([29, 14], 0.4 thr)
+[CHURN2][2017-07-26 10:43:11]  Computing confusion matrix for 244512 observations
+[CHURN2][2017-07-26 10:43:11]  Computing confusion matrix for 1385573 observations
+[CHURN2][2017-07-26 10:43:13] TestRec: 0.461 TestKap: 0.344 TrainRec: 0.464 TrainKap: 0.347 on NN ([118, 59, 29, 14], 0.4 thr)
+[CHURN2][2017-07-26 10:43:14]  Computing confusion matrix for 244512 observations
+[CHURN2][2017-07-26 10:43:14]  Computing confusion matrix for 1385573 observations
+[CHURN2][2017-07-26 10:43:16] TestRec: 0.383 TestKap: 0.313 TrainRec: 0.387 TrainKap: 0.318 on NN ([29, 14, 7], 0.4 thr)
+[CHURN2][2017-07-26 10:43:16]  Computing confusion matrix for 244512 observations
+[CHURN2][2017-07-26 10:43:17]  Computing confusion matrix for 1385573 observations
+[CHURN2][2017-07-26 10:43:19] TestRec: 0.638 TestKap: 0.368 TrainRec: 0.640 TrainKap: 0.369 on NN ([14, 7], 0.4 thr)
+[CHURN2][2017-07-26 10:43:19]  Computing confusion matrix for 244512 observations
+[CHURN2][2017-07-26 10:43:20]  Computing confusion matrix for 1385573 observations
+[CHURN2][2017-07-26 10:43:22] TestRec: 0.374 TestKap: 0.310 TrainRec: 0.377 TrainKap: 0.314 on NN ([118, 59, 29, 14, 7], 0.4 thr)
+[CHURN2][2017-07-26 10:43:22]  Computing confusion matrix for 244512 observations
+[CHURN2][2017-07-26 10:43:23]  Computing confusion matrix for 1385573 observations
+[CHURN2][2017-07-26 10:43:26] TestRec: 0.524 TestKap: 0.342 TrainRec: 0.525 TrainKap: 0.344 on NN ([96, 48, 24, 12], 0.4 thr)
+[CHURN2][2017-07-26 10:43:26]  Computing confusion matrix for 244512 observations
+[CHURN2][2017-07-26 10:43:26]  Computing confusion matrix for 1385573 observations
+[CHURN2][2017-07-26 10:43:29] TestRec: 0.576 TestKap: 0.370 TrainRec: 0.576 TrainKap: 0.371 on NN ([96, 24], 0.4 thr)
+[CHURN2][2017-07-26 10:43:29]  Computing confusion matrix for 244512 observations
+[CHURN2][2017-07-26 10:43:29]  Computing confusion matrix for 1385573 observations
+[CHURN2][2017-07-26 10:43:32] TestRec: 0.615 TestKap: 0.349 TrainRec: 0.614 TrainKap: 0.347 on NN ([12, 6], 0.4 thr)
+[CHURN2][2017-07-26 10:43:32]  Computing confusion matrix for 244512 observations
+[CHURN2][2017-07-26 10:43:32]  Computing confusion matrix for 1385573 observations
+[CHURN2][2017-07-26 10:43:35] TestRec: 0.682 TestKap: 0.367 TrainRec: 0.681 TrainKap: 0.366 on NN ([24, 12], 0.4 thr)
+[CHURN2][2017-07-26 10:43:35]  Computing confusion matrix for 244512 observations
+[CHURN2][2017-07-26 10:43:35]  Computing confusion matrix for 1385573 observations
+[CHURN2][2017-07-26 10:43:38] TestRec: 0.564 TestKap: 0.367 TrainRec: 0.564 TrainKap: 0.367 on NN ([24, 6], 0.4 thr)
+[CHURN2][2017-07-26 10:43:38]  Computing confusion matrix for 244512 observations
+[CHURN2][2017-07-26 10:43:38]  Computing confusion matrix for 1385573 observations
+[CHURN2][2017-07-26 10:43:41] TestRec: 0.414 TestKap: 0.318 TrainRec: 0.416 TrainKap: 0.320 on NN ([24, 12, 6], 0.4 thr)
+[CHURN2][2017-07-26 10:43:41]  Computing confusion matrix for 244512 observations
+[CHURN2][2017-07-26 10:43:41]  Computing confusion matrix for 1385573 observations
+[CHURN2][2017-07-26 10:43:44] TestRec: 0.484 TestKap: 0.342 TrainRec: 0.485 TrainKap: 0.343 on NN ([12, 6, 3], 0.4 thr)
+[CHURN2][2017-07-26 10:43:44]  Computing confusion matrix for 244512 observations
+[CHURN2][2017-07-26 10:43:44]  Computing confusion matrix for 1385573 observations
+[CHURN2][2017-07-26 10:43:47] TestRec: 0.554 TestKap: 0.356 TrainRec: 0.556 TrainKap: 0.357 on NN ([6, 3], 0.4 thr)
+[CHURN2][2017-07-26 10:43:47]  Computing confusion matrix for 244512 observations
+[CHURN2][2017-07-26 10:43:47]  Computing confusion matrix for 1385573 observations
+[CHURN2][2017-07-26 10:43:50] TestRec: 0.523 TestKap: 0.362 TrainRec: 0.525 TrainKap: 0.364 on NN ([24, 12, 6, 3], 0.4 thr)
+[CHURN2][2017-07-26 10:43:50] Using Churn.Threshold of 50.00%
+[CHURN2][2017-07-26 10:43:50]  Computing confusion matrix for 244512 observations
+[CHURN2][2017-07-26 10:43:50]  Computing confusion matrix for 1385573 observations
+[CHURN2][2017-07-26 10:43:53] TestRec: 0.360 TestKap: 0.302 TrainRec: 0.364 TrainKap: 0.306 on NN ([448, 224, 112, 56], 0.5 thr)
+[CHURN2][2017-07-26 10:43:53]  Computing confusion matrix for 244512 observations
+[CHURN2][2017-07-26 10:43:53]  Computing confusion matrix for 1385573 observations
+[CHURN2][2017-07-26 10:43:56] TestRec: 0.140 TestKap: 0.154 TrainRec: 0.142 TrainKap: 0.158 on NN ([448, 112], 0.5 thr)
+[CHURN2][2017-07-26 10:43:56]  Computing confusion matrix for 244512 observations
+[CHURN2][2017-07-26 10:43:56]  Computing confusion matrix for 1385573 observations
+[CHURN2][2017-07-26 10:43:59] TestRec: 0.569 TestKap: 0.368 TrainRec: 0.570 TrainKap: 0.368 on NN ([56, 28], 0.5 thr)
+[CHURN2][2017-07-26 10:43:59]  Computing confusion matrix for 244512 observations
+[CHURN2][2017-07-26 10:43:59]  Computing confusion matrix for 1385573 observations
+[CHURN2][2017-07-26 10:44:02] TestRec: 0.511 TestKap: 0.359 TrainRec: 0.514 TrainKap: 0.361 on NN ([112, 56], 0.5 thr)
+[CHURN2][2017-07-26 10:44:02]  Computing confusion matrix for 244512 observations
+[CHURN2][2017-07-26 10:44:02]  Computing confusion matrix for 1385573 observations
+[CHURN2][2017-07-26 10:44:05] TestRec: 0.500 TestKap: 0.356 TrainRec: 0.504 TrainKap: 0.359 on NN ([112, 28], 0.5 thr)
+[CHURN2][2017-07-26 10:44:05]  Computing confusion matrix for 244512 observations
+[CHURN2][2017-07-26 10:44:05]  Computing confusion matrix for 1385573 observations
+[CHURN2][2017-07-26 10:44:07] TestRec: 0.264 TestKap: 0.247 TrainRec: 0.266 TrainKap: 0.250 on NN ([112, 56, 28], 0.5 thr)
+[CHURN2][2017-07-26 10:44:07]  Computing confusion matrix for 244512 observations
+[CHURN2][2017-07-26 10:44:09]  Computing confusion matrix for 1385573 observations
+[CHURN2][2017-07-26 10:44:11] TestRec: 0.242 TestKap: 0.231 TrainRec: 0.244 TrainKap: 0.234 on NN ([56, 28, 14], 0.5 thr)
+[CHURN2][2017-07-26 10:44:11]  Computing confusion matrix for 244512 observations
+[CHURN2][2017-07-26 10:44:11]  Computing confusion matrix for 1385573 observations
+[CHURN2][2017-07-26 10:44:14] TestRec: 0.426 TestKap: 0.324 TrainRec: 0.427 TrainKap: 0.327 on NN ([28, 14], 0.5 thr)
+[CHURN2][2017-07-26 10:44:14]  Computing confusion matrix for 244512 observations
+[CHURN2][2017-07-26 10:44:14]  Computing confusion matrix for 1385573 observations
+[CHURN2][2017-07-26 10:44:17] TestRec: 0.244 TestKap: 0.233 TrainRec: 0.245 TrainKap: 0.235 on NN ([112, 56, 28, 14], 0.5 thr)
+[CHURN2][2017-07-26 10:44:17]  Computing confusion matrix for 244512 observations
+[CHURN2][2017-07-26 10:44:17]  Computing confusion matrix for 1385573 observations
+[CHURN2][2017-07-26 10:44:20] TestRec: 0.719 TestKap: 0.357 TrainRec: 0.720 TrainKap: 0.357 on NN ([28, 14, 7], 0.5 thr)
+[CHURN2][2017-07-26 10:44:20]  Computing confusion matrix for 244512 observations
+[CHURN2][2017-07-26 10:44:20]  Computing confusion matrix for 1385573 observations
+[CHURN2][2017-07-26 10:44:23] TestRec: 0.360 TestKap: 0.294 TrainRec: 0.362 TrainKap: 0.297 on NN ([14, 7], 0.5 thr)
+[CHURN2][2017-07-26 10:44:23]  Computing confusion matrix for 244512 observations
+[CHURN2][2017-07-26 10:44:23]  Computing confusion matrix for 1385573 observations
+[CHURN2][2017-07-26 10:44:26] TestRec: 0.163 TestKap: 0.173 TrainRec: 0.164 TrainKap: 0.175 on NN ([112, 56, 28, 14, 7], 0.5 thr)
+[CHURN2][2017-07-26 10:44:26]  Computing confusion matrix for 244512 observations
+[CHURN2][2017-07-26 10:44:26]  Computing confusion matrix for 1385573 observations
+[CHURN2][2017-07-26 10:44:29] TestRec: 0.091 TestKap: 0.108 TrainRec: 0.091 TrainKap: 0.109 on NN ([472, 236, 118, 59], 0.5 thr)
+[CHURN2][2017-07-26 10:44:29]  Computing confusion matrix for 244512 observations
+[CHURN2][2017-07-26 10:44:29]  Computing confusion matrix for 1385573 observations
+[CHURN2][2017-07-26 10:44:32] TestRec: 0.404 TestKap: 0.324 TrainRec: 0.407 TrainKap: 0.327 on NN ([472, 118], 0.5 thr)
+[CHURN2][2017-07-26 10:44:32]  Computing confusion matrix for 244512 observations
+[CHURN2][2017-07-26 10:44:32]  Computing confusion matrix for 1385573 observations
+[CHURN2][2017-07-26 10:44:35] TestRec: 0.526 TestKap: 0.360 TrainRec: 0.529 TrainKap: 0.363 on NN ([59, 29], 0.5 thr)
+[CHURN2][2017-07-26 10:44:35]  Computing confusion matrix for 244512 observations
+[CHURN2][2017-07-26 10:44:35]  Computing confusion matrix for 1385573 observations
+[CHURN2][2017-07-26 10:44:38] TestRec: 0.512 TestKap: 0.358 TrainRec: 0.515 TrainKap: 0.360 on NN ([118, 59], 0.5 thr)
+[CHURN2][2017-07-26 10:44:38]  Computing confusion matrix for 244512 observations
+[CHURN2][2017-07-26 10:44:38]  Computing confusion matrix for 1385573 observations
+[CHURN2][2017-07-26 10:44:41] TestRec: 0.478 TestKap: 0.348 TrainRec: 0.481 TrainKap: 0.351 on NN ([118, 29], 0.5 thr)
+[CHURN2][2017-07-26 10:44:41]  Computing confusion matrix for 244512 observations
+[CHURN2][2017-07-26 10:44:41]  Computing confusion matrix for 1385573 observations
+[CHURN2][2017-07-26 10:44:44] TestRec: 0.236 TestKap: 0.229 TrainRec: 0.239 TrainKap: 0.233 on NN ([118, 59, 29], 0.5 thr)
+[CHURN2][2017-07-26 10:44:44]  Computing confusion matrix for 244512 observations
+[CHURN2][2017-07-26 10:44:44]  Computing confusion matrix for 1385573 observations
+[CHURN2][2017-07-26 10:44:47] TestRec: 0.217 TestKap: 0.217 TrainRec: 0.217 TrainKap: 0.218 on NN ([59, 29, 14], 0.5 thr)
+[CHURN2][2017-07-26 10:44:47]  Computing confusion matrix for 244512 observations
+[CHURN2][2017-07-26 10:44:47]  Computing confusion matrix for 1385573 observations
+[CHURN2][2017-07-26 10:44:50] TestRec: 0.644 TestKap: 0.373 TrainRec: 0.642 TrainKap: 0.372 on NN ([29, 14], 0.5 thr)
+[CHURN2][2017-07-26 10:44:50]  Computing confusion matrix for 244512 observations
+[CHURN2][2017-07-26 10:44:51]  Computing confusion matrix for 1385573 observations
+[CHURN2][2017-07-26 10:44:53] TestRec: 0.119 TestKap: 0.136 TrainRec: 0.122 TrainKap: 0.139 on NN ([118, 59, 29, 14], 0.5 thr)
+[CHURN2][2017-07-26 10:44:53]  Computing confusion matrix for 244512 observations
+[CHURN2][2017-07-26 10:44:54]  Computing confusion matrix for 1385573 observations
+[CHURN2][2017-07-26 10:44:56] TestRec: 0.250 TestKap: 0.237 TrainRec: 0.252 TrainKap: 0.240 on NN ([29, 14, 7], 0.5 thr)
+[CHURN2][2017-07-26 10:44:56]  Computing confusion matrix for 244512 observations
+[CHURN2][2017-07-26 10:44:57]  Computing confusion matrix for 1385573 observations
+[CHURN2][2017-07-26 10:44:59] TestRec: 0.416 TestKap: 0.324 TrainRec: 0.418 TrainKap: 0.327 on NN ([14, 7], 0.5 thr)
+[CHURN2][2017-07-26 10:44:59]  Computing confusion matrix for 244512 observations
+[CHURN2][2017-07-26 10:45:00]  Computing confusion matrix for 1385573 observations
+[CHURN2][2017-07-26 10:45:02] TestRec: 0.268 TestKap: 0.250 TrainRec: 0.270 TrainKap: 0.253 on NN ([118, 59, 29, 14, 7], 0.5 thr)
+[CHURN2][2017-07-26 10:45:02]  Computing confusion matrix for 244512 observations
+[CHURN2][2017-07-26 10:45:03]  Computing confusion matrix for 1385573 observations
+[CHURN2][2017-07-26 10:45:05] TestRec: 0.142 TestKap: 0.142 TrainRec: 0.143 TrainKap: 0.144 on NN ([96, 48, 24, 12], 0.5 thr)
+[CHURN2][2017-07-26 10:45:05]  Computing confusion matrix for 244512 observations
+[CHURN2][2017-07-26 10:45:06]  Computing confusion matrix for 1385573 observations
+[CHURN2][2017-07-26 10:45:08] TestRec: 0.506 TestKap: 0.358 TrainRec: 0.509 TrainKap: 0.360 on NN ([96, 24], 0.5 thr)
+[CHURN2][2017-07-26 10:45:08]  Computing confusion matrix for 244512 observations
+[CHURN2][2017-07-26 10:45:09]  Computing confusion matrix for 1385573 observations
+[CHURN2][2017-07-26 10:45:11] TestRec: 0.374 TestKap: 0.305 TrainRec: 0.377 TrainKap: 0.309 on NN ([12, 6], 0.5 thr)
+[CHURN2][2017-07-26 10:45:11]  Computing confusion matrix for 244512 observations
+[CHURN2][2017-07-26 10:45:12]  Computing confusion matrix for 1385573 observations
+[CHURN2][2017-07-26 10:45:14] TestRec: 0.549 TestKap: 0.363 TrainRec: 0.552 TrainKap: 0.364 on NN ([24, 12], 0.5 thr)
+[CHURN2][2017-07-26 10:45:14]  Computing confusion matrix for 244512 observations
+[CHURN2][2017-07-26 10:45:15]  Computing confusion matrix for 1385573 observations
+[CHURN2][2017-07-26 10:45:17] TestRec: 0.326 TestKap: 0.283 TrainRec: 0.328 TrainKap: 0.286 on NN ([24, 6], 0.5 thr)
+[CHURN2][2017-07-26 10:45:17]  Computing confusion matrix for 244512 observations
+[CHURN2][2017-07-26 10:45:18]  Computing confusion matrix for 1385573 observations
+[CHURN2][2017-07-26 10:45:20] TestRec: 0.387 TestKap: 0.311 TrainRec: 0.390 TrainKap: 0.314 on NN ([24, 12, 6], 0.5 thr)
+[CHURN2][2017-07-26 10:45:20]  Computing confusion matrix for 244512 observations
+[CHURN2][2017-07-26 10:45:21]  Computing confusion matrix for 1385573 observations
+[CHURN2][2017-07-26 10:45:23] TestRec: 0.000 TestKap: 0.000 TrainRec: 0.000 TrainKap: 0.000 on NN ([12, 6, 3], 0.5 thr)
+[CHURN2][2017-07-26 10:45:23]  Computing confusion matrix for 244512 observations
+[CHURN2][2017-07-26 10:45:24]  Computing confusion matrix for 1385573 observations
+[CHURN2][2017-07-26 10:45:26] TestRec: 0.357 TestKap: 0.299 TrainRec: 0.360 TrainKap: 0.302 on NN ([6, 3], 0.5 thr)
+[CHURN2][2017-07-26 10:45:26]  Computing confusion matrix for 244512 observations
+[CHURN2][2017-07-26 10:45:27]  Computing confusion matrix for 1385573 observations
+[CHURN2][2017-07-26 10:45:29] TestRec: 0.077 TestKap: 0.082 TrainRec: 0.077 TrainKap: 0.081 on NN ([24, 12, 6, 3], 0.5 thr)
+[CHURN2][2017-07-26 10:45:29] DNN processing time: 98.4 min
+[CHURN2][2017-07-26 10:45:29] Summing results
+[CHURN2][2017-07-26 10:45:29] TestRec: 0.539 TestKap: 0.365 TrainRec: 0.542 TrainKap: 0.367 on NN ([448, 224, 112, 56], 0.4 thr)
+[CHURN2][2017-07-26 10:45:29] TestRec: 0.424 TestKap: 0.331 TrainRec: 0.428 TrainKap: 0.336 on NN ([448, 112], 0.4 thr)
+[CHURN2][2017-07-26 10:45:29] TestRec: 0.847 TestKap: 0.306 TrainRec: 0.847 TrainKap: 0.305 on NN ([56, 28], 0.4 thr)
+[CHURN2][2017-07-26 10:45:29] TestRec: 0.795 TestKap: 0.332 TrainRec: 0.795 TrainKap: 0.332 on NN ([112, 56], 0.4 thr)
+[CHURN2][2017-07-26 10:45:29] TestRec: 0.743 TestKap: 0.355 TrainRec: 0.743 TrainKap: 0.355 on NN ([112, 28], 0.4 thr)
+[CHURN2][2017-07-26 10:45:29] TestRec: 0.619 TestKap: 0.370 TrainRec: 0.621 TrainKap: 0.370 on NN ([112, 56, 28], 0.4 thr)
+[CHURN2][2017-07-26 10:45:29] TestRec: 0.671 TestKap: 0.370 TrainRec: 0.671 TrainKap: 0.369 on NN ([56, 28, 14], 0.4 thr)
+[CHURN2][2017-07-26 10:45:29] TestRec: 0.834 TestKap: 0.270 TrainRec: 0.832 TrainKap: 0.268 on NN ([28, 14], 0.4 thr)
+[CHURN2][2017-07-26 10:45:29] TestRec: 0.533 TestKap: 0.364 TrainRec: 0.536 TrainKap: 0.366 on NN ([112, 56, 28, 14], 0.4 thr)
+[CHURN2][2017-07-26 10:45:29] TestRec: 0.931 TestKap: 0.231 TrainRec: 0.931 TrainKap: 0.231 on NN ([28, 14, 7], 0.4 thr)
+[CHURN2][2017-07-26 10:45:29] TestRec: 0.648 TestKap: 0.352 TrainRec: 0.649 TrainKap: 0.352 on NN ([14, 7], 0.4 thr)
+[CHURN2][2017-07-26 10:45:29] TestRec: 0.543 TestKap: 0.365 TrainRec: 0.545 TrainKap: 0.367 on NN ([112, 56, 28, 14, 7], 0.4 thr)
+[CHURN2][2017-07-26 10:45:29] TestRec: 0.507 TestKap: 0.358 TrainRec: 0.509 TrainKap: 0.360 on NN ([472, 236, 118, 59], 0.4 thr)
+[CHURN2][2017-07-26 10:45:29] TestRec: 0.585 TestKap: 0.371 TrainRec: 0.587 TrainKap: 0.372 on NN ([472, 118], 0.4 thr)
+[CHURN2][2017-07-26 10:45:29] TestRec: 0.729 TestKap: 0.360 TrainRec: 0.729 TrainKap: 0.358 on NN ([59, 29], 0.4 thr)
+[CHURN2][2017-07-26 10:45:29] TestRec: 0.829 TestKap: 0.318 TrainRec: 0.829 TrainKap: 0.317 on NN ([118, 59], 0.4 thr)
+[CHURN2][2017-07-26 10:45:29] TestRec: 0.656 TestKap: 0.366 TrainRec: 0.659 TrainKap: 0.368 on NN ([118, 29], 0.4 thr)
+[CHURN2][2017-07-26 10:45:29] TestRec: 0.514 TestKap: 0.359 TrainRec: 0.517 TrainKap: 0.361 on NN ([118, 59, 29], 0.4 thr)
+[CHURN2][2017-07-26 10:45:29] TestRec: 0.588 TestKap: 0.365 TrainRec: 0.589 TrainKap: 0.366 on NN ([59, 29, 14], 0.4 thr)
+[CHURN2][2017-07-26 10:45:29] TestRec: 0.893 TestKap: 0.273 TrainRec: 0.892 TrainKap: 0.271 on NN ([29, 14], 0.4 thr)
+[CHURN2][2017-07-26 10:45:29] TestRec: 0.532 TestKap: 0.362 TrainRec: 0.535 TrainKap: 0.365 on NN ([118, 59, 29, 14], 0.4 thr)
+[CHURN2][2017-07-26 10:45:29] TestRec: 0.490 TestKap: 0.354 TrainRec: 0.492 TrainKap: 0.356 on NN ([29, 14, 7], 0.4 thr)
+[CHURN2][2017-07-26 10:45:29] TestRec: 0.775 TestKap: 0.334 TrainRec: 0.777 TrainKap: 0.333 on NN ([14, 7], 0.4 thr)
+[CHURN2][2017-07-26 10:45:29] TestRec: 0.483 TestKap: 0.352 TrainRec: 0.486 TrainKap: 0.355 on NN ([118, 59, 29, 14, 7], 0.4 thr)
+[CHURN2][2017-07-26 10:45:29] TestRec: 0.559 TestKap: 0.329 TrainRec: 0.560 TrainKap: 0.329 on NN ([96, 48, 24, 12], 0.4 thr)
+[CHURN2][2017-07-26 10:45:29] TestRec: 0.732 TestKap: 0.357 TrainRec: 0.731 TrainKap: 0.356 on NN ([96, 24], 0.4 thr)
+[CHURN2][2017-07-26 10:45:29] TestRec: 0.739 TestKap: 0.344 TrainRec: 0.738 TrainKap: 0.342 on NN ([12, 6], 0.4 thr)
+[CHURN2][2017-07-26 10:45:29] TestRec: 0.803 TestKap: 0.325 TrainRec: 0.804 TrainKap: 0.325 on NN ([24, 12], 0.4 thr)
+[CHURN2][2017-07-26 10:45:29] TestRec: 0.723 TestKap: 0.362 TrainRec: 0.722 TrainKap: 0.360 on NN ([24, 6], 0.4 thr)
+[CHURN2][2017-07-26 10:45:29] TestRec: 0.566 TestKap: 0.367 TrainRec: 0.566 TrainKap: 0.367 on NN ([24, 12, 6], 0.4 thr)
+[CHURN2][2017-07-26 10:45:29] TestRec: 0.620 TestKap: 0.358 TrainRec: 0.618 TrainKap: 0.356 on NN ([12, 6, 3], 0.4 thr)
+[CHURN2][2017-07-26 10:45:29] TestRec: 0.646 TestKap: 0.339 TrainRec: 0.647 TrainKap: 0.339 on NN ([6, 3], 0.4 thr)
+[CHURN2][2017-07-26 10:45:29] TestRec: 0.562 TestKap: 0.367 TrainRec: 0.563 TrainKap: 0.368 on NN ([24, 12, 6, 3], 0.4 thr)
+[CHURN2][2017-07-26 10:45:29] TestRec: 0.483 TestKap: 0.351 TrainRec: 0.487 TrainKap: 0.355 on NN ([448, 224, 112, 56], 0.4 thr)
+[CHURN2][2017-07-26 10:45:30] TestRec: 0.312 TestKap: 0.279 TrainRec: 0.314 TrainKap: 0.281 on NN ([448, 112], 0.4 thr)
+[CHURN2][2017-07-26 10:45:30] TestRec: 0.750 TestKap: 0.354 TrainRec: 0.749 TrainKap: 0.352 on NN ([56, 28], 0.4 thr)
+[CHURN2][2017-07-26 10:45:30] TestRec: 0.666 TestKap: 0.370 TrainRec: 0.666 TrainKap: 0.369 on NN ([112, 56], 0.4 thr)
+[CHURN2][2017-07-26 10:45:30] TestRec: 0.615 TestKap: 0.371 TrainRec: 0.617 TrainKap: 0.371 on NN ([112, 28], 0.4 thr)
+[CHURN2][2017-07-26 10:45:30] TestRec: 0.499 TestKap: 0.355 TrainRec: 0.502 TrainKap: 0.358 on NN ([112, 56, 28], 0.4 thr)
+[CHURN2][2017-07-26 10:45:30] TestRec: 0.510 TestKap: 0.359 TrainRec: 0.513 TrainKap: 0.362 on NN ([56, 28, 14], 0.4 thr)
+[CHURN2][2017-07-26 10:45:30] TestRec: 0.703 TestKap: 0.327 TrainRec: 0.707 TrainKap: 0.329 on NN ([28, 14], 0.4 thr)
+[CHURN2][2017-07-26 10:45:30] TestRec: 0.351 TestKap: 0.299 TrainRec: 0.355 TrainKap: 0.303 on NN ([112, 56, 28, 14], 0.4 thr)
+[CHURN2][2017-07-26 10:45:30] TestRec: 0.844 TestKap: 0.308 TrainRec: 0.843 TrainKap: 0.306 on NN ([28, 14, 7], 0.4 thr)
+[CHURN2][2017-07-26 10:45:30] TestRec: 0.505 TestKap: 0.331 TrainRec: 0.506 TrainKap: 0.332 on NN ([14, 7], 0.4 thr)
+[CHURN2][2017-07-26 10:45:30] TestRec: 0.390 TestKap: 0.317 TrainRec: 0.392 TrainKap: 0.319 on NN ([112, 56, 28, 14, 7], 0.4 thr)
+[CHURN2][2017-07-26 10:45:30] TestRec: 0.402 TestKap: 0.322 TrainRec: 0.406 TrainKap: 0.326 on NN ([472, 236, 118, 59], 0.4 thr)
+[CHURN2][2017-07-26 10:45:30] TestRec: 0.527 TestKap: 0.364 TrainRec: 0.529 TrainKap: 0.366 on NN ([472, 118], 0.4 thr)
+[CHURN2][2017-07-26 10:45:30] TestRec: 0.600 TestKap: 0.369 TrainRec: 0.599 TrainKap: 0.368 on NN ([59, 29], 0.4 thr)
+[CHURN2][2017-07-26 10:45:30] TestRec: 0.684 TestKap: 0.369 TrainRec: 0.684 TrainKap: 0.368 on NN ([118, 59], 0.4 thr)
+[CHURN2][2017-07-26 10:45:30] TestRec: 0.565 TestKap: 0.364 TrainRec: 0.569 TrainKap: 0.368 on NN ([118, 29], 0.4 thr)
+[CHURN2][2017-07-26 10:45:30] TestRec: 0.421 TestKap: 0.329 TrainRec: 0.424 TrainKap: 0.333 on NN ([118, 59, 29], 0.4 thr)
+[CHURN2][2017-07-26 10:45:30] TestRec: 0.542 TestKap: 0.360 TrainRec: 0.544 TrainKap: 0.362 on NN ([59, 29, 14], 0.4 thr)
+[CHURN2][2017-07-26 10:45:30] TestRec: 0.797 TestKap: 0.331 TrainRec: 0.798 TrainKap: 0.330 on NN ([29, 14], 0.4 thr)
+[CHURN2][2017-07-26 10:45:30] TestRec: 0.461 TestKap: 0.344 TrainRec: 0.464 TrainKap: 0.347 on NN ([118, 59, 29, 14], 0.4 thr)
+[CHURN2][2017-07-26 10:45:30] TestRec: 0.383 TestKap: 0.313 TrainRec: 0.387 TrainKap: 0.318 on NN ([29, 14, 7], 0.4 thr)
+[CHURN2][2017-07-26 10:45:30] TestRec: 0.638 TestKap: 0.368 TrainRec: 0.640 TrainKap: 0.369 on NN ([14, 7], 0.4 thr)
+[CHURN2][2017-07-26 10:45:30] TestRec: 0.374 TestKap: 0.310 TrainRec: 0.377 TrainKap: 0.314 on NN ([118, 59, 29, 14, 7], 0.4 thr)
+[CHURN2][2017-07-26 10:45:30] TestRec: 0.524 TestKap: 0.342 TrainRec: 0.525 TrainKap: 0.344 on NN ([96, 48, 24, 12], 0.4 thr)
+[CHURN2][2017-07-26 10:45:30] TestRec: 0.576 TestKap: 0.370 TrainRec: 0.576 TrainKap: 0.371 on NN ([96, 24], 0.4 thr)
+[CHURN2][2017-07-26 10:45:30] TestRec: 0.615 TestKap: 0.349 TrainRec: 0.614 TrainKap: 0.347 on NN ([12, 6], 0.4 thr)
+[CHURN2][2017-07-26 10:45:30] TestRec: 0.682 TestKap: 0.367 TrainRec: 0.681 TrainKap: 0.366 on NN ([24, 12], 0.4 thr)
+[CHURN2][2017-07-26 10:45:30] TestRec: 0.564 TestKap: 0.367 TrainRec: 0.564 TrainKap: 0.367 on NN ([24, 6], 0.4 thr)
+[CHURN2][2017-07-26 10:45:30] TestRec: 0.414 TestKap: 0.318 TrainRec: 0.416 TrainKap: 0.320 on NN ([24, 12, 6], 0.4 thr)
+[CHURN2][2017-07-26 10:45:30] TestRec: 0.484 TestKap: 0.342 TrainRec: 0.485 TrainKap: 0.343 on NN ([12, 6, 3], 0.4 thr)
+[CHURN2][2017-07-26 10:45:30] TestRec: 0.554 TestKap: 0.356 TrainRec: 0.556 TrainKap: 0.357 on NN ([6, 3], 0.4 thr)
+[CHURN2][2017-07-26 10:45:30] TestRec: 0.523 TestKap: 0.362 TrainRec: 0.525 TrainKap: 0.364 on NN ([24, 12, 6, 3], 0.4 thr)
+[CHURN2][2017-07-26 10:45:30] TestRec: 0.360 TestKap: 0.302 TrainRec: 0.364 TrainKap: 0.306 on NN ([448, 224, 112, 56], 0.5 thr)
+[CHURN2][2017-07-26 10:45:30] TestRec: 0.140 TestKap: 0.154 TrainRec: 0.142 TrainKap: 0.158 on NN ([448, 112], 0.5 thr)
+[CHURN2][2017-07-26 10:45:30] TestRec: 0.569 TestKap: 0.368 TrainRec: 0.570 TrainKap: 0.368 on NN ([56, 28], 0.5 thr)
+[CHURN2][2017-07-26 10:45:30] TestRec: 0.511 TestKap: 0.359 TrainRec: 0.514 TrainKap: 0.361 on NN ([112, 56], 0.5 thr)
+[CHURN2][2017-07-26 10:45:30] TestRec: 0.500 TestKap: 0.356 TrainRec: 0.504 TrainKap: 0.359 on NN ([112, 28], 0.5 thr)
+[CHURN2][2017-07-26 10:45:30] TestRec: 0.264 TestKap: 0.247 TrainRec: 0.266 TrainKap: 0.250 on NN ([112, 56, 28], 0.5 thr)
+[CHURN2][2017-07-26 10:45:30] TestRec: 0.242 TestKap: 0.231 TrainRec: 0.244 TrainKap: 0.234 on NN ([56, 28, 14], 0.5 thr)
+[CHURN2][2017-07-26 10:45:30] TestRec: 0.426 TestKap: 0.324 TrainRec: 0.427 TrainKap: 0.327 on NN ([28, 14], 0.5 thr)
+[CHURN2][2017-07-26 10:45:30] TestRec: 0.244 TestKap: 0.233 TrainRec: 0.245 TrainKap: 0.235 on NN ([112, 56, 28, 14], 0.5 thr)
+[CHURN2][2017-07-26 10:45:30] TestRec: 0.719 TestKap: 0.357 TrainRec: 0.720 TrainKap: 0.357 on NN ([28, 14, 7], 0.5 thr)
+[CHURN2][2017-07-26 10:45:30] TestRec: 0.360 TestKap: 0.294 TrainRec: 0.362 TrainKap: 0.297 on NN ([14, 7], 0.5 thr)
+[CHURN2][2017-07-26 10:45:30] TestRec: 0.163 TestKap: 0.173 TrainRec: 0.164 TrainKap: 0.175 on NN ([112, 56, 28, 14, 7], 0.5 thr)
+[CHURN2][2017-07-26 10:45:30] TestRec: 0.091 TestKap: 0.108 TrainRec: 0.091 TrainKap: 0.109 on NN ([472, 236, 118, 59], 0.5 thr)
+[CHURN2][2017-07-26 10:45:30] TestRec: 0.404 TestKap: 0.324 TrainRec: 0.407 TrainKap: 0.327 on NN ([472, 118], 0.5 thr)
+[CHURN2][2017-07-26 10:45:30] TestRec: 0.526 TestKap: 0.360 TrainRec: 0.529 TrainKap: 0.363 on NN ([59, 29], 0.5 thr)
+[CHURN2][2017-07-26 10:45:30] TestRec: 0.512 TestKap: 0.358 TrainRec: 0.515 TrainKap: 0.360 on NN ([118, 59], 0.5 thr)
+[CHURN2][2017-07-26 10:45:30] TestRec: 0.478 TestKap: 0.348 TrainRec: 0.481 TrainKap: 0.351 on NN ([118, 29], 0.5 thr)
+[CHURN2][2017-07-26 10:45:30] TestRec: 0.236 TestKap: 0.229 TrainRec: 0.239 TrainKap: 0.233 on NN ([118, 59, 29], 0.5 thr)
+[CHURN2][2017-07-26 10:45:30] TestRec: 0.217 TestKap: 0.217 TrainRec: 0.217 TrainKap: 0.218 on NN ([59, 29, 14], 0.5 thr)
+[CHURN2][2017-07-26 10:45:30] TestRec: 0.644 TestKap: 0.373 TrainRec: 0.642 TrainKap: 0.372 on NN ([29, 14], 0.5 thr)
+[CHURN2][2017-07-26 10:45:30] TestRec: 0.119 TestKap: 0.136 TrainRec: 0.122 TrainKap: 0.139 on NN ([118, 59, 29, 14], 0.5 thr)
+[CHURN2][2017-07-26 10:45:30] TestRec: 0.250 TestKap: 0.237 TrainRec: 0.252 TrainKap: 0.240 on NN ([29, 14, 7], 0.5 thr)
+[CHURN2][2017-07-26 10:45:30] TestRec: 0.416 TestKap: 0.324 TrainRec: 0.418 TrainKap: 0.327 on NN ([14, 7], 0.5 thr)
+[CHURN2][2017-07-26 10:45:30] TestRec: 0.268 TestKap: 0.250 TrainRec: 0.270 TrainKap: 0.253 on NN ([118, 59, 29, 14, 7], 0.5 thr)
+[CHURN2][2017-07-26 10:45:30] TestRec: 0.142 TestKap: 0.142 TrainRec: 0.143 TrainKap: 0.144 on NN ([96, 48, 24, 12], 0.5 thr)
+[CHURN2][2017-07-26 10:45:30] TestRec: 0.506 TestKap: 0.358 TrainRec: 0.509 TrainKap: 0.360 on NN ([96, 24], 0.5 thr)
+[CHURN2][2017-07-26 10:45:30] TestRec: 0.374 TestKap: 0.305 TrainRec: 0.377 TrainKap: 0.309 on NN ([12, 6], 0.5 thr)
+[CHURN2][2017-07-26 10:45:30] TestRec: 0.549 TestKap: 0.363 TrainRec: 0.552 TrainKap: 0.364 on NN ([24, 12], 0.5 thr)
+[CHURN2][2017-07-26 10:45:30] TestRec: 0.326 TestKap: 0.283 TrainRec: 0.328 TrainKap: 0.286 on NN ([24, 6], 0.5 thr)
+[CHURN2][2017-07-26 10:45:30] TestRec: 0.387 TestKap: 0.311 TrainRec: 0.390 TrainKap: 0.314 on NN ([24, 12, 6], 0.5 thr)
+[CHURN2][2017-07-26 10:45:30] TestRec: 0.000 TestKap: 0.000 TrainRec: 0.000 TrainKap: 0.000 on NN ([12, 6, 3], 0.5 thr)
+[CHURN2][2017-07-26 10:45:30] TestRec: 0.357 TestKap: 0.299 TrainRec: 0.360 TrainKap: 0.302 on NN ([6, 3], 0.5 thr)
+[CHURN2][2017-07-26 10:45:30] TestRec: 0.077 TestKap: 0.082 TrainRec: 0.077 TrainKap: 0.081 on NN ([24, 12, 6, 3], 0.5 thr)
+[CHURN2][2017-07-26 10:45:30] Best train Recall: 0.931 Kappa: 0.231 for 28, 14, 7
+[CHURN2][2017-07-26 10:45:30] Best test  Recall: 0.931 Kappa: 0.231 for 28, 14, 7
+
+Accuracy96      31   0.776    0.0000     0.0000    0.777     0.0000      0.0000           12, 6, 3    12 0.50
+Accuracy98      33   0.778    0.0822     0.0775    0.778     0.0814      0.0772       24, 12, 6, 3    12 0.50
+Accuracy78      13   0.784    0.1078     0.0906    0.785     0.1086      0.0910  472, 236, 118, 59    59 0.50
+Accuracy86      21   0.786    0.1357     0.1195    0.787     0.1388      0.1217    118, 59, 29, 14    59 0.50
+Accuracy67       2   0.786    0.1545     0.1399    0.787     0.1576      0.1425           448, 112    56 0.50
+Accuracy90      25   0.780    0.1423     0.1421    0.780     0.1437      0.1431     96, 48, 24, 12    12 0.50
+Accuracy77      12   0.786    0.1730     0.1632    0.787     0.1746      0.1641 112, 56, 28, 14, 7    56 0.50
+Accuracy84      19   0.788    0.2169     0.2166    0.789     0.2181      0.2173         59, 29, 14    59 0.50
+Accuracy83      18   0.787    0.2293     0.2360    0.788     0.2328      0.2387        118, 59, 29    59 0.50
+Accuracy72       7   0.786    0.2310     0.2419    0.787     0.2342      0.2441         56, 28, 14    56 0.50
+Accuracy74       9   0.787    0.2333     0.2438    0.788     0.2353      0.2451    112, 56, 28, 14    56 0.50
+Accuracy87      22   0.786    0.2372     0.2502    0.787     0.2399      0.2524          29, 14, 7    59 0.50
+Accuracy71       6   0.787    0.2473     0.2639    0.788     0.2497      0.2657        112, 56, 28    56 0.50
+Accuracy89      24   0.787    0.2505     0.2677    0.788     0.2531      0.2696 118, 59, 29, 14, 7    59 0.50
+Accuracy34       2   0.788    0.2789     0.3120    0.788     0.2806      0.3137           448, 112    56 0.45
+Accuracy94      29   0.786    0.2833     0.3261    0.787     0.2859      0.3282              24, 6    12 0.50
+Accuracy41       9   0.786    0.2988     0.3514    0.787     0.3033      0.3553    112, 56, 28, 14    56 0.45
+Accuracy97      32   0.784    0.2989     0.3569    0.786     0.3022      0.3598               6, 3    12 0.50
+Accuracy76      11   0.781    0.2937     0.3595    0.782     0.2972      0.3623              14, 7    56 0.50
+Accuracy66       1   0.785    0.3016     0.3601    0.786     0.3060      0.3642  448, 224, 112, 56    56 0.50
+Accuracy92      27   0.783    0.3048     0.3741    0.784     0.3088      0.3770              12, 6    12 0.50
+Accuracy56      24   0.785    0.3103     0.3744    0.787     0.3141      0.3774 118, 59, 29, 14, 7    59 0.45
+Accuracy54      22   0.785    0.3134     0.3830    0.786     0.3178      0.3866          29, 14, 7    59 0.45
+Accuracy95      30   0.782    0.3109     0.3868    0.783     0.3145      0.3900          24, 12, 6    12 0.50
+Accuracy44      12   0.784    0.3166     0.3900    0.785     0.3192      0.3921 112, 56, 28, 14, 7    56 0.45
+Accuracy45      13   0.784    0.3220     0.4025    0.785     0.3260      0.4056  472, 236, 118, 59    59 0.45
+Accuracy79      14   0.784    0.3236     0.4041    0.785     0.3271      0.4071           472, 118    59 0.50
+Accuracy62      30   0.778    0.3178     0.4142    0.779     0.3202      0.4160          24, 12, 6    12 0.45
+Accuracy88      23   0.781    0.3236     0.4157    0.782     0.3267      0.4185              14, 7    59 0.50
+Accuracy50      18   0.782    0.3293     0.4208    0.784     0.3334      0.4239        118, 59, 29    59 0.45
+Accuracy1        2   0.783    0.3314     0.4243    0.784     0.3358      0.4279           448, 112    56 0.40
+Accuracy73       8   0.778    0.3241     0.4257    0.780     0.3267      0.4275             28, 14    56 0.50
+Accuracy53      21   0.780    0.3436     0.4606    0.781     0.3472      0.4639    118, 59, 29, 14    59 0.45
+Accuracy82      17   0.778    0.3484     0.4783    0.778     0.3506      0.4814            118, 29    59 0.50
+Accuracy23      24   0.778    0.3515     0.4826    0.779     0.3550      0.4863 118, 59, 29, 14, 7    59 0.40
+Accuracy33       1   0.778    0.3514     0.4828    0.779     0.3551      0.4867  448, 224, 112, 56    56 0.45
+Accuracy63      31   0.773    0.3418     0.4841    0.774     0.3433      0.4848           12, 6, 3    12 0.45
+Accuracy21      22   0.778    0.3536     0.4896    0.779     0.3563      0.4924          29, 14, 7    59 0.40
+Accuracy38       6   0.776    0.3553     0.4989    0.777     0.3579      0.5020        112, 56, 28    56 0.45
+Accuracy70       5   0.776    0.3559     0.5000    0.777     0.3591      0.5037            112, 28    56 0.50
+Accuracy43      11   0.761    0.3308     0.5049    0.762     0.3322      0.5062              14, 7    56 0.45
+Accuracy91      26   0.776    0.3575     0.5065    0.776     0.3598      0.5093             96, 24    12 0.50
+Accuracy12      13   0.776    0.3582     0.5065    0.777     0.3600      0.5086  472, 236, 118, 59    59 0.40
+Accuracy39       7   0.775    0.3590     0.5104    0.776     0.3616      0.5135         56, 28, 14    56 0.45
+Accuracy69       4   0.775    0.3588     0.5113    0.776     0.3611      0.5136            112, 56    56 0.50
+Accuracy81      16   0.774    0.3580     0.5122    0.775     0.3604      0.5151            118, 59    59 0.50
+Accuracy17      18   0.774    0.3587     0.5140    0.775     0.3615      0.5172        118, 59, 29    59 0.40
+Accuracy65      33   0.774    0.3621     0.5233    0.775     0.3640      0.5252       24, 12, 6, 3    12 0.45
+Accuracy57      25   0.763    0.3420     0.5241    0.763     0.3436      0.5255     96, 48, 24, 12    12 0.45
+Accuracy80      15   0.772    0.3605     0.5259    0.773     0.3625      0.5289             59, 29    59 0.50
+Accuracy46      14   0.774    0.3635     0.5265    0.775     0.3661      0.5295           472, 118    59 0.45
+Accuracy20      21   0.772    0.3622     0.5319    0.773     0.3649      0.5346    118, 59, 29, 14    59 0.40
+Accuracy8        9   0.772    0.3637     0.5331    0.773     0.3662      0.5359    112, 56, 28, 14    56 0.40
+Accuracy         1   0.772    0.3654     0.5395    0.772     0.3670      0.5418  448, 224, 112, 56    56 0.40
+Accuracy51      19   0.768    0.3595     0.5417    0.769     0.3615      0.5437         59, 29, 14    59 0.45
+Accuracy11      12   0.771    0.3647     0.5427    0.772     0.3675      0.5454 112, 56, 28, 14, 7    56 0.40
+Accuracy93      28   0.768    0.3627     0.5495    0.768     0.3641      0.5519             24, 12    12 0.50
+Accuracy64      32   0.763    0.3562     0.5541    0.764     0.3571      0.5556               6, 3    12 0.45
+Accuracy24      25   0.746    0.3290     0.5586    0.746     0.3291      0.5595     96, 48, 24, 12    12 0.40
+Accuracy32      33   0.767    0.3668     0.5617    0.768     0.3680      0.5629       24, 12, 6, 3    12 0.40
+Accuracy61      29   0.767    0.3669     0.5638    0.767     0.3668      0.5643              24, 6    12 0.45
+Accuracy49      17   0.765    0.3640     0.5647    0.766     0.3677      0.5688            118, 29    59 0.45
+Accuracy29      30   0.766    0.3670     0.5658    0.767     0.3673      0.5662          24, 12, 6    12 0.40
+Accuracy68       3   0.766    0.3676     0.5687    0.766     0.3679      0.5695             56, 28    56 0.50
+Accuracy58      26   0.766    0.3703     0.5759    0.766     0.3707      0.5763             96, 24    12 0.45
+Accuracy13      14   0.764    0.3708     0.5853    0.764     0.3721      0.5875           472, 118    59 0.40
+Accuracy18      19   0.760    0.3652     0.5879    0.761     0.3663      0.5894         59, 29, 14    59 0.40
+Accuracy47      15   0.759    0.3691     0.6000    0.759     0.3679      0.5990             59, 29    59 0.45
+Accuracy59      27   0.744    0.3486     0.6145    0.743     0.3472      0.6142              12, 6    12 0.45
+Accuracy37       5   0.757    0.3710     0.6150    0.757     0.3715      0.6171            112, 28    56 0.45
+Accuracy5        6   0.755    0.3695     0.6190    0.755     0.3701      0.6211        112, 56, 28    56 0.40
+Accuracy30      31   0.748    0.3583     0.6199    0.748     0.3564      0.6184           12, 6, 3    12 0.40
+Accuracy55      23   0.750    0.3684     0.6381    0.750     0.3686      0.6402              14, 7    59 0.45
+Accuracy85      20   0.751    0.3734     0.6442    0.751     0.3718      0.6424             29, 14    59 0.50
+Accuracy31      32   0.730    0.3391     0.6459    0.729     0.3387      0.6474               6, 3    12 0.40
+Accuracy10      11   0.737    0.3516     0.6476    0.737     0.3517      0.6485              14, 7    56 0.40
+Accuracy16      17   0.744    0.3664     0.6557    0.745     0.3683      0.6589            118, 29    59 0.40
+Accuracy36       4   0.744    0.3697     0.6659    0.744     0.3691      0.6657            112, 56    56 0.45
+Accuracy6        7   0.743    0.3704     0.6715    0.743     0.3691      0.6709         56, 28, 14    56 0.40
+Accuracy60      28   0.739    0.3675     0.6818    0.738     0.3660      0.6806             24, 12    12 0.45
+Accuracy48      16   0.739    0.3691     0.6837    0.739     0.3683      0.6841            118, 59    59 0.45
+Accuracy40       8   0.706    0.3269     0.7031    0.707     0.3289      0.7067             28, 14    56 0.45
+Accuracy75      10   0.723    0.3571     0.7187    0.723     0.3570      0.7198          28, 14, 7    56 0.50
+Accuracy28      29   0.725    0.3616     0.7227    0.724     0.3601      0.7221              24, 6    12 0.40
+Accuracy14      15   0.722    0.3598     0.7289    0.722     0.3582      0.7288             59, 29    59 0.40
+Accuracy25      26   0.720    0.3574     0.7323    0.719     0.3555      0.7308             96, 24    12 0.40
+Accuracy26      27   0.709    0.3442     0.7390    0.708     0.3424      0.7383              12, 6    12 0.40
+Accuracy4        5   0.716    0.3550     0.7425    0.715     0.3545      0.7431            112, 28    56 0.40
+Accuracy35       3   0.713    0.3537     0.7496    0.713     0.3523      0.7489             56, 28    56 0.45
+Accuracy22      23   0.692    0.3336     0.7749    0.692     0.3333      0.7767              14, 7    59 0.40
+Accuracy3        4   0.686    0.3324     0.7948    0.686     0.3320      0.7951            112, 56    56 0.40
+Accuracy52      20   0.685    0.3311     0.7968    0.684     0.3304      0.7978             29, 14    59 0.45
+Accuracy27      28   0.679    0.3253     0.8026    0.679     0.3254      0.8039             24, 12    12 0.40
+Accuracy15      16   0.666    0.3179     0.8294    0.665     0.3170      0.8295            118, 59    59 0.40
+Accuracy7        8   0.626    0.2704     0.8337    0.625     0.2684      0.8323             28, 14    56 0.40
+Accuracy42      10   0.654    0.3075     0.8442    0.653     0.3059      0.8434          28, 14, 7    56 0.45
+Accuracy2        3   0.652    0.3064     0.8471    0.651     0.3050      0.8468             56, 28    56 0.40
+Accuracy19      20   0.610    0.2726     0.8928    0.609     0.2707      0.8917             29, 14    59 0.40
+Accuracy9       10   0.559    0.2314     0.9310    0.558     0.2309      0.9312          28, 14, 7    56 0.40
+           ModelID TestAcc TestKappa TestRecall TrainAcc TrainKappa TrainRecall             Layout NPRED THRS
+
+
+
+
+

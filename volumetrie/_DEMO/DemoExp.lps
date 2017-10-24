@@ -1,0 +1,208 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CONFIG>
+  <ProjectSession>
+    <PathDelim Value="\"/>
+    <Version Value="10"/>
+    <BuildModes Active="Default"/>
+    <Units Count="9">
+      <Unit0>
+        <Filename Value="DemoExp.lpr"/>
+        <IsPartOfProject Value="True"/>
+        <EditorIndex Value="-1"/>
+        <WindowIndex Value="-1"/>
+        <TopLine Value="-1"/>
+        <CursorPos X="-1" Y="-1"/>
+        <UsageCount Value="80"/>
+      </Unit0>
+      <Unit1>
+        <Filename Value="u_main.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="frm_Main"/>
+        <HasResources Value="True"/>
+        <ResourceBaseClass Value="Form"/>
+        <IsVisibleTab Value="True"/>
+        <TopLine Value="48"/>
+        <CursorPos X="3" Y="50"/>
+        <UsageCount Value="80"/>
+        <Loaded Value="True"/>
+        <LoadedDesigner Value="True"/>
+      </Unit1>
+      <Unit2>
+        <Filename Value="u_script.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="frm_Script"/>
+        <HasResources Value="True"/>
+        <ResourceBaseClass Value="Form"/>
+        <EditorIndex Value="1"/>
+        <TopLine Value="270"/>
+        <CursorPos X="48" Y="266"/>
+        <UsageCount Value="80"/>
+        <Loaded Value="True"/>
+        <LoadedDesigner Value="True"/>
+      </Unit2>
+      <Unit3>
+        <Filename Value="D:\lazarus\lcl\graphics.pp"/>
+        <UnitName Value="Graphics"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="254"/>
+        <CursorPos X="8" Y="274"/>
+        <UsageCount Value="27"/>
+      </Unit3>
+      <Unit4>
+        <Filename Value="D:\lazarus\lcl\lcltype.pp"/>
+        <UnitName Value="LCLType"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="1128"/>
+        <CursorPos X="3" Y="1140"/>
+        <UsageCount Value="5"/>
+      </Unit4>
+      <Unit5>
+        <Filename Value="D:\lazarus\fpc\3.0.2\source\rtl\win\wininc\messages.inc"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="1165"/>
+        <CursorPos X="6" Y="1177"/>
+        <UsageCount Value="5"/>
+      </Unit5>
+      <Unit6>
+        <Filename Value="D:\lazarus\fpc\3.0.2\source\rtl\win\wininc\redef.inc"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="363"/>
+        <CursorPos X="10" Y="375"/>
+        <UsageCount Value="5"/>
+      </Unit6>
+      <Unit7>
+        <Filename Value="D:\lazarus\lcl\controls.pp"/>
+        <UnitName Value="Controls"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="2157"/>
+        <CursorPos X="15" Y="2167"/>
+        <UsageCount Value="9"/>
+      </Unit7>
+      <Unit8>
+        <Filename Value="D:\lazarus\lcl\include\wincontrol.inc"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="6146"/>
+        <CursorPos X="3" Y="6150"/>
+        <UsageCount Value="9"/>
+      </Unit8>
+    </Units>
+    <JumpHistory Count="29" HistoryIndex="28">
+      <Position1>
+        <Filename Value="u_script.pas"/>
+        <Caret Line="170" Column="3" TopLine="168"/>
+      </Position1>
+      <Position2>
+        <Filename Value="u_script.pas"/>
+        <Caret Line="169" Column="3" TopLine="167"/>
+      </Position2>
+      <Position3>
+        <Filename Value="u_script.pas"/>
+        <Caret Line="170" Column="3" TopLine="168"/>
+      </Position3>
+      <Position4>
+        <Filename Value="u_script.pas"/>
+        <Caret Line="169" Column="3" TopLine="167"/>
+      </Position4>
+      <Position5>
+        <Filename Value="u_script.pas"/>
+        <Caret Line="170" Column="3" TopLine="168"/>
+      </Position5>
+      <Position6>
+        <Filename Value="u_script.pas"/>
+        <Caret Line="171" Column="3" TopLine="169"/>
+      </Position6>
+      <Position7>
+        <Filename Value="u_script.pas"/>
+        <Caret Line="172" Column="3" TopLine="170"/>
+      </Position7>
+      <Position8>
+        <Filename Value="u_script.pas"/>
+        <Caret Line="176" Column="3" TopLine="174"/>
+      </Position8>
+      <Position9>
+        <Filename Value="u_script.pas"/>
+        <Caret Line="182" Column="3" TopLine="180"/>
+      </Position9>
+      <Position10>
+        <Filename Value="u_script.pas"/>
+        <Caret Line="177" Column="3" TopLine="175"/>
+      </Position10>
+      <Position11>
+        <Filename Value="u_script.pas"/>
+        <Caret Line="255" Column="2" TopLine="230"/>
+      </Position11>
+      <Position12>
+        <Filename Value="u_script.pas"/>
+        <Caret Line="82" Column="28" TopLine="65"/>
+      </Position12>
+      <Position13>
+        <Filename Value="u_script.pas"/>
+        <Caret Line="352" Column="3" TopLine="332"/>
+      </Position13>
+      <Position14>
+        <Filename Value="u_script.pas"/>
+        <Caret Line="315" Column="15" TopLine="298"/>
+      </Position14>
+      <Position15>
+        <Filename Value="u_script.pas"/>
+        <Caret Line="353" Column="3" TopLine="333"/>
+      </Position15>
+      <Position16>
+        <Filename Value="u_script.pas"/>
+        <Caret Line="287" Column="27" TopLine="271"/>
+      </Position16>
+      <Position17>
+        <Filename Value="u_script.pas"/>
+        <Caret Line="139" Column="22" TopLine="120"/>
+      </Position17>
+      <Position18>
+        <Filename Value="u_script.pas"/>
+        <Caret Line="362" Column="16" TopLine="339"/>
+      </Position18>
+      <Position19>
+        <Filename Value="u_script.pas"/>
+        <Caret Line="293" Column="15" TopLine="277"/>
+      </Position19>
+      <Position20>
+        <Filename Value="u_script.pas"/>
+        <Caret Line="376" Column="30" TopLine="353"/>
+      </Position20>
+      <Position21>
+        <Filename Value="u_script.pas"/>
+        <Caret Line="284" Column="36" TopLine="274"/>
+      </Position21>
+      <Position22>
+        <Filename Value="u_main.pas"/>
+        <Caret Line="64" Column="23" TopLine="44"/>
+      </Position22>
+      <Position23>
+        <Filename Value="u_main.pas"/>
+        <Caret Line="63" Column="23" TopLine="43"/>
+      </Position23>
+      <Position24>
+        <Filename Value="u_main.pas"/>
+        <Caret Line="62" Column="23" TopLine="42"/>
+      </Position24>
+      <Position25>
+        <Filename Value="u_main.pas"/>
+        <Caret Line="64" Column="23" TopLine="44"/>
+      </Position25>
+      <Position26>
+        <Filename Value="u_main.pas"/>
+        <Caret Line="63" Column="23" TopLine="43"/>
+      </Position26>
+      <Position27>
+        <Filename Value="u_main.pas"/>
+        <Caret Line="69" Column="23" TopLine="45"/>
+      </Position27>
+      <Position28>
+        <Filename Value="u_main.pas"/>
+        <Caret Line="49" Column="3" TopLine="47"/>
+      </Position28>
+      <Position29>
+        <Filename Value="u_script.pas"/>
+        <Caret Line="376" Column="26" TopLine="356"/>
+      </Position29>
+    </JumpHistory>
+  </ProjectSession>
+</CONFIG>

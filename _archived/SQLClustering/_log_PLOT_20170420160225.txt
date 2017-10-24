@@ -1,0 +1,9 @@
+Preparing helper lib v1.4.1...
+[2017-04-20 16:02:25] BEGIN PLOT Clustering/Exploration script SQL_CONNECT=3
+XDF File: D:/Dropbox/_HYPERLOOP/SQLClustering/SELECT_ClusterId_R_M_FROM_dbo_z2016rfm4_.xdf
+RevoScaleRConn MSSQLServer [driver={ODBC Driver 13 for SQL Server};server=VSQL08\HYPERLOOP;database=StatisticalStore;uid=andreidi;pwd=HypML2017]...
+[2017-04-20 16:02:25] Downloading [rxImport: SELECT [ClusterId],[R],[M] FROM [dbo].[z2016rfm4]]...
+  executed in 5.05s
+[2017-04-20 16:02:30] RevoScaleR loading dataframe [rxDataStep]...   executed in 1.31s
+  [Object df_in [data.frame] size: 33.5MB (1,756,813 rows by 3 cols)]
+Plotting 52704 rows

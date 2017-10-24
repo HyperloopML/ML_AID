@@ -1489,14 +1489,12 @@ if (DEMO) {
             timeit(sprintf(" Directly training SIMPLE XGB for %d rounds", nrounds),
                             xgb2 <- xgboost(data = as.matrix(df_micro[, Predictor.Fields]),
                                                 label = df_micro[, Target.Field],
-                                                missing = 0,
                                                 verbose = 0,
                                                 nround = nrounds))
 
             timeit(sprintf(" Directly training TUNED XGB for %d rounds", nrounds),
                             xgb3 <- xgboost(data = as.matrix(df_micro[, Predictor.Fields]),
                                                 label = df_micro[, Target.Field],
-                                                missing = 0,
                                                 verbose = 0,
                                                 nround = nrounds,
                                                 eta = cv_eta,
@@ -1525,7 +1523,6 @@ if (DEMO) {
             timeit(sprintf(" Directly training XGB for %d rounds", nrounds),
                             xgb <- xgboost(data = as.matrix(df_micro[, Predictor.Fields]),
                                                 label = df_micro[, Target.Field],
-                                                missing = 0,
                                                 verbose = 0,
                                                 nround = nrounds,
                                                 eta = cv_eta,

@@ -1,0 +1,368 @@
+object frm_Script: Tfrm_Script
+  Left = 392
+  Height = 700
+  Top = 150
+  Width = 1200
+  Caption = 'Demonstratie automata'
+  ClientHeight = 700
+  ClientWidth = 1200
+  Font.Name = 'Arial'
+  OnCreate = FormCreate
+  Position = poScreenCenter
+  LCLVersion = '1.6.4.0'
+  object GroupBox1: TGroupBox
+    Left = 408
+    Height = 384
+    Top = 0
+    Width = 786
+    Caption = 'Fluxul datelor de iesire rezultate in urma actiunilor'
+    ClientHeight = 351
+    ClientWidth = 782
+    Font.Height = -20
+    Font.Name = 'Arial'
+    Font.Style = [fsBold]
+    ParentFont = False
+    TabOrder = 0
+    OnClick = GroupBox1Click
+    object dg_grid: TDBGrid
+      Left = 0
+      Height = 351
+      Top = 0
+      Width = 782
+      Align = alClient
+      Color = clWindow
+      Columns = <>
+      DataSource = dsrc_log
+      Font.Height = -13
+      Font.Name = 'Arial'
+      ParentFont = False
+      TabOrder = 0
+      TitleFont.Height = -13
+      TitleFont.Name = 'Arial'
+    end
+  end
+  object btn_start: TBitBtn
+    Left = 8
+    Height = 70
+    Top = 616
+    Width = 226
+    Caption = 'Porneste demo'
+    Font.Height = -20
+    Font.Name = 'Arial'
+    Kind = bkYes
+    OnClick = btn_startClick
+    ParentFont = False
+    TabOrder = 1
+  end
+  object BitBtn2: TBitBtn
+    Left = 472
+    Height = 70
+    Top = 616
+    Width = 224
+    Caption = 'Restart demo'
+    Font.Height = -20
+    Font.Name = 'Arial'
+    Kind = bkRetry
+    OnClick = BitBtn2Click
+    ParentFont = False
+    TabOrder = 2
+  end
+  object BitBtn3: TBitBtn
+    Left = 240
+    Height = 70
+    Top = 616
+    Width = 226
+    Caption = 'Pauza demo'
+    Font.Height = -20
+    Font.Name = 'Arial'
+    Glyph.Data = {
+      36040000424D3604000000000000360000002800000010000000100000000100
+      2000000000000004000064000000640000000000000000000000EEEEEE00EEEE
+      EE00EEEEEE00987050FFA46534FFA46534FF987050FFFBE3BC00FBE3BC009870
+      50FFA46534FFA46534FF987050FF000000000000000000000000987050009870
+      5000987050009F683EFFC99C76FFCDA585FF9F683EFF98705000987050009F68
+      3EFFC99C76FFCDA585FF9F683EFF000000000000000000000000A2663800A266
+      3800A2663800A36535FFD7AC88FFE1C5ADFFA36535FFA2663800A2663800A365
+      35FFD7AC88FFE1C5ADFFA36535FF000000000000000000000000A4653400A465
+      3400A4653400A46534FFD8A981FFE6CCB5FFA46534FFA4653400A4653400A465
+      34FFD8A981FFE6CCB5FFA46534FF000000000000000000000000A4653400A465
+      3400A4653400A46534FFD7A77FFFE6CCB5FFA46534FFA4653400A4653400A465
+      34FFD7A77FFFE6CCB5FFA46534FF000000000000000000000000A4653400A465
+      3400A4653400A46534FFD7A981FFE6CDB6FFA46534FFA4653400A4653400A465
+      34FFD7A981FFE6CDB6FFA46534FF000000000000000000000000A4653400A465
+      3400A4653400A46534FFD8AB84FFE6CEB7FFA46534FFA4653400A4653400A465
+      34FFD8AB84FFE6CEB7FFA46534FF000000000000000000000000A4653400A465
+      3400A4653400A46534FFD9AE89FFE6CEB7FFA46534FFA4653400A4653400A465
+      34FFD9AE89FFE6CEB7FFA46534FF000000000000000000000000A4653400A465
+      3400A4653400A46534FFD9B08DFFE6CEB7FFA46534FFA4653400A4653400A465
+      34FFD9B08DFFE6CEB7FFA46534FF000000000000000000000000A4653400A465
+      3400A4653400A46534FFD9B28FFFE6CEB7FFA46534FFA4653400A4653400A465
+      34FFD9B28FFFE6CEB7FFA46534FF000000000000000000000000A4653400A465
+      3400A4653400A46534FFDAB391FFE6CEB7FFA46534FFA4653400A4653400A465
+      34FFDAB391FFE6CEB7FFA46534FF000000000000000000000000A4653400A465
+      3400A4653400A46534FFDAB593FFE6CFB9FFA46534FFA4653400A4653400A465
+      34FFDAB593FFE6CFB9FFA46534FF000000000000000000000000A4653400A465
+      3400A4653400A46534FFDBB694FFE7D1BBFFA46534FFA4653400A4653400A465
+      34FFDBB694FFE7D1BBFFA46534FF000000000000000000000000A4653400A465
+      3400A4653400A46534FFDDBC9DFFE7D1BCFFA46534FFA4653400A4653400A465
+      34FFDDBC9DFFE7D1BCFFA46534FF000000000000000000000000996E4C00996E
+      4C00996E4C00A26637FFDCBFA4FFDFC6AFFFA26637FF996E4C00996E4C00A266
+      37FFDCBFA4FFDFC6AFFFA26637FF000000000000000000000000EEEEEE00EEEE
+      EE00EEEEEE00996E4CFFAB7143FFAC7244FF996E4CFFFBE3BC00FBE3BC00996E
+      4CFFAB7143FFAC7244FF996E4CFF000000000000000000000000
+    }
+    OnClick = BitBtn3Click
+    ParentFont = False
+    TabOrder = 3
+  end
+  object BitBtn4: TBitBtn
+    Left = 968
+    Height = 70
+    Top = 616
+    Width = 226
+    Caption = 'Inchide demo'
+    Font.Height = -20
+    Font.Name = 'Arial'
+    Kind = bkClose
+    ModalResult = 11
+    OnClick = BitBtn4Click
+    ParentFont = False
+    TabOrder = 4
+  end
+  object GroupBox2: TGroupBox
+    Left = 8
+    Height = 608
+    Top = 0
+    Width = 400
+    Caption = 'Fluxul actiunilor'
+    ClientHeight = 575
+    ClientWidth = 396
+    Font.Height = -20
+    Font.Name = 'Arial'
+    Font.Style = [fsBold]
+    ParentFont = False
+    TabOrder = 5
+    OnClick = GroupBox1Click
+    object lb_log: TListBox
+      Left = 8
+      Height = 568
+      Top = 0
+      Width = 384
+      BorderSpacing.Left = 1
+      BorderSpacing.Top = 1
+      BorderSpacing.Right = 1
+      BorderSpacing.Bottom = 1
+      BorderSpacing.Around = 1
+      BorderSpacing.InnerBorder = 1
+      ExtendedSelect = False
+      Font.Height = -15
+      Font.Name = 'Arial'
+      ItemHeight = 110
+      OnDrawItem = lb_logDrawItem
+      ParentFont = False
+      Style = lbOwnerDrawFixed
+      TabOrder = 0
+    end
+  end
+  object sld_timer: TTrackBar
+    Left = 720
+    Height = 40
+    Top = 648
+    Width = 216
+    Max = 2500
+    Min = 250
+    OnChange = sld_timerChange
+    Position = 1000
+    ScalePos = trBottom
+    TabOrder = 6
+  end
+  object Label1: TLabel
+    Left = 728
+    Height = 24
+    Top = 624
+    Width = 178
+    Caption = 'Viteza de executie:'
+    Font.Height = -20
+    Font.Name = 'Arial'
+    Font.Style = [fsBold]
+    ParentColor = False
+    ParentFont = False
+  end
+  object GroupBox3: TGroupBox
+    Left = 408
+    Height = 209
+    Top = 400
+    Width = 784
+    Caption = 'Informatii statistice despre sistem'
+    ClientHeight = 180
+    ClientWidth = 780
+    Font.Height = -20
+    Font.Name = 'Arial'
+    Font.Style = [fsBold]
+    ParentFont = False
+    TabOrder = 7
+    OnClick = GroupBox3Click
+    object Label2: TLabel
+      Left = 8
+      Height = 48
+      Top = 8
+      Width = 208
+      Alignment = taRightJustify
+      AutoSize = False
+      Caption = 'Numarul de citiri / evenimente WSN (optic):'
+      Font.Height = -17
+      Font.Name = 'Arial'
+      Font.Style = [fsBold]
+      ParentColor = False
+      ParentFont = False
+      WordWrap = True
+    end
+    object Label3: TLabel
+      Left = 8
+      Height = 48
+      Top = 64
+      Width = 208
+      Alignment = taRightJustify
+      AutoSize = False
+      Caption = 'Numarul de citiri / evenimente WSN (mag):'
+      Font.Height = -17
+      Font.Name = 'Arial'
+      Font.Style = [fsBold]
+      ParentColor = False
+      ParentFont = False
+      WordWrap = True
+      OnClick = Label3Click
+    end
+    object Label4: TLabel
+      Left = 8
+      Height = 48
+      Top = 120
+      Width = 208
+      Alignment = taRightJustify
+      AutoSize = False
+      Caption = 'Numarul de inferente / predictii cu DNN:'
+      Font.Height = -17
+      Font.Name = 'Arial'
+      Font.Style = [fsBold]
+      ParentColor = False
+      ParentFont = False
+      WordWrap = True
+      OnClick = Label3Click
+    end
+    object pnl_opt: TPanel
+      Left = 232
+      Height = 34
+      Top = 16
+      Width = 96
+      BevelInner = bvLowered
+      BorderStyle = bsSingle
+      TabOrder = 0
+    end
+    object pnl_mag: TPanel
+      Left = 232
+      Height = 32
+      Top = 72
+      Width = 96
+      BevelInner = bvLowered
+      BorderStyle = bsSingle
+      TabOrder = 1
+    end
+    object pnl_dnn: TPanel
+      Left = 232
+      Height = 34
+      Top = 128
+      Width = 96
+      BevelInner = bvLowered
+      BorderStyle = bsSingle
+      TabOrder = 2
+    end
+    object pnl_err: TPanel
+      Left = 656
+      Height = 34
+      Top = 40
+      Width = 96
+      BevelInner = bvLowered
+      BorderStyle = bsSingle
+      Font.Color = clRed
+      Font.Height = -20
+      Font.Style = [fsBold]
+      ParentFont = False
+      TabOrder = 3
+    end
+    object Label5: TLabel
+      Left = 440
+      Height = 48
+      Top = 32
+      Width = 200
+      Alignment = taRightJustify
+      AutoSize = False
+      Caption = 'Numarul de anomalii detectate de sistem:'
+      Font.Height = -17
+      Font.Name = 'Arial'
+      Font.Style = [fsBold]
+      ParentColor = False
+      ParentFont = False
+      WordWrap = True
+    end
+    object Label6: TLabel
+      Left = 368
+      Height = 48
+      Top = 88
+      Width = 272
+      Alignment = taRightJustify
+      AutoSize = False
+      Caption = 'Numarul de evenimente validate de catre sistem:'
+      Font.Height = -17
+      Font.Name = 'Arial'
+      Font.Style = [fsBold]
+      ParentColor = False
+      ParentFont = False
+      WordWrap = True
+      OnClick = Label3Click
+    end
+    object pnl_act: TPanel
+      Left = 656
+      Height = 32
+      Top = 96
+      Width = 96
+      BevelInner = bvLowered
+      BorderStyle = bsSingle
+      Color = clBtnFace
+      Font.Color = clBlue
+      Font.Height = -20
+      Font.Style = [fsBold]
+      ParentColor = False
+      ParentFont = False
+      TabOrder = 4
+    end
+  end
+  object ds_csv: TSdfDataSet
+    FileMustExist = True
+    ReadOnly = False
+    FileName = 'data.csv'
+    FieldDefs = <>
+    AllowMultiLine = False
+    Delimiter = ','
+    FirstLineAsSchema = False
+    StripTrailingDelimiters = False
+    left = 544
+    top = 40
+  end
+  object tmr_script: TTimer
+    Enabled = False
+    Interval = 3000
+    OnTimer = tmr_scriptTimer
+    left = 544
+    top = 112
+  end
+  object ds_log: TMemDataset
+    FieldDefs = <>
+    left = 616
+    top = 40
+  end
+  object dsrc_log: TDataSource
+    DataSet = ds_log
+    left = 696
+    top = 40
+  end
+end

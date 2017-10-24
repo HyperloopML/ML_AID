@@ -1,6 +1,7 @@
 ##
 ##
 ##
+##
 ## @script:       Churn Prediction System
 ## @v1_created:   2017.03.23
 ## @v2_created:   2017.06.19
@@ -85,11 +86,13 @@ if (Current.Machine.Name == Debug.Machine3.Name) {
 }
 
 
-SQL.GETCHURN <- "EXEC [SP_GET_CHURN] @TRAN_PER_ID = %d, @CHURN_PER_ID = %d, @SGM_ID = 22"
+SQL.GETCHURN <- "EXEC [SP_GET_CHURN] @TRAN_PER_ID = %d, @CHURN_PER_ID = %d, @SGM_ID = %d, @VER=20171005"
 SQL.GETSTATS <- "EXEC [SP_CUST_LIST] @TRAN_PER_ID = %d"
-
+SQL.INITMODEL.SP <- 'EXEC [SP_ADD_CHURN_MODEL] @SGM_ID=%d, @MODEL_NAME="%s", @MODEL_DESC="%s", @TRAN_PER_ID=%d, @CHURN_PER_ID=%d, @MODEL_FILE="%s", @SCORE1=%.3f, @SCORE2=%.3f'
 
 SQL.DATASELECTION <- "SELECT * FROM "
+
+Table.Results <- "MODEL_RESULTS"
 
 Target.Field <- "CHURN"
 
@@ -132,9 +135,9 @@ conns <- paste0("driver={ODBC Driver 13 for SQL Server};",
 
 
 
-MODULE.VERSION <- "3.1.1.9"
+MODULE.VERSION <- "Trainer v3.4.1"
 MODULE.NAME <- "CHURN_V3"
-MODULE.NAME.SHORT <- "CHURN3"
+MODULE.NAME.SHORT <- "CHRN_TRN_3"
 
 
 
@@ -881,10 +884,10 @@ SaveLastPlot <- function(sfn)
 ## ChurnV2 lib
 ##
 
-LoadChurnData <- function(iTransPer, iChurnPer) {
-  logger(sprintf("Loading period %d churn data (trans=%d, churn=%d)...",
-                 iTransPer, iTransPer, iChurnPer))
-  sSQL <- sprintf(SQL.GETCHURN, iTransPer, iChurnPer)
+LoadChurnData <- function(iTransPer, iChurnPer, iSGM) {
+  logger(sprintf("Loading period %d churn data (trans=%d, churn=%d, SGM=%d)...",
+                 iTransPer, iTransPer, iChurnPer, iSGM))
+  sSQL <- sprintf(SQL.GETCHURN, iTransPer, iChurnPer, iSGM)
   df <- LoadBatch(sSQL)
   logger(sprintf("Done loading period %d churn data (trans=%d, churn=%d).", iTransPer,
                  iTransPer, iChurnPer))
@@ -926,16 +929,21 @@ InstallKeras <- function() {
   }
 }
 
+GetActiv <- function(obj)
+{
+  return(strsplit(toString(obj$activation)," ")[[1]][2])
+}
+
 GetNNInfo <- function(model)
 {
   str_res <- ""
-  for(l in 1:length(model$layers)) 
+  for(l in 0:(length(model$layers)-1)) 
   {
     pre <- "->"
     sunits <-0
-    layer <- model$layers[[l]] #get_layer(model, index = l) # works only for Seq
+    layer <- get_layer(model, index = l)
     sname <- toString(layer)
-    if(l==1) {
+    if(l==0) {
       pre <- ""
       sunits <- layer$input_shape[[2]]
     }else if(sname=="Dropout")
@@ -944,15 +952,22 @@ GetNNInfo <- function(model)
     }else if(sname=="Dense")
       {
         sunits <- toString(layer$units) 
-      }
-    sshort <- substr(sname,1,4)
+        if(l==(length(model$layers)-1))
+          sunits <- paste(sunits,GetActiv(layer))
+        
+    }else if(sname=="Activation"){
+      sunits <-  GetActiv(layer)
+    }
+    sshort <- substr(sname,1,3)
     str_res <- paste0(str_res,pre,sshort,"[",sunits,"]")
   }
+  str_res <- paste0(str_res, " O:[", model$optimizer,"]")
   return(str_res)
 }
 
 ChurnClassifier <- function(hidden_layers = c(128), nr_inputs, dropout_level = 1, 
-                            BN = TRUE, act = 'elu', opt ='rmsprop' ) 
+                            BN = TRUE, act = 'elu', opt ='rmsprop',
+                            drop_rate = 0.5) 
 {
   logger(sprintf("Preparing NN (input:%s layers:[%s])",
                  toString(nr_inputs), toString(hidden_layers)))
@@ -967,7 +982,7 @@ ChurnClassifier <- function(hidden_layers = c(128), nr_inputs, dropout_level = 1
   {
     if(dropout_level>=1 && hid>1)
     {
-      last_layer <- layer_dropout(last_layer, 0.5)
+      last_layer <- layer_dropout(last_layer, drop_rate)
     }
     last_layer <- layer_dense(last_layer,units = hidden_layers[hid])
     if(BN)
@@ -983,7 +998,7 @@ ChurnClassifier <- function(hidden_layers = c(128), nr_inputs, dropout_level = 1
 
   if(dropout_level>=2)
   {
-    last_layer <- layer_dropout(last_layer, rate = 0.5)
+    last_layer <- layer_dropout(last_layer, rate = drop_rate)
   }
   output_layer <- layer_dense(last_layer, units = 1, activation = "sigmoid") 
   
@@ -1289,6 +1304,21 @@ PlotHistChart <- function(df_in, col, plot_title="", show_numbers = T)
   #return(gplot)
 }
 
+AddChurnModel <- function(model_name, model_desc, model_tper, model_cper, model_file,
+                          model_sgm, model_score1, model_score2)
+{
+  #@SGM_ID=%d, @MODEL_NAME="%s", @MODEL_DESC="%s", @TRAN_PER_ID=%d, @CHURN_PER_ID=%d, @MODEL_FILE="%s", @SCORE1=%.3f, @SCORE2=%.3f'
+  sSQL <- sprintf(SQL.INITMODEL.SP, model_sgm, model_name,model_desc,
+                  model_tper,model_cper, model_file, model_score1, model_score2)
+  
+  logger(sprintf("Initializing churn model [%s] (trans=%d, churn=%d)...",
+                 model_name, model_tper, model_cper))
+  df <- LoadBatch(sSQL, cached = F)
+  logger(sprintf("Done initializing churn model [%s] (trans=%d, churn=%d).",
+                 model_name, model_tper, model_cper))
+  return(df[[1]])  
+}
+
 
 ##
 ## Keras Model Checkpoint helper functions
@@ -1361,9 +1391,15 @@ CopyModelToRepository <- function(source_file, dest_file)
   file.copy(src_fn,dst_fn)
 }
 
-SaveBestModel <-function(model_file, test_recall, input_size) 
+SaveBestModel <-function(model_file, test_recall, input_size, netlayout,
+                         test_precision) 
 {
-  dest_fn <- sprintf("R_KERAS_REC_%.3f_INP_%d.hdf5",test_recall,input_size)
+
+  dest_fn <- sprintf("RK_R_%.3f_P_%.2f_INP_%d_NET_%s",
+                       test_recall,test_precision,input_size,netlayout)
+
+  dest_fn <- gsub(",", "_", gsub("[\\. ]", "", dest_fn))  
+  dest_fn <- paste0(dest_fn, ".hdf5")
   CopyModelToRepository(model_file,dest_fn)
   return(dest_fn)
 }
@@ -1373,6 +1409,11 @@ LoadBestModel <- function(model_file)
   logger(sprintf("Loading best model %s", model_file))
   model_fn <- file.path(GetRepositoryDir(), model_file)
   return(load_model_hdf5(filepath = model_fn))
+}
+
+LogCallback <- function(epoch, logs)
+{
+  logger(sprintf("Epoch:%d lr:%.5f @val_loss:%.4f",epoch,logs$lr, logs$val_loss))
 }
 
 ##
@@ -1397,9 +1438,18 @@ LoadBestModel <- function(model_file)
 #df_stats_2016 <- LoadCustomerStatInfo(3)
 
 #setup_paralel_env()
-DEBUG_ONLY_FINAL_STAGE <- FALSE
 
-df_full <- LoadChurnData(2, 3) #load_file("CHURN_2016.csv") #
+use_condaenv("r-tensorflow")
+
+TRAN_PER <- 2
+CHRN_PER <- 3
+SGM_ID <- 22
+
+df_full <- LoadChurnData(TRAN_PER, CHRN_PER, SGM_ID) #load_file("CHURN_2016.csv") #
+
+ZERO_VAR_CHECK <- FALSE
+STANDARD_PREDS <- TRUE
+
 initial_fields <- colnames(df_full)
 
 
@@ -1419,19 +1469,25 @@ if(SHOW_PLOTS)
 
 
 
-#Check Columns Variability !!!! 
-logger("Testing for zero-variance...")
+if(ZERO_VAR_CHECK)
+{
+  #Check Columns Variability !!!! 
+  logger("Testing for zero-variance...")
+  
+  #df_nzv <- nearZeroVar(df_full, names = TRUE, saveMetrics = TRUE, allowParallel = TRUE)
+  #zero_var_cols <- row.names(df_nzv[df_nzv$zeroVar == TRUE,])
+  
+  zero_var_cols <- ZeroVar(df_full)
+  logger(sprintf("Found %d cols with zero-var: [%s]",
+                 length(zero_var_cols), toString(zero_var_cols)))
+  #logger(sprintf("ZeroVarAnalysis:\n%s"GetObjectOuput(df_nzv)))
+  
+  logger("Dropping zero-var cols...")
+  df_full <- df_full[, setdiff(colnames(df_full), zero_var_cols)]
+}
 
-#df_nzv <- nearZeroVar(df_full, names = TRUE, saveMetrics = TRUE, allowParallel = TRUE)
-#zero_var_cols <- row.names(df_nzv[df_nzv$zeroVar == TRUE,])
 
-zero_var_cols <- ZeroVar(df_full)
-logger(sprintf("Found %d cols with zero-var: [%s]",
-      length(zero_var_cols), toString(zero_var_cols)))
-#logger(sprintf("ZeroVarAnalysis:\n%s"GetObjectOuput(df_nzv)))
 
-logger("Dropping zero-var cols...")
-df_full <- df_full[, setdiff(colnames(df_full), zero_var_cols)]
 
 
 Predictor.Fields <- GetPredictors(df_full)
@@ -1439,9 +1495,11 @@ Old.Predictors <- setdiff(Predictor.Fields, New.Fields)
 Standard.Predictors <-setdiff(Old.Predictors, Overall.Fields)
 
 
-
-logger("Transforming factor variables to dummies...")
-df_full <- dummy.data.frame(df_full, sep="__")
+if(!STANDARD_PREDS)
+{
+  logger("Transforming factor variables to dummies...")
+  df_full <- dummy.data.frame(df_full, sep="__")
+}
 All.Predictors <- GetPredictors(df_full)
 
 Predictor.Configs <- c(
@@ -1478,25 +1536,50 @@ Predictor.Fields <- Standard.Predictors
 
 PRE_PROCESSING <- 0 # 0 nothing, 1 minmax, 2 normaliz
 
-c_batch_size = c(256,512)
+c_batch_size = c(256) #,512)
 
-nn_layers <- c(46,23)
+nn_layers <- c(56,28)
 
 
-nr_epochs = 20
+nr_epochs = 50
 c_dropout = 1
+c_drop_rate = 0.40
 
 Test.One.Segment = 0
 
 batch_norm = FALSE
-c_act = 'elu'
-c_opt = 'rmsprop'
+
+c_act = 'selu'
+#
+# we use optimizer with starting lr IF we use lr scheduler
+#
+# optimizer_adam(lr = 0.02) 
+# optimizer_rmsprop(lr = 0.01) 
+# optimizer_nadam(lr = 0.1)  
+# "rmsprop" 
+
+c_opt = optimizer_rmsprop(lr = 0.01)  
+
+lr_decay_factor = 0.90
+
+train_percentage = 0.95
 
 Churn.Threshold <- 0.40
+
+RUN_THRESHOLD <- TRUE
+
+Churn.Threshold.List <- seq(from = 0.4,to = 0.5, length.out = 10)
+
 ###
 ###
 ###
 
+
+if(STANDARD_PREDS) 
+{
+  # force standard preds no matter :)
+  Predictor.Fields <- Standard.Predictors
+}
 
 if(Test.One.Segment>0)
 {
@@ -1511,7 +1594,7 @@ logger(sprintf("Excluded variables: %s", toString(setdiff(initial_fields, Predic
 logger(sprintf("Final predictors: %s",toString(Predictor.Fields)))
 logger(sprintf("Preparing train/test data on %d obs (shape=[%s])...", nrow(df_full), toString(dim(df_full))))
 set.seed(12345)
-train_part <- createDataPartition(as.numeric(df_full[, Target.Field]), p = 0.85, list = FALSE)
+train_part <- createDataPartition(as.numeric(df_full[, Target.Field]), p = train_percentage, list = FALSE)
 
 X_full <- df_full[, Predictor.Fields]
 y_full <- as.numeric(df_full[, Target.Field])
@@ -1561,7 +1644,8 @@ logger(sprintf("\nPreparing/training DNN on %d preds, drop:%d, BN:%d prep:%d",
 
 
 nn_clf <- ChurnClassifier(nn_layers, nr_preds, dropout_level = c_dropout, 
-                          BN = batch_norm, act = c_act, opt = c_opt)
+                          BN = batch_norm, act = c_act, opt = c_opt,
+                          drop_rate = c_drop_rate)
 
 logger(sprintf("Network layout:\n%s", GetObjectOuput(summary(nn_clf))))
 
@@ -1569,15 +1653,20 @@ EmptyModelsDir()
 for(c_batch in c_batch_size)
 {
   sbatch <- sprintf("Batch_%d",c_batch)
-  logger(sprintf("Training with batch size %d", c_batch))  
+  logger(sprintf("Training with batch size %d and %s optimizer", c_batch, c_opt))  
   timeit(sprintf("Fitting (%s) for %d epochs...", GetNNInfo(nn_clf), nr_epochs),
          nn_clf %>% fit(x = as.matrix(X_train), y = y_train,
                         batch_size = c_batch, epochs = nr_epochs, verbose = 1,
                         validation_data = list(as.matrix(X_test), y_test),
                         callbacks = list(#callback_early_stopping(patience = 3,verbose = 1),
                           callback_model_checkpoint(filepath = GetModelFileTemplate(info=sbatch),
-                                                    verbose = 1,
-                                                    save_best_only = FALSE))
+                                                    verbose = 0,
+                                                    save_best_only = FALSE),
+                          callback_reduce_lr_on_plateau(patience = 1,
+                                                        factor = lr_decay_factor,
+                                                        verbose = 1 ),
+                          callback_lambda(on_epoch_end = LogCallback)
+                          )
                         #, shuffle = FALSE # this must be disabled after tests !
          )
   )
@@ -1671,8 +1760,16 @@ df_res_sorted <- df_res[order(df_res$TrainRecall),]
 last_model <- nrow(df_res_sorted)
 best_model_chkp_file <- df_res_sorted[last_model,"CHKP"]
 best_test_recall <- df_res_sorted[last_model,"TestRecall"]
+best_test_precision <- df_res_sorted[last_model,"TestPrec"]
 nr_inputs <- df_res_sorted[last_model, "NPRED"]
-best_model_file <- SaveBestModel(best_model_chkp_file, test_recall = best_test_recall, input_size = nr_inputs)
+nn_info <- paste0(toString(nn_layers),"_A",c_act,"_",c_opt, "_bn",toString(as.numeric(batch_norm)),
+                  "_e",nr_epochs)
+best_model_file <- SaveBestModel(best_model_chkp_file, 
+                                 test_recall = best_test_recall, 
+                                 input_size = nr_inputs,
+                                 netlayout = nn_info,
+                                 test_precision = best_test_precision
+                                 )
 
 
 
@@ -1689,44 +1786,85 @@ p_nn_full <- as.numeric(yhat_nn_full >= Churn.Threshold)
 
 conf_mat_full <- confusionMatrix(p_nn_full, y_full, positive = "1")
   
-logger(sprintf("FULL %s Confusion Matrix:\n%s", best_model_file,GetObjectOuput(conf_mat_full)))
+logger(sprintf("FULL [%s] Confusion Matrix:\n%s", best_model_file,GetObjectOuput(conf_mat_full)))
 
 
 df_full$PREDICTED <- p_nn_full
 
+df_res <- data.frame()
+if(RUN_THRESHOLD)
+{
+  logger("\nRunning churn threshold search ...")
+  for(chrn in Churn.Threshold.List)
+  {
+    logger(sprintf("Computing predictions for ChurnThreshold: %.2f", chrn)) 
+    p_nn_test <- as.numeric(yhat_nn_test >= chrn)
+    p_nn_full <- as.numeric(yhat_nn_full >= chrn)
+    
+    
+    nn_res <- GetPredStats(id_model = 0, yhat = p_nn_test, y = y_test,
+                           yhat_train = p_nn_full, y_train = y_full,
+                           hiddens = nn_layers)
+    nn_res["NPRED"] <- nr_preds
+    nn_res["THRS"] <- chrn
+    nn_res["DROP"] <- c_dropout
+    nn_res["PREP"] <- PRE_PROCESSING
+    nn_res["CHKP"] <- best_model_file #basename(model_file)
+    
+    df_res <- rbind(df_res, nn_res)
+  }
+  df_res_sorted <- df_res[order(df_res$TrainRecall),]
+  logger(sprintf("Results of churn threshold search:\n%s", GetObjectOuput(df_res_sorted)))   
+}
+
+
 #
 # Begin uploading results
 #
-Table.Models <- "MODEL_DATA"
-Table.Results <- "MODEL_RESULTS"
-Field.ModelName <- "MODEL_NAME"
-Field.ModelDesc <- "MODEL_DESC"
-Field.ModelData <- "MODEL_RAW"
 
-Fields.ModelsTable <- c(Field.ModelName,Field.ModelDesc,Field.ModelData)
+MIN.RECALL <- 87.0 # 87% minimum recall
 
 # add new model to db
-Value.ModelName <- "Churn Prediction"
-Value.ModelDesc <- "Churn period"
-Value.ModelData <- serialize_model(nn_best_clf)
-df_new_model <- data.frame(f1=Value.ModelName,f2=Value.ModelDesc,f3=Value.ModelData)
-colnames(df_new_model) <- Fields.ModelsTable
-#UploadToSQL(dest_table = Table.Models, source_df = df_new_model)
-
-#
-# output dataset preparation and uploading
-#
-df_output <- data.frame(uid = df_full[,User.Field])
-colnames(df_output) <- c(User.Field)
-max_proba <- max(yhat_nn_full)
-offset <- (0.99 - max_proba)
-df_output$PREDICTED <- p_nn_full
-df_output$PROBA <- yhat_nn_full + offset
-df_output$MODEL_ID <- model_id
-#UploadToSQL(out_table, df_output)
-#
-# DONE UPLOADING RESULTS
-#
+Value.Recall <- conf_mat_full$byClass["Recall"]*100
+if(Value.Recall > MIN.RECALL)
+{
+  Value.Precision <- conf_mat_full$byClass["Precision"]*100
+  Value.ModelName <- sprintf("Churn Prediction (DNN %s) with Recall %.2f%%",
+                             MODULE.VERSION,
+                             Value.Recall)
+  Value.ModelDesc <- sprintf("Chrn %d/%d; M: %s",
+                             TRAN_PER,CHRN_PER,GetNNInfo(nn_best_clf))
+  
+  
+  model_id <- AddChurnModel(model_name = Value.ModelName,
+                            model_desc = Value.ModelDesc,
+                            model_tper = TRAN_PER, 
+                            model_cper = CHRN_PER,
+                            model_file = best_model_file,
+                            model_sgm = SGM_ID,
+                            model_score1 = Value.Recall,
+                            model_score2 = Value.Precision)
+  logger(sprintf("Churn Model %d initialized.",model_id))
+  
+  #
+  # output dataset preparation and uploading
+  #
+  df_output <- data.frame(MODEL_ID = df_full[,User.Field])
+  colnames(df_output) <- c(User.Field)
+  max_proba <- max(yhat_nn_full)
+  offset <- 0 # (0.99 - max_proba)
+  df_output$MODEL_ID <- model_id
+  df_output$PRED <- as.integer(p_nn_full)
+  df_output$PROB <- as.numeric((yhat_nn_full + offset) * p_nn_full)
+  df_output <- df_output[,c("MODEL_ID","CUST_ID","PRED","PROB")]
+  UploadToSQL(Table.Results, df_output)
+  #
+  # DONE UPLOADING RESULTS
+  #
+} else{
+  logger(sprintf("\nBest model NOT saved: model performance below %.1f%% threshold (%.1f%%) ",
+                 MIN.RECALL, Value.Recall))
+}
 
 
 if(SHOW_PLOTS)

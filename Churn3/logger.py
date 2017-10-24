@@ -28,7 +28,7 @@ class Logger:
     self.results = list()
     self.printed = list()
     self.MACHINE_NAME = self.GetMachineName()
-    self.__version__ = "3.1_tfg_pd"
+    self.__version__ = "3.2_tfg_pd_ker"
     self.SHOW_TIME = SHOW_TIME
     self.file_prefix = dt.now().strftime("%Y%m%d_%H%M%S") 
     self.log_file = self.file_prefix + '_log.txt'
@@ -46,6 +46,7 @@ class Logger:
     
     self.VerboseLog("Library [{}] initialized on machine [{}]".format(
                     self.__lib__, self.MACHINE_NAME))
+    self.VerboseLog("Logger ver: {}".format(self.__version__))
     self.CheckTF()
     
     return
@@ -154,7 +155,41 @@ class Logger:
       out = model.to_yaml()
     
     str_result = "Keras Neural Network Layout\n"+out
-    return str_result    
+    return str_result   
+  
+  def GetKerasModelDesc(self, model):
+    """
+    gets keras model short description
+    """
+    short_name = ""
+    nr_l = len(model.layers)
+    for i in range(nr_l):
+      layer = model.layers[i]
+      s_layer = "{}".format(layer.name)      
+      c_layer = s_layer.upper()[0]
+      if c_layer == "D":
+        if s_layer.upper()[0:2] == "DE":
+          c_layer = "D"
+        else:
+          c_layer = "d"
+      if (c_layer in ["A","d"]):
+        c_layer += "_"
+      if (c_layer == "D") and (i < (nr_l-1)):
+        if (model.layers[i+1].name.upper()[0:2]) != "DR":
+          c_layer += "_"
+      short_name += c_layer
+      
+    return short_name
+  
+  def SaveKerasModel(self, model, label=""):
+    """
+    saves keras model to a file
+    """
+    label = label.replace(">","_")
+    file_prefix = dt.now().strftime("%Y%m%d_%H%M%S_") 
+    file_name = os.path.join(self._outp_dir,file_prefix+label+".h5")    
+    model.save(file_name)
+    return
   
   def LogKerasModel(self, model):
     self.VerboseLog(self.GetKerasModelSummary(model))

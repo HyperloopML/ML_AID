@@ -1,0 +1,1120 @@
+
+[2017-04-07 11:08:07] BEGIN Churn multi-model cross-validation stand-alonescript v.1.0.0 DEBUG=1
+Current workind directory: .
+XDF File: ./hyperloop_churn_temp_data.xdf
+Loading package: doParallel
+Loading package: foreach
+[Parallel backend] Cores registered: 30
+[Parallel backend] Environment: doParallelSNOW
+[Parallel backend] Backend version: 1.0.10
+MSRevoScaleR connect to SQLServer [driver={ODBC Driver 13 for SQL Server};server=VSQL08\HYPERLOOP;database=StatisticalStore;uid=andreidi;pwd=HypML2017]...
+RxOdbcData [SELECT * FROM [dbo].[ML_DataModels]] executed in 0.00 min
+rxImport  executed in 0.00 min
+RevoScaleR loading dataframe...
+rxDataStep:  executed in 0.00 min
+MSRevoScaleR connect to SQLServer [driver={ODBC Driver 13 for SQL Server};server=VSQL08\HYPERLOOP;database=StatisticalStore;uid=andreidi;pwd=HypML2017]...
+RxOdbcData [SELECT * FROM [dbo].[ML_Models]] executed in 0.00 min
+rxImport  executed in 0.00 min
+RevoScaleR loading dataframe...
+rxDataStep:  executed in 0.00 min
+Proposed models: bayesglm
+Proposed libs: caret,arm,rpart,e1071,kernlab,LogicReg,stepPlr,xgboost,plyr,fastAdaboost,randomForest,randomGLM,bst,class
+Loading package: caret
+Loading package: arm
+Loading package: rpart
+Loading package: e1071
+Loading package: kernlab
+Loading package: LogicReg
+Loading package: stepPlr
+Loading package: xgboost
+Loading package: plyr
+Loading package: fastAdaboost
+Loading package: randomForest
+Loading package: randomGLM
+Loading package: bst
+Loading package: class
+
+Loading table:[_v1] label:["Churn"] fields:["P1","P2","P3","P4","P5","P6","P7","P8","P9","P10","P11","P12","P13","P14","P15","P16","P17","P18","P19","P20","P21","P22","P23","P24","P25","P26","P27","P28","P29"]
+MSRevoScaleR connect to SQLServer [driver={ODBC Driver 13 for SQL Server};server=VSQL08\HYPERLOOP;database=StatisticalStore;uid=andreidi;pwd=HypML2017]...
+RxOdbcData [SELECT TOP 1000 * FROM _v1] executed in 0.00 min
+rxImport  executed in 0.00 min
+RevoScaleR loading dataframe...
+rxDataStep:  executed in 0.00 min
+Object df [data.frame] size: 0.3MB (1,000 rows by 47 cols)
+Begin data preprocessing v0.0.3 ...
+Done preprocessing. Total time 0.00 min
+Begin model training and cross-validation v0.3.3 ...
+
+Training [bayesglm: classe~ P1+P2+P3+P4+P5+P6+P7+P8+P9+P10+P11+P12+P13+P14+P15+P16+P17+P18+P19+P20+P21+P22+P23+P24+P25+P26+P27+P28+P29] model ...
+bayesglm executed in 0.57 min
+ Train acc: 0.631 Valid acc: 0.595 Valid kap: 0.082 Valid rec: 0.840
+ Tune params: parameter=1.00 
+ Done training [bayesglm] model ...
+
+Saving data...
+Saving File: ./CHURN_v1.0.0_data.csv executed in 0.00 min
+
+Training [rpart: classe~ P1+P2+P3+P4+P5+P6+P7+P8+P9+P10+P11+P12+P13+P14+P15+P16+P17+P18+P19+P20+P21+P22+P23+P24+P25+P26+P27+P28+P29] model ...
+rpart executed in 0.02 min
+ Train acc: 0.634 Valid acc: 0.615 Valid kap: 0.200 Valid rec: 0.681
+ Tune params: cp=0.04 
+ Done training [rpart] model ...
+
+Saving data...
+Saving File: ./CHURN_v1.0.0_data.csv executed in 0.00 min
+
+Training [svmRadial: classe~ P1+P2+P3+P4+P5+P6+P7+P8+P9+P10+P11+P12+P13+P14+P15+P16+P17+P18+P19+P20+P21+P22+P23+P24+P25+P26+P27+P28+P29] model ...
+svmRadial executed in 0.09 min
+ Train acc: 0.639 Valid acc: 0.605 Valid kap: 0.108 Valid rec: 0.840
+ Tune params: sigma=187.58 C=0.25 
+ Done training [svmRadial] model ...
+
+Saving data...
+Saving File: ./CHURN_v1.0.0_data.csv executed in 0.00 min
+
+Training [plr: classe~ P1+P2+P3+P4+P5+P6+P7+P8+P9+P10+P11+P12+P13+P14+P15+P16+P17+P18+P19+P20+P21+P22+P23+P24+P25+P26+P27+P28+P29] model ...
+plr executed in 0.07 min
+ Train acc: 0.637 Valid acc: 0.585 Valid kap: 0.051 Valid rec: 0.849
+ Tune params: lambda=0.10 cp=1.00 
+ Done training [plr] model ...
+
+Saving data...
+Saving File: ./CHURN_v1.0.0_data.csv executed in 0.00 min
+
+Training [xgbTree: classe~ P1+P2+P3+P4+P5+P6+P7+P8+P9+P10+P11+P12+P13+P14+P15+P16+P17+P18+P19+P20+P21+P22+P23+P24+P25+P26+P27+P28+P29] model ...
+xgbTree executed in 1.38 min
+ Train acc: 0.662 Valid acc: 0.585 Valid kap: 0.079 Valid rec: 0.790
+ Tune params: nrounds=50.00 max_depth=1.00 eta=0.40 gamma=0.00 colsample_bytree=0.80 min_child_weight=1.00 
+ Done training [xgbTree] model ...
+
+Saving data...
+Saving File: ./CHURN_v1.0.0_data.csv executed in 0.00 min
+
+Training [adaboost: classe~ P1+P2+P3+P4+P5+P6+P7+P8+P9+P10+P11+P12+P13+P14+P15+P16+P17+P18+P19+P20+P21+P22+P23+P24+P25+P26+P27+P28+P29] model ...
+adaboost executed in 1.96 min
+ Train acc: 1.000 Valid acc: 0.540 Valid kap: 0.026 Valid rec: 0.655
+ Tune params: nIter=150.00 method=2.00 
+ Done training [adaboost] model ...
+
+Saving data...
+Saving File: ./CHURN_v1.0.0_data.csv executed in 0.00 min
+
+Training [rf: classe~ P1+P2+P3+P4+P5+P6+P7+P8+P9+P10+P11+P12+P13+P14+P15+P16+P17+P18+P19+P20+P21+P22+P23+P24+P25+P26+P27+P28+P29] model ...
+rf executed in 0.10 min
+ Train acc: 1.000 Valid acc: 0.585 Valid kap: 0.120 Valid rec: 0.697
+ Tune params: mtry=15.00 
+ Done training [rf] model ...
+
+Saving data...
+Saving File: ./CHURN_v1.0.0_data.csv executed in 0.00 min
+
+Training [randomGLM: classe~ P1+P2+P3+P4+P5+P6+P7+P8+P9+P10+P11+P12+P13+P14+P15+P16+P17+P18+P19+P20+P21+P22+P23+P24+P25+P26+P27+P28+P29] model ...
+
+
+[2017-04-07 11:08:07] BEGIN Churn multi-model cross-validation stand-alonescript v.1.0.0 DEBUG=1
+Current workind directory: .
+XDF File: ./hyperloop_churn_temp_data.xdf
+Loading package: doParallel
+Loading package: foreach
+[Parallel backend] Cores registered: 30
+[Parallel backend] Environment: doParallelSNOW
+[Parallel backend] Backend version: 1.0.10
+MSRevoScaleR connect to SQLServer [driver={ODBC Driver 13 for SQL Server};server=VSQL08\HYPERLOOP;database=StatisticalStore;uid=andreidi;pwd=HypML2017]...
+RxOdbcData [SELECT * FROM [dbo].[ML_DataModels]] executed in 0.00 min
+rxImport  executed in 0.00 min
+RevoScaleR loading dataframe...
+rxDataStep:  executed in 0.00 min
+MSRevoScaleR connect to SQLServer [driver={ODBC Driver 13 for SQL Server};server=VSQL08\HYPERLOOP;database=StatisticalStore;uid=andreidi;pwd=HypML2017]...
+RxOdbcData [SELECT * FROM [dbo].[ML_Models]] executed in 0.00 min
+rxImport  executed in 0.00 min
+RevoScaleR loading dataframe...
+rxDataStep:  executed in 0.00 min
+Proposed models: rpart
+Proposed libs: caret,arm,rpart,e1071,kernlab,LogicReg,stepPlr,xgboost,plyr,fastAdaboost,randomForest,randomGLM,bst,class
+Loading package: caret
+Loading package: arm
+Loading package: rpart
+Loading package: e1071
+Loading package: kernlab
+Loading package: LogicReg
+Loading package: stepPlr
+Loading package: xgboost
+Loading package: plyr
+Loading package: fastAdaboost
+Loading package: randomForest
+Loading package: randomGLM
+Loading package: bst
+Loading package: class
+
+Loading table:[_v1] label:["Churn"] fields:["P1","P2","P3","P4","P5","P6","P7","P8","P9","P10","P11","P12","P13","P14","P15","P16","P17","P18","P19","P20","P21","P22","P23","P24","P25","P26","P27","P28","P29"]
+MSRevoScaleR connect to SQLServer [driver={ODBC Driver 13 for SQL Server};server=VSQL08\HYPERLOOP;database=StatisticalStore;uid=andreidi;pwd=HypML2017]...
+RxOdbcData [SELECT TOP 1000 * FROM _v1] executed in 0.00 min
+rxImport  executed in 0.00 min
+RevoScaleR loading dataframe...
+rxDataStep:  executed in 0.00 min
+Object df [data.frame] size: 0.3MB (1,000 rows by 47 cols)
+Begin data preprocessing v0.0.3 ...
+Done preprocessing. Total time 0.00 min
+Begin model training and cross-validation v0.3.3 ...
+
+Training [bayesglm: classe~ P1+P2+P3+P4+P5+P6+P7+P8+P9+P10+P11+P12+P13+P14+P15+P16+P17+P18+P19+P20+P21+P22+P23+P24+P25+P26+P27+P28+P29] model ...
+bayesglm executed in 0.57 min
+ Train acc: 0.631 Valid acc: 0.595 Valid kap: 0.082 Valid rec: 0.840
+ Tune params: parameter=1.00 
+ Done training [bayesglm] model ...
+
+Saving data...
+Saving File: ./CHURN_v1.0.0_data.csv executed in 0.00 min
+
+Training [rpart: classe~ P1+P2+P3+P4+P5+P6+P7+P8+P9+P10+P11+P12+P13+P14+P15+P16+P17+P18+P19+P20+P21+P22+P23+P24+P25+P26+P27+P28+P29] model ...
+rpart executed in 0.02 min
+ Train acc: 0.634 Valid acc: 0.615 Valid kap: 0.200 Valid rec: 0.681
+ Tune params: cp=0.04 
+ Done training [rpart] model ...
+
+Saving data...
+Saving File: ./CHURN_v1.0.0_data.csv executed in 0.00 min
+
+Training [svmRadial: classe~ P1+P2+P3+P4+P5+P6+P7+P8+P9+P10+P11+P12+P13+P14+P15+P16+P17+P18+P19+P20+P21+P22+P23+P24+P25+P26+P27+P28+P29] model ...
+svmRadial executed in 0.09 min
+ Train acc: 0.639 Valid acc: 0.605 Valid kap: 0.108 Valid rec: 0.840
+ Tune params: sigma=187.58 C=0.25 
+ Done training [svmRadial] model ...
+
+Saving data...
+Saving File: ./CHURN_v1.0.0_data.csv executed in 0.00 min
+
+Training [plr: classe~ P1+P2+P3+P4+P5+P6+P7+P8+P9+P10+P11+P12+P13+P14+P15+P16+P17+P18+P19+P20+P21+P22+P23+P24+P25+P26+P27+P28+P29] model ...
+plr executed in 0.07 min
+ Train acc: 0.637 Valid acc: 0.585 Valid kap: 0.051 Valid rec: 0.849
+ Tune params: lambda=0.10 cp=1.00 
+ Done training [plr] model ...
+
+Saving data...
+Saving File: ./CHURN_v1.0.0_data.csv executed in 0.00 min
+
+Training [xgbTree: classe~ P1+P2+P3+P4+P5+P6+P7+P8+P9+P10+P11+P12+P13+P14+P15+P16+P17+P18+P19+P20+P21+P22+P23+P24+P25+P26+P27+P28+P29] model ...
+xgbTree executed in 1.38 min
+ Train acc: 0.662 Valid acc: 0.585 Valid kap: 0.079 Valid rec: 0.790
+ Tune params: nrounds=50.00 max_depth=1.00 eta=0.40 gamma=0.00 colsample_bytree=0.80 min_child_weight=1.00 
+ Done training [xgbTree] model ...
+
+Saving data...
+Saving File: ./CHURN_v1.0.0_data.csv executed in 0.00 min
+
+Training [adaboost: classe~ P1+P2+P3+P4+P5+P6+P7+P8+P9+P10+P11+P12+P13+P14+P15+P16+P17+P18+P19+P20+P21+P22+P23+P24+P25+P26+P27+P28+P29] model ...
+adaboost executed in 1.96 min
+ Train acc: 1.000 Valid acc: 0.540 Valid kap: 0.026 Valid rec: 0.655
+ Tune params: nIter=150.00 method=2.00 
+ Done training [adaboost] model ...
+
+Saving data...
+Saving File: ./CHURN_v1.0.0_data.csv executed in 0.00 min
+
+Training [rf: classe~ P1+P2+P3+P4+P5+P6+P7+P8+P9+P10+P11+P12+P13+P14+P15+P16+P17+P18+P19+P20+P21+P22+P23+P24+P25+P26+P27+P28+P29] model ...
+rf executed in 0.10 min
+ Train acc: 1.000 Valid acc: 0.585 Valid kap: 0.120 Valid rec: 0.697
+ Tune params: mtry=15.00 
+ Done training [rf] model ...
+
+Saving data...
+Saving File: ./CHURN_v1.0.0_data.csv executed in 0.00 min
+
+Training [randomGLM: classe~ P1+P2+P3+P4+P5+P6+P7+P8+P9+P10+P11+P12+P13+P14+P15+P16+P17+P18+P19+P20+P21+P22+P23+P24+P25+P26+P27+P28+P29] model ...
+
+
+[2017-04-07 11:08:07] BEGIN Churn multi-model cross-validation stand-alonescript v.1.0.0 DEBUG=1
+Current workind directory: .
+XDF File: ./hyperloop_churn_temp_data.xdf
+Loading package: doParallel
+Loading package: foreach
+[Parallel backend] Cores registered: 30
+[Parallel backend] Environment: doParallelSNOW
+[Parallel backend] Backend version: 1.0.10
+MSRevoScaleR connect to SQLServer [driver={ODBC Driver 13 for SQL Server};server=VSQL08\HYPERLOOP;database=StatisticalStore;uid=andreidi;pwd=HypML2017]...
+RxOdbcData [SELECT * FROM [dbo].[ML_DataModels]] executed in 0.00 min
+rxImport  executed in 0.00 min
+RevoScaleR loading dataframe...
+rxDataStep:  executed in 0.00 min
+MSRevoScaleR connect to SQLServer [driver={ODBC Driver 13 for SQL Server};server=VSQL08\HYPERLOOP;database=StatisticalStore;uid=andreidi;pwd=HypML2017]...
+RxOdbcData [SELECT * FROM [dbo].[ML_Models]] executed in 0.00 min
+rxImport  executed in 0.00 min
+RevoScaleR loading dataframe...
+rxDataStep:  executed in 0.00 min
+Proposed models: svmRadial
+Proposed libs: caret,arm,rpart,e1071,kernlab,LogicReg,stepPlr,xgboost,plyr,fastAdaboost,randomForest,randomGLM,bst,class
+Loading package: caret
+Loading package: arm
+Loading package: rpart
+Loading package: e1071
+Loading package: kernlab
+Loading package: LogicReg
+Loading package: stepPlr
+Loading package: xgboost
+Loading package: plyr
+Loading package: fastAdaboost
+Loading package: randomForest
+Loading package: randomGLM
+Loading package: bst
+Loading package: class
+
+Loading table:[_v1] label:["Churn"] fields:["P1","P2","P3","P4","P5","P6","P7","P8","P9","P10","P11","P12","P13","P14","P15","P16","P17","P18","P19","P20","P21","P22","P23","P24","P25","P26","P27","P28","P29"]
+MSRevoScaleR connect to SQLServer [driver={ODBC Driver 13 for SQL Server};server=VSQL08\HYPERLOOP;database=StatisticalStore;uid=andreidi;pwd=HypML2017]...
+RxOdbcData [SELECT TOP 1000 * FROM _v1] executed in 0.00 min
+rxImport  executed in 0.00 min
+RevoScaleR loading dataframe...
+rxDataStep:  executed in 0.00 min
+Object df [data.frame] size: 0.3MB (1,000 rows by 47 cols)
+Begin data preprocessing v0.0.3 ...
+Done preprocessing. Total time 0.00 min
+Begin model training and cross-validation v0.3.3 ...
+
+Training [bayesglm: classe~ P1+P2+P3+P4+P5+P6+P7+P8+P9+P10+P11+P12+P13+P14+P15+P16+P17+P18+P19+P20+P21+P22+P23+P24+P25+P26+P27+P28+P29] model ...
+bayesglm executed in 0.57 min
+ Train acc: 0.631 Valid acc: 0.595 Valid kap: 0.082 Valid rec: 0.840
+ Tune params: parameter=1.00 
+ Done training [bayesglm] model ...
+
+Saving data...
+Saving File: ./CHURN_v1.0.0_data.csv executed in 0.00 min
+
+Training [rpart: classe~ P1+P2+P3+P4+P5+P6+P7+P8+P9+P10+P11+P12+P13+P14+P15+P16+P17+P18+P19+P20+P21+P22+P23+P24+P25+P26+P27+P28+P29] model ...
+rpart executed in 0.02 min
+ Train acc: 0.634 Valid acc: 0.615 Valid kap: 0.200 Valid rec: 0.681
+ Tune params: cp=0.04 
+ Done training [rpart] model ...
+
+Saving data...
+Saving File: ./CHURN_v1.0.0_data.csv executed in 0.00 min
+
+Training [svmRadial: classe~ P1+P2+P3+P4+P5+P6+P7+P8+P9+P10+P11+P12+P13+P14+P15+P16+P17+P18+P19+P20+P21+P22+P23+P24+P25+P26+P27+P28+P29] model ...
+svmRadial executed in 0.09 min
+ Train acc: 0.639 Valid acc: 0.605 Valid kap: 0.108 Valid rec: 0.840
+ Tune params: sigma=187.58 C=0.25 
+ Done training [svmRadial] model ...
+
+Saving data...
+Saving File: ./CHURN_v1.0.0_data.csv executed in 0.00 min
+
+Training [plr: classe~ P1+P2+P3+P4+P5+P6+P7+P8+P9+P10+P11+P12+P13+P14+P15+P16+P17+P18+P19+P20+P21+P22+P23+P24+P25+P26+P27+P28+P29] model ...
+plr executed in 0.07 min
+ Train acc: 0.637 Valid acc: 0.585 Valid kap: 0.051 Valid rec: 0.849
+ Tune params: lambda=0.10 cp=1.00 
+ Done training [plr] model ...
+
+Saving data...
+Saving File: ./CHURN_v1.0.0_data.csv executed in 0.00 min
+
+Training [xgbTree: classe~ P1+P2+P3+P4+P5+P6+P7+P8+P9+P10+P11+P12+P13+P14+P15+P16+P17+P18+P19+P20+P21+P22+P23+P24+P25+P26+P27+P28+P29] model ...
+xgbTree executed in 1.38 min
+ Train acc: 0.662 Valid acc: 0.585 Valid kap: 0.079 Valid rec: 0.790
+ Tune params: nrounds=50.00 max_depth=1.00 eta=0.40 gamma=0.00 colsample_bytree=0.80 min_child_weight=1.00 
+ Done training [xgbTree] model ...
+
+Saving data...
+Saving File: ./CHURN_v1.0.0_data.csv executed in 0.00 min
+
+Training [adaboost: classe~ P1+P2+P3+P4+P5+P6+P7+P8+P9+P10+P11+P12+P13+P14+P15+P16+P17+P18+P19+P20+P21+P22+P23+P24+P25+P26+P27+P28+P29] model ...
+adaboost executed in 1.96 min
+ Train acc: 1.000 Valid acc: 0.540 Valid kap: 0.026 Valid rec: 0.655
+ Tune params: nIter=150.00 method=2.00 
+ Done training [adaboost] model ...
+
+Saving data...
+Saving File: ./CHURN_v1.0.0_data.csv executed in 0.00 min
+
+Training [rf: classe~ P1+P2+P3+P4+P5+P6+P7+P8+P9+P10+P11+P12+P13+P14+P15+P16+P17+P18+P19+P20+P21+P22+P23+P24+P25+P26+P27+P28+P29] model ...
+rf executed in 0.10 min
+ Train acc: 1.000 Valid acc: 0.585 Valid kap: 0.120 Valid rec: 0.697
+ Tune params: mtry=15.00 
+ Done training [rf] model ...
+
+Saving data...
+Saving File: ./CHURN_v1.0.0_data.csv executed in 0.00 min
+
+Training [randomGLM: classe~ P1+P2+P3+P4+P5+P6+P7+P8+P9+P10+P11+P12+P13+P14+P15+P16+P17+P18+P19+P20+P21+P22+P23+P24+P25+P26+P27+P28+P29] model ...
+
+
+[2017-04-07 11:08:07] BEGIN Churn multi-model cross-validation stand-alonescript v.1.0.0 DEBUG=1
+Current workind directory: .
+XDF File: ./hyperloop_churn_temp_data.xdf
+Loading package: doParallel
+Loading package: foreach
+[Parallel backend] Cores registered: 30
+[Parallel backend] Environment: doParallelSNOW
+[Parallel backend] Backend version: 1.0.10
+MSRevoScaleR connect to SQLServer [driver={ODBC Driver 13 for SQL Server};server=VSQL08\HYPERLOOP;database=StatisticalStore;uid=andreidi;pwd=HypML2017]...
+RxOdbcData [SELECT * FROM [dbo].[ML_DataModels]] executed in 0.00 min
+rxImport  executed in 0.00 min
+RevoScaleR loading dataframe...
+rxDataStep:  executed in 0.00 min
+MSRevoScaleR connect to SQLServer [driver={ODBC Driver 13 for SQL Server};server=VSQL08\HYPERLOOP;database=StatisticalStore;uid=andreidi;pwd=HypML2017]...
+RxOdbcData [SELECT * FROM [dbo].[ML_Models]] executed in 0.00 min
+rxImport  executed in 0.00 min
+RevoScaleR loading dataframe...
+rxDataStep:  executed in 0.00 min
+Proposed models: plr
+Proposed libs: caret,arm,rpart,e1071,kernlab,LogicReg,stepPlr,xgboost,plyr,fastAdaboost,randomForest,randomGLM,bst,class
+Loading package: caret
+Loading package: arm
+Loading package: rpart
+Loading package: e1071
+Loading package: kernlab
+Loading package: LogicReg
+Loading package: stepPlr
+Loading package: xgboost
+Loading package: plyr
+Loading package: fastAdaboost
+Loading package: randomForest
+Loading package: randomGLM
+Loading package: bst
+Loading package: class
+
+Loading table:[_v1] label:["Churn"] fields:["P1","P2","P3","P4","P5","P6","P7","P8","P9","P10","P11","P12","P13","P14","P15","P16","P17","P18","P19","P20","P21","P22","P23","P24","P25","P26","P27","P28","P29"]
+MSRevoScaleR connect to SQLServer [driver={ODBC Driver 13 for SQL Server};server=VSQL08\HYPERLOOP;database=StatisticalStore;uid=andreidi;pwd=HypML2017]...
+RxOdbcData [SELECT TOP 1000 * FROM _v1] executed in 0.00 min
+rxImport  executed in 0.00 min
+RevoScaleR loading dataframe...
+rxDataStep:  executed in 0.00 min
+Object df [data.frame] size: 0.3MB (1,000 rows by 47 cols)
+Begin data preprocessing v0.0.3 ...
+Done preprocessing. Total time 0.00 min
+Begin model training and cross-validation v0.3.3 ...
+
+Training [bayesglm: classe~ P1+P2+P3+P4+P5+P6+P7+P8+P9+P10+P11+P12+P13+P14+P15+P16+P17+P18+P19+P20+P21+P22+P23+P24+P25+P26+P27+P28+P29] model ...
+bayesglm executed in 0.57 min
+ Train acc: 0.631 Valid acc: 0.595 Valid kap: 0.082 Valid rec: 0.840
+ Tune params: parameter=1.00 
+ Done training [bayesglm] model ...
+
+Saving data...
+Saving File: ./CHURN_v1.0.0_data.csv executed in 0.00 min
+
+Training [rpart: classe~ P1+P2+P3+P4+P5+P6+P7+P8+P9+P10+P11+P12+P13+P14+P15+P16+P17+P18+P19+P20+P21+P22+P23+P24+P25+P26+P27+P28+P29] model ...
+rpart executed in 0.02 min
+ Train acc: 0.634 Valid acc: 0.615 Valid kap: 0.200 Valid rec: 0.681
+ Tune params: cp=0.04 
+ Done training [rpart] model ...
+
+Saving data...
+Saving File: ./CHURN_v1.0.0_data.csv executed in 0.00 min
+
+Training [svmRadial: classe~ P1+P2+P3+P4+P5+P6+P7+P8+P9+P10+P11+P12+P13+P14+P15+P16+P17+P18+P19+P20+P21+P22+P23+P24+P25+P26+P27+P28+P29] model ...
+svmRadial executed in 0.09 min
+ Train acc: 0.639 Valid acc: 0.605 Valid kap: 0.108 Valid rec: 0.840
+ Tune params: sigma=187.58 C=0.25 
+ Done training [svmRadial] model ...
+
+Saving data...
+Saving File: ./CHURN_v1.0.0_data.csv executed in 0.00 min
+
+Training [plr: classe~ P1+P2+P3+P4+P5+P6+P7+P8+P9+P10+P11+P12+P13+P14+P15+P16+P17+P18+P19+P20+P21+P22+P23+P24+P25+P26+P27+P28+P29] model ...
+plr executed in 0.07 min
+ Train acc: 0.637 Valid acc: 0.585 Valid kap: 0.051 Valid rec: 0.849
+ Tune params: lambda=0.10 cp=1.00 
+ Done training [plr] model ...
+
+Saving data...
+Saving File: ./CHURN_v1.0.0_data.csv executed in 0.00 min
+
+Training [xgbTree: classe~ P1+P2+P3+P4+P5+P6+P7+P8+P9+P10+P11+P12+P13+P14+P15+P16+P17+P18+P19+P20+P21+P22+P23+P24+P25+P26+P27+P28+P29] model ...
+xgbTree executed in 1.38 min
+ Train acc: 0.662 Valid acc: 0.585 Valid kap: 0.079 Valid rec: 0.790
+ Tune params: nrounds=50.00 max_depth=1.00 eta=0.40 gamma=0.00 colsample_bytree=0.80 min_child_weight=1.00 
+ Done training [xgbTree] model ...
+
+Saving data...
+Saving File: ./CHURN_v1.0.0_data.csv executed in 0.00 min
+
+Training [adaboost: classe~ P1+P2+P3+P4+P5+P6+P7+P8+P9+P10+P11+P12+P13+P14+P15+P16+P17+P18+P19+P20+P21+P22+P23+P24+P25+P26+P27+P28+P29] model ...
+adaboost executed in 1.96 min
+ Train acc: 1.000 Valid acc: 0.540 Valid kap: 0.026 Valid rec: 0.655
+ Tune params: nIter=150.00 method=2.00 
+ Done training [adaboost] model ...
+
+Saving data...
+Saving File: ./CHURN_v1.0.0_data.csv executed in 0.00 min
+
+Training [rf: classe~ P1+P2+P3+P4+P5+P6+P7+P8+P9+P10+P11+P12+P13+P14+P15+P16+P17+P18+P19+P20+P21+P22+P23+P24+P25+P26+P27+P28+P29] model ...
+rf executed in 0.10 min
+ Train acc: 1.000 Valid acc: 0.585 Valid kap: 0.120 Valid rec: 0.697
+ Tune params: mtry=15.00 
+ Done training [rf] model ...
+
+Saving data...
+Saving File: ./CHURN_v1.0.0_data.csv executed in 0.00 min
+
+Training [randomGLM: classe~ P1+P2+P3+P4+P5+P6+P7+P8+P9+P10+P11+P12+P13+P14+P15+P16+P17+P18+P19+P20+P21+P22+P23+P24+P25+P26+P27+P28+P29] model ...
+
+
+[2017-04-07 11:08:07] BEGIN Churn multi-model cross-validation stand-alonescript v.1.0.0 DEBUG=1
+Current workind directory: .
+XDF File: ./hyperloop_churn_temp_data.xdf
+Loading package: doParallel
+Loading package: foreach
+[Parallel backend] Cores registered: 30
+[Parallel backend] Environment: doParallelSNOW
+[Parallel backend] Backend version: 1.0.10
+MSRevoScaleR connect to SQLServer [driver={ODBC Driver 13 for SQL Server};server=VSQL08\HYPERLOOP;database=StatisticalStore;uid=andreidi;pwd=HypML2017]...
+RxOdbcData [SELECT * FROM [dbo].[ML_DataModels]] executed in 0.00 min
+rxImport  executed in 0.00 min
+RevoScaleR loading dataframe...
+rxDataStep:  executed in 0.00 min
+MSRevoScaleR connect to SQLServer [driver={ODBC Driver 13 for SQL Server};server=VSQL08\HYPERLOOP;database=StatisticalStore;uid=andreidi;pwd=HypML2017]...
+RxOdbcData [SELECT * FROM [dbo].[ML_Models]] executed in 0.00 min
+rxImport  executed in 0.00 min
+RevoScaleR loading dataframe...
+rxDataStep:  executed in 0.00 min
+Proposed models: xgbTree
+Proposed libs: caret,arm,rpart,e1071,kernlab,LogicReg,stepPlr,xgboost,plyr,fastAdaboost,randomForest,randomGLM,bst,class
+Loading package: caret
+Loading package: arm
+Loading package: rpart
+Loading package: e1071
+Loading package: kernlab
+Loading package: LogicReg
+Loading package: stepPlr
+Loading package: xgboost
+Loading package: plyr
+Loading package: fastAdaboost
+Loading package: randomForest
+Loading package: randomGLM
+Loading package: bst
+Loading package: class
+
+Loading table:[_v1] label:["Churn"] fields:["P1","P2","P3","P4","P5","P6","P7","P8","P9","P10","P11","P12","P13","P14","P15","P16","P17","P18","P19","P20","P21","P22","P23","P24","P25","P26","P27","P28","P29"]
+MSRevoScaleR connect to SQLServer [driver={ODBC Driver 13 for SQL Server};server=VSQL08\HYPERLOOP;database=StatisticalStore;uid=andreidi;pwd=HypML2017]...
+RxOdbcData [SELECT TOP 1000 * FROM _v1] executed in 0.00 min
+rxImport  executed in 0.00 min
+RevoScaleR loading dataframe...
+rxDataStep:  executed in 0.00 min
+Object df [data.frame] size: 0.3MB (1,000 rows by 47 cols)
+Begin data preprocessing v0.0.3 ...
+Done preprocessing. Total time 0.00 min
+Begin model training and cross-validation v0.3.3 ...
+
+Training [bayesglm: classe~ P1+P2+P3+P4+P5+P6+P7+P8+P9+P10+P11+P12+P13+P14+P15+P16+P17+P18+P19+P20+P21+P22+P23+P24+P25+P26+P27+P28+P29] model ...
+bayesglm executed in 0.57 min
+ Train acc: 0.631 Valid acc: 0.595 Valid kap: 0.082 Valid rec: 0.840
+ Tune params: parameter=1.00 
+ Done training [bayesglm] model ...
+
+Saving data...
+Saving File: ./CHURN_v1.0.0_data.csv executed in 0.00 min
+
+Training [rpart: classe~ P1+P2+P3+P4+P5+P6+P7+P8+P9+P10+P11+P12+P13+P14+P15+P16+P17+P18+P19+P20+P21+P22+P23+P24+P25+P26+P27+P28+P29] model ...
+rpart executed in 0.02 min
+ Train acc: 0.634 Valid acc: 0.615 Valid kap: 0.200 Valid rec: 0.681
+ Tune params: cp=0.04 
+ Done training [rpart] model ...
+
+Saving data...
+Saving File: ./CHURN_v1.0.0_data.csv executed in 0.00 min
+
+Training [svmRadial: classe~ P1+P2+P3+P4+P5+P6+P7+P8+P9+P10+P11+P12+P13+P14+P15+P16+P17+P18+P19+P20+P21+P22+P23+P24+P25+P26+P27+P28+P29] model ...
+svmRadial executed in 0.09 min
+ Train acc: 0.639 Valid acc: 0.605 Valid kap: 0.108 Valid rec: 0.840
+ Tune params: sigma=187.58 C=0.25 
+ Done training [svmRadial] model ...
+
+Saving data...
+Saving File: ./CHURN_v1.0.0_data.csv executed in 0.00 min
+
+Training [plr: classe~ P1+P2+P3+P4+P5+P6+P7+P8+P9+P10+P11+P12+P13+P14+P15+P16+P17+P18+P19+P20+P21+P22+P23+P24+P25+P26+P27+P28+P29] model ...
+plr executed in 0.07 min
+ Train acc: 0.637 Valid acc: 0.585 Valid kap: 0.051 Valid rec: 0.849
+ Tune params: lambda=0.10 cp=1.00 
+ Done training [plr] model ...
+
+Saving data...
+Saving File: ./CHURN_v1.0.0_data.csv executed in 0.00 min
+
+Training [xgbTree: classe~ P1+P2+P3+P4+P5+P6+P7+P8+P9+P10+P11+P12+P13+P14+P15+P16+P17+P18+P19+P20+P21+P22+P23+P24+P25+P26+P27+P28+P29] model ...
+xgbTree executed in 1.38 min
+ Train acc: 0.662 Valid acc: 0.585 Valid kap: 0.079 Valid rec: 0.790
+ Tune params: nrounds=50.00 max_depth=1.00 eta=0.40 gamma=0.00 colsample_bytree=0.80 min_child_weight=1.00 
+ Done training [xgbTree] model ...
+
+Saving data...
+Saving File: ./CHURN_v1.0.0_data.csv executed in 0.00 min
+
+Training [adaboost: classe~ P1+P2+P3+P4+P5+P6+P7+P8+P9+P10+P11+P12+P13+P14+P15+P16+P17+P18+P19+P20+P21+P22+P23+P24+P25+P26+P27+P28+P29] model ...
+adaboost executed in 1.96 min
+ Train acc: 1.000 Valid acc: 0.540 Valid kap: 0.026 Valid rec: 0.655
+ Tune params: nIter=150.00 method=2.00 
+ Done training [adaboost] model ...
+
+Saving data...
+Saving File: ./CHURN_v1.0.0_data.csv executed in 0.00 min
+
+Training [rf: classe~ P1+P2+P3+P4+P5+P6+P7+P8+P9+P10+P11+P12+P13+P14+P15+P16+P17+P18+P19+P20+P21+P22+P23+P24+P25+P26+P27+P28+P29] model ...
+rf executed in 0.10 min
+ Train acc: 1.000 Valid acc: 0.585 Valid kap: 0.120 Valid rec: 0.697
+ Tune params: mtry=15.00 
+ Done training [rf] model ...
+
+Saving data...
+Saving File: ./CHURN_v1.0.0_data.csv executed in 0.00 min
+
+Training [randomGLM: classe~ P1+P2+P3+P4+P5+P6+P7+P8+P9+P10+P11+P12+P13+P14+P15+P16+P17+P18+P19+P20+P21+P22+P23+P24+P25+P26+P27+P28+P29] model ...
+
+
+[2017-04-07 11:08:07] BEGIN Churn multi-model cross-validation stand-alonescript v.1.0.0 DEBUG=1
+Current workind directory: .
+XDF File: ./hyperloop_churn_temp_data.xdf
+Loading package: doParallel
+Loading package: foreach
+[Parallel backend] Cores registered: 30
+[Parallel backend] Environment: doParallelSNOW
+[Parallel backend] Backend version: 1.0.10
+MSRevoScaleR connect to SQLServer [driver={ODBC Driver 13 for SQL Server};server=VSQL08\HYPERLOOP;database=StatisticalStore;uid=andreidi;pwd=HypML2017]...
+RxOdbcData [SELECT * FROM [dbo].[ML_DataModels]] executed in 0.00 min
+rxImport  executed in 0.00 min
+RevoScaleR loading dataframe...
+rxDataStep:  executed in 0.00 min
+MSRevoScaleR connect to SQLServer [driver={ODBC Driver 13 for SQL Server};server=VSQL08\HYPERLOOP;database=StatisticalStore;uid=andreidi;pwd=HypML2017]...
+RxOdbcData [SELECT * FROM [dbo].[ML_Models]] executed in 0.00 min
+rxImport  executed in 0.00 min
+RevoScaleR loading dataframe...
+rxDataStep:  executed in 0.00 min
+Proposed models: adaboost
+Proposed libs: caret,arm,rpart,e1071,kernlab,LogicReg,stepPlr,xgboost,plyr,fastAdaboost,randomForest,randomGLM,bst,class
+Loading package: caret
+Loading package: arm
+Loading package: rpart
+Loading package: e1071
+Loading package: kernlab
+Loading package: LogicReg
+Loading package: stepPlr
+Loading package: xgboost
+Loading package: plyr
+Loading package: fastAdaboost
+Loading package: randomForest
+Loading package: randomGLM
+Loading package: bst
+Loading package: class
+
+Loading table:[_v1] label:["Churn"] fields:["P1","P2","P3","P4","P5","P6","P7","P8","P9","P10","P11","P12","P13","P14","P15","P16","P17","P18","P19","P20","P21","P22","P23","P24","P25","P26","P27","P28","P29"]
+MSRevoScaleR connect to SQLServer [driver={ODBC Driver 13 for SQL Server};server=VSQL08\HYPERLOOP;database=StatisticalStore;uid=andreidi;pwd=HypML2017]...
+RxOdbcData [SELECT TOP 1000 * FROM _v1] executed in 0.00 min
+rxImport  executed in 0.00 min
+RevoScaleR loading dataframe...
+rxDataStep:  executed in 0.00 min
+Object df [data.frame] size: 0.3MB (1,000 rows by 47 cols)
+Begin data preprocessing v0.0.3 ...
+Done preprocessing. Total time 0.00 min
+Begin model training and cross-validation v0.3.3 ...
+
+Training [bayesglm: classe~ P1+P2+P3+P4+P5+P6+P7+P8+P9+P10+P11+P12+P13+P14+P15+P16+P17+P18+P19+P20+P21+P22+P23+P24+P25+P26+P27+P28+P29] model ...
+bayesglm executed in 0.57 min
+ Train acc: 0.631 Valid acc: 0.595 Valid kap: 0.082 Valid rec: 0.840
+ Tune params: parameter=1.00 
+ Done training [bayesglm] model ...
+
+Saving data...
+Saving File: ./CHURN_v1.0.0_data.csv executed in 0.00 min
+
+Training [rpart: classe~ P1+P2+P3+P4+P5+P6+P7+P8+P9+P10+P11+P12+P13+P14+P15+P16+P17+P18+P19+P20+P21+P22+P23+P24+P25+P26+P27+P28+P29] model ...
+rpart executed in 0.02 min
+ Train acc: 0.634 Valid acc: 0.615 Valid kap: 0.200 Valid rec: 0.681
+ Tune params: cp=0.04 
+ Done training [rpart] model ...
+
+Saving data...
+Saving File: ./CHURN_v1.0.0_data.csv executed in 0.00 min
+
+Training [svmRadial: classe~ P1+P2+P3+P4+P5+P6+P7+P8+P9+P10+P11+P12+P13+P14+P15+P16+P17+P18+P19+P20+P21+P22+P23+P24+P25+P26+P27+P28+P29] model ...
+svmRadial executed in 0.09 min
+ Train acc: 0.639 Valid acc: 0.605 Valid kap: 0.108 Valid rec: 0.840
+ Tune params: sigma=187.58 C=0.25 
+ Done training [svmRadial] model ...
+
+Saving data...
+Saving File: ./CHURN_v1.0.0_data.csv executed in 0.00 min
+
+Training [plr: classe~ P1+P2+P3+P4+P5+P6+P7+P8+P9+P10+P11+P12+P13+P14+P15+P16+P17+P18+P19+P20+P21+P22+P23+P24+P25+P26+P27+P28+P29] model ...
+plr executed in 0.07 min
+ Train acc: 0.637 Valid acc: 0.585 Valid kap: 0.051 Valid rec: 0.849
+ Tune params: lambda=0.10 cp=1.00 
+ Done training [plr] model ...
+
+Saving data...
+Saving File: ./CHURN_v1.0.0_data.csv executed in 0.00 min
+
+Training [xgbTree: classe~ P1+P2+P3+P4+P5+P6+P7+P8+P9+P10+P11+P12+P13+P14+P15+P16+P17+P18+P19+P20+P21+P22+P23+P24+P25+P26+P27+P28+P29] model ...
+xgbTree executed in 1.38 min
+ Train acc: 0.662 Valid acc: 0.585 Valid kap: 0.079 Valid rec: 0.790
+ Tune params: nrounds=50.00 max_depth=1.00 eta=0.40 gamma=0.00 colsample_bytree=0.80 min_child_weight=1.00 
+ Done training [xgbTree] model ...
+
+Saving data...
+Saving File: ./CHURN_v1.0.0_data.csv executed in 0.00 min
+
+Training [adaboost: classe~ P1+P2+P3+P4+P5+P6+P7+P8+P9+P10+P11+P12+P13+P14+P15+P16+P17+P18+P19+P20+P21+P22+P23+P24+P25+P26+P27+P28+P29] model ...
+adaboost executed in 1.96 min
+ Train acc: 1.000 Valid acc: 0.540 Valid kap: 0.026 Valid rec: 0.655
+ Tune params: nIter=150.00 method=2.00 
+ Done training [adaboost] model ...
+
+Saving data...
+Saving File: ./CHURN_v1.0.0_data.csv executed in 0.00 min
+
+Training [rf: classe~ P1+P2+P3+P4+P5+P6+P7+P8+P9+P10+P11+P12+P13+P14+P15+P16+P17+P18+P19+P20+P21+P22+P23+P24+P25+P26+P27+P28+P29] model ...
+rf executed in 0.10 min
+ Train acc: 1.000 Valid acc: 0.585 Valid kap: 0.120 Valid rec: 0.697
+ Tune params: mtry=15.00 
+ Done training [rf] model ...
+
+Saving data...
+Saving File: ./CHURN_v1.0.0_data.csv executed in 0.00 min
+
+Training [randomGLM: classe~ P1+P2+P3+P4+P5+P6+P7+P8+P9+P10+P11+P12+P13+P14+P15+P16+P17+P18+P19+P20+P21+P22+P23+P24+P25+P26+P27+P28+P29] model ...
+
+
+[2017-04-07 11:08:07] BEGIN Churn multi-model cross-validation stand-alonescript v.1.0.0 DEBUG=1
+Current workind directory: .
+XDF File: ./hyperloop_churn_temp_data.xdf
+Loading package: doParallel
+Loading package: foreach
+[Parallel backend] Cores registered: 30
+[Parallel backend] Environment: doParallelSNOW
+[Parallel backend] Backend version: 1.0.10
+MSRevoScaleR connect to SQLServer [driver={ODBC Driver 13 for SQL Server};server=VSQL08\HYPERLOOP;database=StatisticalStore;uid=andreidi;pwd=HypML2017]...
+RxOdbcData [SELECT * FROM [dbo].[ML_DataModels]] executed in 0.00 min
+rxImport  executed in 0.00 min
+RevoScaleR loading dataframe...
+rxDataStep:  executed in 0.00 min
+MSRevoScaleR connect to SQLServer [driver={ODBC Driver 13 for SQL Server};server=VSQL08\HYPERLOOP;database=StatisticalStore;uid=andreidi;pwd=HypML2017]...
+RxOdbcData [SELECT * FROM [dbo].[ML_Models]] executed in 0.00 min
+rxImport  executed in 0.00 min
+RevoScaleR loading dataframe...
+rxDataStep:  executed in 0.00 min
+Proposed models: rf
+Proposed libs: caret,arm,rpart,e1071,kernlab,LogicReg,stepPlr,xgboost,plyr,fastAdaboost,randomForest,randomGLM,bst,class
+Loading package: caret
+Loading package: arm
+Loading package: rpart
+Loading package: e1071
+Loading package: kernlab
+Loading package: LogicReg
+Loading package: stepPlr
+Loading package: xgboost
+Loading package: plyr
+Loading package: fastAdaboost
+Loading package: randomForest
+Loading package: randomGLM
+Loading package: bst
+Loading package: class
+
+Loading table:[_v1] label:["Churn"] fields:["P1","P2","P3","P4","P5","P6","P7","P8","P9","P10","P11","P12","P13","P14","P15","P16","P17","P18","P19","P20","P21","P22","P23","P24","P25","P26","P27","P28","P29"]
+MSRevoScaleR connect to SQLServer [driver={ODBC Driver 13 for SQL Server};server=VSQL08\HYPERLOOP;database=StatisticalStore;uid=andreidi;pwd=HypML2017]...
+RxOdbcData [SELECT TOP 1000 * FROM _v1] executed in 0.00 min
+rxImport  executed in 0.00 min
+RevoScaleR loading dataframe...
+rxDataStep:  executed in 0.00 min
+Object df [data.frame] size: 0.3MB (1,000 rows by 47 cols)
+Begin data preprocessing v0.0.3 ...
+Done preprocessing. Total time 0.00 min
+Begin model training and cross-validation v0.3.3 ...
+
+Training [bayesglm: classe~ P1+P2+P3+P4+P5+P6+P7+P8+P9+P10+P11+P12+P13+P14+P15+P16+P17+P18+P19+P20+P21+P22+P23+P24+P25+P26+P27+P28+P29] model ...
+bayesglm executed in 0.57 min
+ Train acc: 0.631 Valid acc: 0.595 Valid kap: 0.082 Valid rec: 0.840
+ Tune params: parameter=1.00 
+ Done training [bayesglm] model ...
+
+Saving data...
+Saving File: ./CHURN_v1.0.0_data.csv executed in 0.00 min
+
+Training [rpart: classe~ P1+P2+P3+P4+P5+P6+P7+P8+P9+P10+P11+P12+P13+P14+P15+P16+P17+P18+P19+P20+P21+P22+P23+P24+P25+P26+P27+P28+P29] model ...
+rpart executed in 0.02 min
+ Train acc: 0.634 Valid acc: 0.615 Valid kap: 0.200 Valid rec: 0.681
+ Tune params: cp=0.04 
+ Done training [rpart] model ...
+
+Saving data...
+Saving File: ./CHURN_v1.0.0_data.csv executed in 0.00 min
+
+Training [svmRadial: classe~ P1+P2+P3+P4+P5+P6+P7+P8+P9+P10+P11+P12+P13+P14+P15+P16+P17+P18+P19+P20+P21+P22+P23+P24+P25+P26+P27+P28+P29] model ...
+svmRadial executed in 0.09 min
+ Train acc: 0.639 Valid acc: 0.605 Valid kap: 0.108 Valid rec: 0.840
+ Tune params: sigma=187.58 C=0.25 
+ Done training [svmRadial] model ...
+
+Saving data...
+Saving File: ./CHURN_v1.0.0_data.csv executed in 0.00 min
+
+Training [plr: classe~ P1+P2+P3+P4+P5+P6+P7+P8+P9+P10+P11+P12+P13+P14+P15+P16+P17+P18+P19+P20+P21+P22+P23+P24+P25+P26+P27+P28+P29] model ...
+plr executed in 0.07 min
+ Train acc: 0.637 Valid acc: 0.585 Valid kap: 0.051 Valid rec: 0.849
+ Tune params: lambda=0.10 cp=1.00 
+ Done training [plr] model ...
+
+Saving data...
+Saving File: ./CHURN_v1.0.0_data.csv executed in 0.00 min
+
+Training [xgbTree: classe~ P1+P2+P3+P4+P5+P6+P7+P8+P9+P10+P11+P12+P13+P14+P15+P16+P17+P18+P19+P20+P21+P22+P23+P24+P25+P26+P27+P28+P29] model ...
+xgbTree executed in 1.38 min
+ Train acc: 0.662 Valid acc: 0.585 Valid kap: 0.079 Valid rec: 0.790
+ Tune params: nrounds=50.00 max_depth=1.00 eta=0.40 gamma=0.00 colsample_bytree=0.80 min_child_weight=1.00 
+ Done training [xgbTree] model ...
+
+Saving data...
+Saving File: ./CHURN_v1.0.0_data.csv executed in 0.00 min
+
+Training [adaboost: classe~ P1+P2+P3+P4+P5+P6+P7+P8+P9+P10+P11+P12+P13+P14+P15+P16+P17+P18+P19+P20+P21+P22+P23+P24+P25+P26+P27+P28+P29] model ...
+adaboost executed in 1.96 min
+ Train acc: 1.000 Valid acc: 0.540 Valid kap: 0.026 Valid rec: 0.655
+ Tune params: nIter=150.00 method=2.00 
+ Done training [adaboost] model ...
+
+Saving data...
+Saving File: ./CHURN_v1.0.0_data.csv executed in 0.00 min
+
+Training [rf: classe~ P1+P2+P3+P4+P5+P6+P7+P8+P9+P10+P11+P12+P13+P14+P15+P16+P17+P18+P19+P20+P21+P22+P23+P24+P25+P26+P27+P28+P29] model ...
+rf executed in 0.10 min
+ Train acc: 1.000 Valid acc: 0.585 Valid kap: 0.120 Valid rec: 0.697
+ Tune params: mtry=15.00 
+ Done training [rf] model ...
+
+Saving data...
+Saving File: ./CHURN_v1.0.0_data.csv executed in 0.00 min
+
+Training [randomGLM: classe~ P1+P2+P3+P4+P5+P6+P7+P8+P9+P10+P11+P12+P13+P14+P15+P16+P17+P18+P19+P20+P21+P22+P23+P24+P25+P26+P27+P28+P29] model ...
+
+
+[2017-04-07 11:08:07] BEGIN Churn multi-model cross-validation stand-alonescript v.1.0.0 DEBUG=1
+Current workind directory: .
+XDF File: ./hyperloop_churn_temp_data.xdf
+Loading package: doParallel
+Loading package: foreach
+[Parallel backend] Cores registered: 30
+[Parallel backend] Environment: doParallelSNOW
+[Parallel backend] Backend version: 1.0.10
+MSRevoScaleR connect to SQLServer [driver={ODBC Driver 13 for SQL Server};server=VSQL08\HYPERLOOP;database=StatisticalStore;uid=andreidi;pwd=HypML2017]...
+RxOdbcData [SELECT * FROM [dbo].[ML_DataModels]] executed in 0.00 min
+rxImport  executed in 0.00 min
+RevoScaleR loading dataframe...
+rxDataStep:  executed in 0.00 min
+MSRevoScaleR connect to SQLServer [driver={ODBC Driver 13 for SQL Server};server=VSQL08\HYPERLOOP;database=StatisticalStore;uid=andreidi;pwd=HypML2017]...
+RxOdbcData [SELECT * FROM [dbo].[ML_Models]] executed in 0.00 min
+rxImport  executed in 0.00 min
+RevoScaleR loading dataframe...
+rxDataStep:  executed in 0.00 min
+Proposed models: randomGLM
+Proposed libs: caret,arm,rpart,e1071,kernlab,LogicReg,stepPlr,xgboost,plyr,fastAdaboost,randomForest,randomGLM,bst,class
+Loading package: caret
+Loading package: arm
+Loading package: rpart
+Loading package: e1071
+Loading package: kernlab
+Loading package: LogicReg
+Loading package: stepPlr
+Loading package: xgboost
+Loading package: plyr
+Loading package: fastAdaboost
+Loading package: randomForest
+Loading package: randomGLM
+Loading package: bst
+Loading package: class
+
+Loading table:[_v1] label:["Churn"] fields:["P1","P2","P3","P4","P5","P6","P7","P8","P9","P10","P11","P12","P13","P14","P15","P16","P17","P18","P19","P20","P21","P22","P23","P24","P25","P26","P27","P28","P29"]
+MSRevoScaleR connect to SQLServer [driver={ODBC Driver 13 for SQL Server};server=VSQL08\HYPERLOOP;database=StatisticalStore;uid=andreidi;pwd=HypML2017]...
+RxOdbcData [SELECT TOP 1000 * FROM _v1] executed in 0.00 min
+rxImport  executed in 0.00 min
+RevoScaleR loading dataframe...
+rxDataStep:  executed in 0.00 min
+Object df [data.frame] size: 0.3MB (1,000 rows by 47 cols)
+Begin data preprocessing v0.0.3 ...
+Done preprocessing. Total time 0.00 min
+Begin model training and cross-validation v0.3.3 ...
+
+Training [bayesglm: classe~ P1+P2+P3+P4+P5+P6+P7+P8+P9+P10+P11+P12+P13+P14+P15+P16+P17+P18+P19+P20+P21+P22+P23+P24+P25+P26+P27+P28+P29] model ...
+bayesglm executed in 0.57 min
+ Train acc: 0.631 Valid acc: 0.595 Valid kap: 0.082 Valid rec: 0.840
+ Tune params: parameter=1.00 
+ Done training [bayesglm] model ...
+
+Saving data...
+Saving File: ./CHURN_v1.0.0_data.csv executed in 0.00 min
+
+Training [rpart: classe~ P1+P2+P3+P4+P5+P6+P7+P8+P9+P10+P11+P12+P13+P14+P15+P16+P17+P18+P19+P20+P21+P22+P23+P24+P25+P26+P27+P28+P29] model ...
+rpart executed in 0.02 min
+ Train acc: 0.634 Valid acc: 0.615 Valid kap: 0.200 Valid rec: 0.681
+ Tune params: cp=0.04 
+ Done training [rpart] model ...
+
+Saving data...
+Saving File: ./CHURN_v1.0.0_data.csv executed in 0.00 min
+
+Training [svmRadial: classe~ P1+P2+P3+P4+P5+P6+P7+P8+P9+P10+P11+P12+P13+P14+P15+P16+P17+P18+P19+P20+P21+P22+P23+P24+P25+P26+P27+P28+P29] model ...
+svmRadial executed in 0.09 min
+ Train acc: 0.639 Valid acc: 0.605 Valid kap: 0.108 Valid rec: 0.840
+ Tune params: sigma=187.58 C=0.25 
+ Done training [svmRadial] model ...
+
+Saving data...
+Saving File: ./CHURN_v1.0.0_data.csv executed in 0.00 min
+
+Training [plr: classe~ P1+P2+P3+P4+P5+P6+P7+P8+P9+P10+P11+P12+P13+P14+P15+P16+P17+P18+P19+P20+P21+P22+P23+P24+P25+P26+P27+P28+P29] model ...
+plr executed in 0.07 min
+ Train acc: 0.637 Valid acc: 0.585 Valid kap: 0.051 Valid rec: 0.849
+ Tune params: lambda=0.10 cp=1.00 
+ Done training [plr] model ...
+
+Saving data...
+Saving File: ./CHURN_v1.0.0_data.csv executed in 0.00 min
+
+Training [xgbTree: classe~ P1+P2+P3+P4+P5+P6+P7+P8+P9+P10+P11+P12+P13+P14+P15+P16+P17+P18+P19+P20+P21+P22+P23+P24+P25+P26+P27+P28+P29] model ...
+xgbTree executed in 1.38 min
+ Train acc: 0.662 Valid acc: 0.585 Valid kap: 0.079 Valid rec: 0.790
+ Tune params: nrounds=50.00 max_depth=1.00 eta=0.40 gamma=0.00 colsample_bytree=0.80 min_child_weight=1.00 
+ Done training [xgbTree] model ...
+
+Saving data...
+Saving File: ./CHURN_v1.0.0_data.csv executed in 0.00 min
+
+Training [adaboost: classe~ P1+P2+P3+P4+P5+P6+P7+P8+P9+P10+P11+P12+P13+P14+P15+P16+P17+P18+P19+P20+P21+P22+P23+P24+P25+P26+P27+P28+P29] model ...
+adaboost executed in 1.96 min
+ Train acc: 1.000 Valid acc: 0.540 Valid kap: 0.026 Valid rec: 0.655
+ Tune params: nIter=150.00 method=2.00 
+ Done training [adaboost] model ...
+
+Saving data...
+Saving File: ./CHURN_v1.0.0_data.csv executed in 0.00 min
+
+Training [rf: classe~ P1+P2+P3+P4+P5+P6+P7+P8+P9+P10+P11+P12+P13+P14+P15+P16+P17+P18+P19+P20+P21+P22+P23+P24+P25+P26+P27+P28+P29] model ...
+rf executed in 0.10 min
+ Train acc: 1.000 Valid acc: 0.585 Valid kap: 0.120 Valid rec: 0.697
+ Tune params: mtry=15.00 
+ Done training [rf] model ...
+
+Saving data...
+Saving File: ./CHURN_v1.0.0_data.csv executed in 0.00 min
+
+Training [randomGLM: classe~ P1+P2+P3+P4+P5+P6+P7+P8+P9+P10+P11+P12+P13+P14+P15+P16+P17+P18+P19+P20+P21+P22+P23+P24+P25+P26+P27+P28+P29] model ...
+
+
+[2017-04-07 11:08:07] BEGIN Churn multi-model cross-validation stand-alonescript v.1.0.0 DEBUG=1
+Current workind directory: .
+XDF File: ./hyperloop_churn_temp_data.xdf
+Loading package: doParallel
+Loading package: foreach
+[Parallel backend] Cores registered: 30
+[Parallel backend] Environment: doParallelSNOW
+[Parallel backend] Backend version: 1.0.10
+MSRevoScaleR connect to SQLServer [driver={ODBC Driver 13 for SQL Server};server=VSQL08\HYPERLOOP;database=StatisticalStore;uid=andreidi;pwd=HypML2017]...
+RxOdbcData [SELECT * FROM [dbo].[ML_DataModels]] executed in 0.00 min
+rxImport  executed in 0.00 min
+RevoScaleR loading dataframe...
+rxDataStep:  executed in 0.00 min
+MSRevoScaleR connect to SQLServer [driver={ODBC Driver 13 for SQL Server};server=VSQL08\HYPERLOOP;database=StatisticalStore;uid=andreidi;pwd=HypML2017]...
+RxOdbcData [SELECT * FROM [dbo].[ML_Models]] executed in 0.00 min
+rxImport  executed in 0.00 min
+RevoScaleR loading dataframe...
+rxDataStep:  executed in 0.00 min
+Proposed models: bstTree
+Proposed libs: caret,arm,rpart,e1071,kernlab,LogicReg,stepPlr,xgboost,plyr,fastAdaboost,randomForest,randomGLM,bst,class
+Loading package: caret
+Loading package: arm
+Loading package: rpart
+Loading package: e1071
+Loading package: kernlab
+Loading package: LogicReg
+Loading package: stepPlr
+Loading package: xgboost
+Loading package: plyr
+Loading package: fastAdaboost
+Loading package: randomForest
+Loading package: randomGLM
+Loading package: bst
+Loading package: class
+
+Loading table:[_v1] label:["Churn"] fields:["P1","P2","P3","P4","P5","P6","P7","P8","P9","P10","P11","P12","P13","P14","P15","P16","P17","P18","P19","P20","P21","P22","P23","P24","P25","P26","P27","P28","P29"]
+MSRevoScaleR connect to SQLServer [driver={ODBC Driver 13 for SQL Server};server=VSQL08\HYPERLOOP;database=StatisticalStore;uid=andreidi;pwd=HypML2017]...
+RxOdbcData [SELECT TOP 1000 * FROM _v1] executed in 0.00 min
+rxImport  executed in 0.00 min
+RevoScaleR loading dataframe...
+rxDataStep:  executed in 0.00 min
+Object df [data.frame] size: 0.3MB (1,000 rows by 47 cols)
+Begin data preprocessing v0.0.3 ...
+Done preprocessing. Total time 0.00 min
+Begin model training and cross-validation v0.3.3 ...
+
+Training [bayesglm: classe~ P1+P2+P3+P4+P5+P6+P7+P8+P9+P10+P11+P12+P13+P14+P15+P16+P17+P18+P19+P20+P21+P22+P23+P24+P25+P26+P27+P28+P29] model ...
+bayesglm executed in 0.57 min
+ Train acc: 0.631 Valid acc: 0.595 Valid kap: 0.082 Valid rec: 0.840
+ Tune params: parameter=1.00 
+ Done training [bayesglm] model ...
+
+Saving data...
+Saving File: ./CHURN_v1.0.0_data.csv executed in 0.00 min
+
+Training [rpart: classe~ P1+P2+P3+P4+P5+P6+P7+P8+P9+P10+P11+P12+P13+P14+P15+P16+P17+P18+P19+P20+P21+P22+P23+P24+P25+P26+P27+P28+P29] model ...
+rpart executed in 0.02 min
+ Train acc: 0.634 Valid acc: 0.615 Valid kap: 0.200 Valid rec: 0.681
+ Tune params: cp=0.04 
+ Done training [rpart] model ...
+
+Saving data...
+Saving File: ./CHURN_v1.0.0_data.csv executed in 0.00 min
+
+Training [svmRadial: classe~ P1+P2+P3+P4+P5+P6+P7+P8+P9+P10+P11+P12+P13+P14+P15+P16+P17+P18+P19+P20+P21+P22+P23+P24+P25+P26+P27+P28+P29] model ...
+svmRadial executed in 0.09 min
+ Train acc: 0.639 Valid acc: 0.605 Valid kap: 0.108 Valid rec: 0.840
+ Tune params: sigma=187.58 C=0.25 
+ Done training [svmRadial] model ...
+
+Saving data...
+Saving File: ./CHURN_v1.0.0_data.csv executed in 0.00 min
+
+Training [plr: classe~ P1+P2+P3+P4+P5+P6+P7+P8+P9+P10+P11+P12+P13+P14+P15+P16+P17+P18+P19+P20+P21+P22+P23+P24+P25+P26+P27+P28+P29] model ...
+plr executed in 0.07 min
+ Train acc: 0.637 Valid acc: 0.585 Valid kap: 0.051 Valid rec: 0.849
+ Tune params: lambda=0.10 cp=1.00 
+ Done training [plr] model ...
+
+Saving data...
+Saving File: ./CHURN_v1.0.0_data.csv executed in 0.00 min
+
+Training [xgbTree: classe~ P1+P2+P3+P4+P5+P6+P7+P8+P9+P10+P11+P12+P13+P14+P15+P16+P17+P18+P19+P20+P21+P22+P23+P24+P25+P26+P27+P28+P29] model ...
+xgbTree executed in 1.38 min
+ Train acc: 0.662 Valid acc: 0.585 Valid kap: 0.079 Valid rec: 0.790
+ Tune params: nrounds=50.00 max_depth=1.00 eta=0.40 gamma=0.00 colsample_bytree=0.80 min_child_weight=1.00 
+ Done training [xgbTree] model ...
+
+Saving data...
+Saving File: ./CHURN_v1.0.0_data.csv executed in 0.00 min
+
+Training [adaboost: classe~ P1+P2+P3+P4+P5+P6+P7+P8+P9+P10+P11+P12+P13+P14+P15+P16+P17+P18+P19+P20+P21+P22+P23+P24+P25+P26+P27+P28+P29] model ...
+adaboost executed in 1.96 min
+ Train acc: 1.000 Valid acc: 0.540 Valid kap: 0.026 Valid rec: 0.655
+ Tune params: nIter=150.00 method=2.00 
+ Done training [adaboost] model ...
+
+Saving data...
+Saving File: ./CHURN_v1.0.0_data.csv executed in 0.00 min
+
+Training [rf: classe~ P1+P2+P3+P4+P5+P6+P7+P8+P9+P10+P11+P12+P13+P14+P15+P16+P17+P18+P19+P20+P21+P22+P23+P24+P25+P26+P27+P28+P29] model ...
+rf executed in 0.10 min
+ Train acc: 1.000 Valid acc: 0.585 Valid kap: 0.120 Valid rec: 0.697
+ Tune params: mtry=15.00 
+ Done training [rf] model ...
+
+Saving data...
+Saving File: ./CHURN_v1.0.0_data.csv executed in 0.00 min
+
+Training [randomGLM: classe~ P1+P2+P3+P4+P5+P6+P7+P8+P9+P10+P11+P12+P13+P14+P15+P16+P17+P18+P19+P20+P21+P22+P23+P24+P25+P26+P27+P28+P29] model ...
+
+
+[2017-04-07 11:08:07] BEGIN Churn multi-model cross-validation stand-alonescript v.1.0.0 DEBUG=1
+Current workind directory: .
+XDF File: ./hyperloop_churn_temp_data.xdf
+Loading package: doParallel
+Loading package: foreach
+[Parallel backend] Cores registered: 30
+[Parallel backend] Environment: doParallelSNOW
+[Parallel backend] Backend version: 1.0.10
+MSRevoScaleR connect to SQLServer [driver={ODBC Driver 13 for SQL Server};server=VSQL08\HYPERLOOP;database=StatisticalStore;uid=andreidi;pwd=HypML2017]...
+RxOdbcData [SELECT * FROM [dbo].[ML_DataModels]] executed in 0.00 min
+rxImport  executed in 0.00 min
+RevoScaleR loading dataframe...
+rxDataStep:  executed in 0.00 min
+MSRevoScaleR connect to SQLServer [driver={ODBC Driver 13 for SQL Server};server=VSQL08\HYPERLOOP;database=StatisticalStore;uid=andreidi;pwd=HypML2017]...
+RxOdbcData [SELECT * FROM [dbo].[ML_Models]] executed in 0.00 min
+rxImport  executed in 0.00 min
+RevoScaleR loading dataframe...
+rxDataStep:  executed in 0.00 min
+Proposed models: knn
+Proposed libs: caret,arm,rpart,e1071,kernlab,LogicReg,stepPlr,xgboost,plyr,fastAdaboost,randomForest,randomGLM,bst,class
+Loading package: caret
+Loading package: arm
+Loading package: rpart
+Loading package: e1071
+Loading package: kernlab
+Loading package: LogicReg
+Loading package: stepPlr
+Loading package: xgboost
+Loading package: plyr
+Loading package: fastAdaboost
+Loading package: randomForest
+Loading package: randomGLM
+Loading package: bst
+Loading package: class
+
+Loading table:[_v1] label:["Churn"] fields:["P1","P2","P3","P4","P5","P6","P7","P8","P9","P10","P11","P12","P13","P14","P15","P16","P17","P18","P19","P20","P21","P22","P23","P24","P25","P26","P27","P28","P29"]
+MSRevoScaleR connect to SQLServer [driver={ODBC Driver 13 for SQL Server};server=VSQL08\HYPERLOOP;database=StatisticalStore;uid=andreidi;pwd=HypML2017]...
+RxOdbcData [SELECT TOP 1000 * FROM _v1] executed in 0.00 min
+rxImport  executed in 0.00 min
+RevoScaleR loading dataframe...
+rxDataStep:  executed in 0.00 min
+Object df [data.frame] size: 0.3MB (1,000 rows by 47 cols)
+Begin data preprocessing v0.0.3 ...
+Done preprocessing. Total time 0.00 min
+Begin model training and cross-validation v0.3.3 ...
+
+Training [bayesglm: classe~ P1+P2+P3+P4+P5+P6+P7+P8+P9+P10+P11+P12+P13+P14+P15+P16+P17+P18+P19+P20+P21+P22+P23+P24+P25+P26+P27+P28+P29] model ...
+bayesglm executed in 0.57 min
+ Train acc: 0.631 Valid acc: 0.595 Valid kap: 0.082 Valid rec: 0.840
+ Tune params: parameter=1.00 
+ Done training [bayesglm] model ...
+
+Saving data...
+Saving File: ./CHURN_v1.0.0_data.csv executed in 0.00 min
+
+Training [rpart: classe~ P1+P2+P3+P4+P5+P6+P7+P8+P9+P10+P11+P12+P13+P14+P15+P16+P17+P18+P19+P20+P21+P22+P23+P24+P25+P26+P27+P28+P29] model ...
+rpart executed in 0.02 min
+ Train acc: 0.634 Valid acc: 0.615 Valid kap: 0.200 Valid rec: 0.681
+ Tune params: cp=0.04 
+ Done training [rpart] model ...
+
+Saving data...
+Saving File: ./CHURN_v1.0.0_data.csv executed in 0.00 min
+
+Training [svmRadial: classe~ P1+P2+P3+P4+P5+P6+P7+P8+P9+P10+P11+P12+P13+P14+P15+P16+P17+P18+P19+P20+P21+P22+P23+P24+P25+P26+P27+P28+P29] model ...
+svmRadial executed in 0.09 min
+ Train acc: 0.639 Valid acc: 0.605 Valid kap: 0.108 Valid rec: 0.840
+ Tune params: sigma=187.58 C=0.25 
+ Done training [svmRadial] model ...
+
+Saving data...
+Saving File: ./CHURN_v1.0.0_data.csv executed in 0.00 min
+
+Training [plr: classe~ P1+P2+P3+P4+P5+P6+P7+P8+P9+P10+P11+P12+P13+P14+P15+P16+P17+P18+P19+P20+P21+P22+P23+P24+P25+P26+P27+P28+P29] model ...
+plr executed in 0.07 min
+ Train acc: 0.637 Valid acc: 0.585 Valid kap: 0.051 Valid rec: 0.849
+ Tune params: lambda=0.10 cp=1.00 
+ Done training [plr] model ...
+
+Saving data...
+Saving File: ./CHURN_v1.0.0_data.csv executed in 0.00 min
+
+Training [xgbTree: classe~ P1+P2+P3+P4+P5+P6+P7+P8+P9+P10+P11+P12+P13+P14+P15+P16+P17+P18+P19+P20+P21+P22+P23+P24+P25+P26+P27+P28+P29] model ...
+xgbTree executed in 1.38 min
+ Train acc: 0.662 Valid acc: 0.585 Valid kap: 0.079 Valid rec: 0.790
+ Tune params: nrounds=50.00 max_depth=1.00 eta=0.40 gamma=0.00 colsample_bytree=0.80 min_child_weight=1.00 
+ Done training [xgbTree] model ...
+
+Saving data...
+Saving File: ./CHURN_v1.0.0_data.csv executed in 0.00 min
+
+Training [adaboost: classe~ P1+P2+P3+P4+P5+P6+P7+P8+P9+P10+P11+P12+P13+P14+P15+P16+P17+P18+P19+P20+P21+P22+P23+P24+P25+P26+P27+P28+P29] model ...
+adaboost executed in 1.96 min
+ Train acc: 1.000 Valid acc: 0.540 Valid kap: 0.026 Valid rec: 0.655
+ Tune params: nIter=150.00 method=2.00 
+ Done training [adaboost] model ...
+
+Saving data...
+Saving File: ./CHURN_v1.0.0_data.csv executed in 0.00 min
+
+Training [rf: classe~ P1+P2+P3+P4+P5+P6+P7+P8+P9+P10+P11+P12+P13+P14+P15+P16+P17+P18+P19+P20+P21+P22+P23+P24+P25+P26+P27+P28+P29] model ...
+rf executed in 0.10 min
+ Train acc: 1.000 Valid acc: 0.585 Valid kap: 0.120 Valid rec: 0.697
+ Tune params: mtry=15.00 
+ Done training [rf] model ...
+
+Saving data...
+Saving File: ./CHURN_v1.0.0_data.csv executed in 0.00 min
+
+Training [randomGLM: classe~ P1+P2+P3+P4+P5+P6+P7+P8+P9+P10+P11+P12+P13+P14+P15+P16+P17+P18+P19+P20+P21+P22+P23+P24+P25+P26+P27+P28+P29] model ...
+
