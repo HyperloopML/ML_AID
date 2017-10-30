@@ -1,7 +1,7 @@
 object frm_Main: Tfrm_Main
-  Left = 506
+  Left = 518
   Height = 632
-  Top = 242
+  Top = 256
   Width = 801
   BorderStyle = bsDialog
   BorderWidth = 5
@@ -16,8 +16,8 @@ object frm_Main: Tfrm_Main
     Height = 167
     Top = 456
     Width = 349
-    Caption = 'Demonstratie automatizata'
-    Font.Height = -20
+    Caption = 'Demo automatizata'
+    Font.Height = -27
     Font.Name = 'Arial'
     Glyph.Data = {
       36090000424D3609000000000000360000002800000018000000180000000100
@@ -104,8 +104,8 @@ object frm_Main: Tfrm_Main
     Height = 167
     Top = 456
     Width = 349
-    Caption = 'Demonstratie configurabila'
-    Font.Height = -20
+    Caption = 'Demo configurabila'
+    Font.Height = -27
     Font.Name = 'Arial'
     Glyph.Data = {
       36090000424D3609000000000000360000002800000018000000180000000100
@@ -210,16 +210,19 @@ object frm_Main: Tfrm_Main
       Font.Color = 16534038
       Font.Name = 'Arial Black'
       Lines.Strings = (
-        'Aceasta aplicatie reprezinta demonstratia experimentului de sistem avansat de '
-        'urmarire a proceselor industriale. '
+        'Aceasta aplicatie reprezinta demonstratia experimentului de '
+        'sistem avansat de urmarire a proceselor industriale. '
         'In acest experiment s-au tinut cont de urmatoarele criterii:'
-        '- utilizarea retelei avansate duale de senzori (senzori magnetici si senzori optici)'
-        '- aplicarea de modele de Inteligenta Artificiala de ultima generatie (Deep '
-        'Learning)'
-        'Sistemul functioneaza pe cod nativ win32 80x86 fara a fi necesara '
-        'instalare/configurare.'
+        '- utilizarea retelei avansate duale de senzori (senzori magnetici '
+        'si senzori optici)'
+        '- aplicarea de modele de Inteligenta Artificiala de ultima '
+        'generatie (Deep Learning)'
+        'Sistemul functioneaza pe cod nativ win32 80x86 fara a fi '
+        'necesara  instalare/configurare.'
         ''
-        'Versiunea 1.1.0 (development):'
+        'Istoric versiuni:'
+        ''
+        'Versiunea 1.1.0 (in dezv):'
         '- modul configurare a procesului'
         '- configurarea pasilor'
         '- generarea timpilor reali pentru datele de antrenament'
@@ -235,10 +238,12 @@ object frm_Main: Tfrm_Main
         'Versiunea 1.0.2:'
         '- interfata avansata'
         '- incarcare script din surse externe de tip CSV'
-        '- configurarea generatorului de evenimente (viteza de executie automatizata)'
+        '- configurarea generatorului de evenimente (viteza de executie '
+        'automatizata)'
         ''
         'Versiunea 0.9.1:'
-        '- evenimente automatizate generate de modul de tip random-walker'
+        '- evenimente automatizate generate de modul de tip random-'
+        'walker'
         '- utilizare timer system '
         '- interfata minimala'
         ''
@@ -252,10 +257,10 @@ object frm_Main: Tfrm_Main
     end
   end
   object Panel2: TPanel
-    Left = 288
-    Height = 26
-    Top = 424
-    Width = 213
+    Left = 248
+    Height = 34
+    Top = 416
+    Width = 317
     BevelInner = bvLowered
     BevelWidth = 3
     Caption = 'Autor: Bogdan Dumitrescu'

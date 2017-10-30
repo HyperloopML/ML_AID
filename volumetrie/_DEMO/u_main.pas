@@ -6,7 +6,7 @@ interface
 
 uses
   Classes, SysUtils, SdfData, db, FileUtil, Forms, Controls, Graphics, Dialogs,
-  Menus, DBGrids, Buttons, ExtCtrls, StdCtrls, u_script;
+  Menus, DBGrids, Buttons, ExtCtrls, StdCtrls, u_script, u_config;
 
 type
 
@@ -57,7 +57,7 @@ end;
 
 procedure Tfrm_Main.BitBtn2Click(Sender: TObject);
 begin
-
+  frm_Config.ShowModal;
 end;
 
 procedure Tfrm_Main.Bevel1ChangeBounds(Sender: TObject);

@@ -1,7 +1,7 @@
 object frm_Script: Tfrm_Script
-  Left = 392
+  Left = 5111
   Height = 700
-  Top = 150
+  Top = 299
   Width = 1200
   Caption = 'Demonstratie automata'
   ClientHeight = 700
@@ -11,13 +11,13 @@ object frm_Script: Tfrm_Script
   Position = poScreenCenter
   LCLVersion = '1.6.4.0'
   object GroupBox1: TGroupBox
-    Left = 408
+    Left = 392
     Height = 384
     Top = 0
-    Width = 786
+    Width = 802
     Caption = 'Fluxul datelor de iesire rezultate in urma actiunilor'
     ClientHeight = 355
-    ClientWidth = 782
+    ClientWidth = 798
     Font.Height = -20
     Font.Name = 'Arial'
     Font.Style = [fsBold]
@@ -28,7 +28,7 @@ object frm_Script: Tfrm_Script
       Left = 0
       Height = 355
       Top = 0
-      Width = 782
+      Width = 798
       Align = alClient
       Color = clWindow
       Columns = <>
@@ -116,10 +116,10 @@ object frm_Script: Tfrm_Script
     TabOrder = 3
   end
   object BitBtn4: TBitBtn
-    Left = 968
+    Left = 1024
     Height = 70
     Top = 616
-    Width = 226
+    Width = 170
     Caption = 'Inchide demo'
     Font.Height = -20
     Font.Name = 'Arial'
@@ -133,10 +133,10 @@ object frm_Script: Tfrm_Script
     Left = 8
     Height = 608
     Top = 0
-    Width = 400
+    Width = 384
     Caption = 'Fluxul actiunilor'
     ClientHeight = 579
-    ClientWidth = 396
+    ClientWidth = 380
     Font.Height = -20
     Font.Name = 'Arial'
     Font.Style = [fsBold]
@@ -147,7 +147,7 @@ object frm_Script: Tfrm_Script
       Left = 8
       Height = 568
       Top = 0
-      Width = 384
+      Width = 368
       BorderSpacing.Left = 1
       BorderSpacing.Top = 1
       BorderSpacing.Right = 1
@@ -189,13 +189,13 @@ object frm_Script: Tfrm_Script
     ParentFont = False
   end
   object GroupBox3: TGroupBox
-    Left = 408
+    Left = 400
     Height = 209
     Top = 400
-    Width = 784
+    Width = 792
     Caption = 'Informatii statistice despre sistem'
     ClientHeight = 180
-    ClientWidth = 780
+    ClientWidth = 788
     Font.Height = -20
     Font.Name = 'Arial'
     Font.Style = [fsBold]

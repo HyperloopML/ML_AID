@@ -261,7 +261,9 @@ begin
    if new_start then
    begin
      log_list_count := 0;
-     add_log('DEMO STARTED! Se foloseste tota virtuala #12345 pe un traseu virtual de banda industriala cu statii multiple supervizata de WSN+DNN',clGreen);
+     add_log('DEMO STARTED! Se foloseste tota virtuala #12345 pe un '+
+             'traseu virtual de banda industriala cu statii multiple '+
+             'supervizata de WSN+DNN',clGreen);
      new_start := False;
    end;
    ds_log.Append;
