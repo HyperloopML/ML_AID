@@ -1,23 +1,23 @@
 object frm_Main: Tfrm_Main
-  Left = 5454
-  Height = 632
-  Top = 773
-  Width = 801
-  BorderStyle = bsDialog
+  Left = 534
+  Height = 690
+  Top = 610
+  Width = 1100
+  BorderStyle = bsSingle
   BorderWidth = 5
   Caption = 'Demonstratie experiment'
-  ClientHeight = 632
-  ClientWidth = 801
+  ClientHeight = 690
+  ClientWidth = 1100
   OnCreate = FormCreate
   Position = poScreenCenter
   LCLVersion = '1.6.4.0'
   object BitBtn1: TBitBtn
-    Left = 16
-    Height = 167
-    Top = 456
-    Width = 349
+    Left = 128
+    Height = 120
+    Top = 552
+    Width = 389
     Caption = 'Demo automatizata'
-    Font.Height = -27
+    Font.Height = -32
     Font.Name = 'Arial'
     Glyph.Data = {
       36090000424D3609000000000000360000002800000018000000180000000100
@@ -100,12 +100,12 @@ object frm_Main: Tfrm_Main
     TabOrder = 0
   end
   object BitBtn2: TBitBtn
-    Left = 432
-    Height = 167
-    Top = 456
-    Width = 349
+    Left = 584
+    Height = 120
+    Top = 552
+    Width = 390
     Caption = 'Demo configurabila'
-    Font.Height = -27
+    Font.Height = -32
     Font.Name = 'Arial'
     Glyph.Data = {
       36090000424D3609000000000000360000002800000018000000180000000100
@@ -189,40 +189,46 @@ object frm_Main: Tfrm_Main
   end
   object Panel1: TPanel
     Left = 16
-    Height = 408
+    Height = 480
     Top = 8
-    Width = 770
+    Width = 1058
+    BevelInner = bvLowered
+    BevelWidth = 5
     BorderWidth = 1
     BorderStyle = bsSingle
-    ClientHeight = 404
-    ClientWidth = 766
+    ClientHeight = 476
+    ClientWidth = 1054
     Color = clSilver
     ParentColor = False
     TabOrder = 2
     OnClick = Panel1Click
     object Memo1: TMemo
-      Left = 2
-      Height = 400
-      Top = 2
-      Width = 762
+      Left = 11
+      Height = 454
+      Top = 11
+      Width = 1032
       Align = alClient
       Color = clSilver
       Font.Color = 16534038
+      Font.Height = -29
       Font.Name = 'Arial Black'
       Lines.Strings = (
         'Aceasta aplicatie reprezinta demonstratia experimentului de '
         'sistem avansat de urmarire a proceselor industriale. '
         'In acest experiment s-au tinut cont de urmatoarele criterii:'
-        '- utilizarea retelei avansate duale de senzori (senzori magnetici '
-        'si senzori optici)'
+        '- utilizarea retelei avansate duale de senzori (senzori '
+        'magnetici  si senzori optici)'
         '- aplicarea de modele de Inteligenta Artificiala de ultima '
         'generatie (Deep Learning)'
         'Sistemul functioneaza pe cod nativ win32 80x86 fara a fi '
         'necesara  instalare/configurare.'
-        ''
         'Istoric versiuni:'
         ''
-        'Versiunea 1.1.0 (in dezv):'
+        'Versiunea 1.1.2:'
+        '- depanare erori'
+        '- generator de observatii aleatoare'
+        ''
+        'Versiunea 1.1.0:'
         '- modul configurare a procesului'
         '- configurarea pasilor'
         '- generarea timpilor reali pentru datele de antrenament'
@@ -238,7 +244,8 @@ object frm_Main: Tfrm_Main
         'Versiunea 1.0.2:'
         '- interfata avansata'
         '- incarcare script din surse externe de tip CSV'
-        '- configurarea generatorului de evenimente (viteza de executie '
+        '- configurarea generatorului de evenimente (viteza de '
+        'executie '
         'automatizata)'
         ''
         'Versiunea 0.9.1:'
@@ -257,9 +264,9 @@ object frm_Main: Tfrm_Main
     end
   end
   object Panel2: TPanel
-    Left = 248
+    Left = 392
     Height = 34
-    Top = 416
+    Top = 488
     Width = 317
     BevelInner = bvLowered
     BevelWidth = 3

@@ -16,13 +16,16 @@ type
  TLinearRegression=class(TObject)
     Theta : TDMatrix;
   public
-    procedure fit(X_train,y_train:TDMatrix);
+    procedure fit(X_train,y_train:TDMatrix; lambda:double = 0.5);
     function predict(X_test:TDMatrix):TDMatrix;
     function GetTheta:TDMatrix;
 
 end;
 
+type TMLPRegressorV2 = TLinearRegression;
+
 function TimeMs:longint;
+function GenerateLabels(X: TDMatrix; var coefs: TDMatrix; scale_factor:double = 0.2 ): TDMatrix;
 
 implementation
 
@@ -33,12 +36,20 @@ begin
  result := ts.Time;
 end;
 
+function GenerateLabels(X: TDMatrix; var coefs: TDMatrix; scale_factor:double = 0.2): TDMatrix;
+begin
+ coefs := Mrandom(X.NumCols,1) * scale_factor;
+ result := X * coefs;
+end;
+
 { LinearRegression }
 
-procedure TLinearRegression.fit(X_train, y_train: TDMatrix);
+procedure TLinearRegression.fit(X_train, y_train: TDMatrix; lambda:double = 0.5);
+var
+  n : integer;
 begin
-  //Theta := MZeros(X_train.NumCols,1);
-  Theta := (Minv(X_train.t * X_train) * X_train.t) * y_train;
+  n := X_train.NumCols;
+  Theta := (Minv(X_train.t * X_train + lambda*Meye(n)) * X_train.t) * y_train;
 end;
 
 function TLinearRegression.predict(X_test: TDMatrix): TDMatrix;

@@ -1,24 +1,27 @@
 object frm_Script: Tfrm_Script
-  Left = 6
-  Height = 700
-  Top = 235
-  Width = 1200
+  Left = 332
+  Height = 760
+  Top = 308
+  Width = 1358
   Caption = 'Demonstratie automata'
-  ClientHeight = 700
-  ClientWidth = 1200
+  ClientHeight = 760
+  ClientWidth = 1358
+  Color = cl3DLight
   Font.Name = 'Arial'
+  OnClose = FormClose
   OnCreate = FormCreate
+  OnShow = FormShow
   Position = poScreenCenter
   LCLVersion = '1.6.4.0'
   object GroupBox1: TGroupBox
-    Left = 392
-    Height = 384
+    Left = 544
+    Height = 360
     Top = 0
     Width = 802
     Caption = 'Fluxul datelor de iesire rezultate in urma actiunilor'
-    ClientHeight = 355
+    ClientHeight = 323
     ClientWidth = 798
-    Font.Height = -20
+    Font.Height = -27
     Font.Name = 'Arial'
     Font.Style = [fsBold]
     ParentFont = False
@@ -26,7 +29,7 @@ object frm_Script: Tfrm_Script
     OnClick = GroupBox1Click
     object dg_grid: TDBGrid
       Left = 0
-      Height = 355
+      Height = 323
       Top = 0
       Width = 798
       Align = alClient
@@ -43,12 +46,13 @@ object frm_Script: Tfrm_Script
   end
   object btn_start: TBitBtn
     Left = 8
-    Height = 70
-    Top = 616
+    Height = 46
+    Top = 696
     Width = 226
     Caption = 'Porneste demo'
-    Font.Height = -20
+    Font.Height = -24
     Font.Name = 'Arial'
+    Font.Style = [fsBold]
     Kind = bkYes
     OnClick = btn_startClick
     ParentFont = False
@@ -56,12 +60,13 @@ object frm_Script: Tfrm_Script
   end
   object BitBtn2: TBitBtn
     Left = 472
-    Height = 70
-    Top = 616
+    Height = 46
+    Top = 696
     Width = 224
     Caption = 'Restart demo'
-    Font.Height = -20
+    Font.Height = -24
     Font.Name = 'Arial'
+    Font.Style = [fsBold]
     Kind = bkRetry
     OnClick = BitBtn2Click
     ParentFont = False
@@ -69,12 +74,13 @@ object frm_Script: Tfrm_Script
   end
   object BitBtn3: TBitBtn
     Left = 240
-    Height = 70
-    Top = 616
+    Height = 46
+    Top = 696
     Width = 226
     Caption = 'Pauza demo'
-    Font.Height = -20
+    Font.Height = -24
     Font.Name = 'Arial'
+    Font.Style = [fsBold]
     Glyph.Data = {
       36040000424D3604000000000000360000002800000010000000100000000100
       2000000000000004000064000000640000000000000000000000EEEEEE00EEEE
@@ -116,13 +122,14 @@ object frm_Script: Tfrm_Script
     TabOrder = 3
   end
   object BitBtn4: TBitBtn
-    Left = 1024
-    Height = 70
-    Top = 616
-    Width = 170
+    Left = 1128
+    Height = 46
+    Top = 696
+    Width = 210
     Caption = 'Inchide demo'
-    Font.Height = -20
+    Font.Height = -24
     Font.Name = 'Arial'
+    Font.Style = [fsBold]
     Kind = bkClose
     ModalResult = 11
     OnClick = BitBtn4Click
@@ -131,23 +138,24 @@ object frm_Script: Tfrm_Script
   end
   object GroupBox2: TGroupBox
     Left = 8
-    Height = 608
+    Height = 688
     Top = 0
-    Width = 384
+    Width = 536
     Caption = 'Fluxul actiunilor'
-    ClientHeight = 579
-    ClientWidth = 380
-    Font.Height = -20
+    ClientHeight = 646
+    ClientWidth = 532
+    Font.Height = -32
     Font.Name = 'Arial'
     Font.Style = [fsBold]
     ParentFont = False
     TabOrder = 5
     OnClick = GroupBox1Click
     object lb_log: TListBox
-      Left = 8
-      Height = 568
-      Top = 0
-      Width = 368
+      Left = 2
+      Height = 642
+      Top = 2
+      Width = 528
+      Align = alClient
       BorderSpacing.Left = 1
       BorderSpacing.Top = 1
       BorderSpacing.Right = 1
@@ -155,9 +163,10 @@ object frm_Script: Tfrm_Script
       BorderSpacing.Around = 1
       BorderSpacing.InnerBorder = 1
       ExtendedSelect = False
-      Font.Height = -15
+      Font.Height = -24
       Font.Name = 'Arial'
-      ItemHeight = 110
+      ItemHeight = 160
+      OnClick = lb_logClick
       OnDrawItem = lb_logDrawItem
       ParentFont = False
       Style = lbOwnerDrawFixed
@@ -167,8 +176,10 @@ object frm_Script: Tfrm_Script
   object sld_timer: TTrackBar
     Left = 720
     Height = 40
-    Top = 648
-    Width = 216
+    Top = 712
+    Width = 304
+    Frequency = 250
+    LineSize = 5
     Max = 2500
     Min = 250
     OnChange = sld_timerChange
@@ -178,25 +189,25 @@ object frm_Script: Tfrm_Script
   end
   object Label1: TLabel
     Left = 728
-    Height = 24
-    Top = 624
-    Width = 178
-    Caption = 'Viteza de executie:'
-    Font.Height = -20
+    Height = 29
+    Top = 682
+    Width = 292
+    Caption = 'Delay intre oper simulate:'
+    Font.Height = -24
     Font.Name = 'Arial'
     Font.Style = [fsBold]
     ParentColor = False
     ParentFont = False
   end
   object GroupBox3: TGroupBox
-    Left = 400
-    Height = 209
-    Top = 400
+    Left = 544
+    Height = 313
+    Top = 368
     Width = 792
     Caption = 'Informatii statistice despre sistem'
-    ClientHeight = 180
+    ClientHeight = 276
     ClientWidth = 788
-    Font.Height = -20
+    Font.Height = -27
     Font.Name = 'Arial'
     Font.Style = [fsBold]
     ParentFont = False
@@ -204,13 +215,13 @@ object frm_Script: Tfrm_Script
     OnClick = GroupBox3Click
     object Label2: TLabel
       Left = 8
-      Height = 48
+      Height = 88
       Top = 8
       Width = 208
       Alignment = taRightJustify
       AutoSize = False
       Caption = 'Numarul de citiri / evenimente WSN (optic):'
-      Font.Height = -17
+      Font.Height = -24
       Font.Name = 'Arial'
       Font.Style = [fsBold]
       ParentColor = False
@@ -219,13 +230,13 @@ object frm_Script: Tfrm_Script
     end
     object Label3: TLabel
       Left = 8
-      Height = 48
-      Top = 64
+      Height = 88
+      Top = 96
       Width = 208
       Alignment = taRightJustify
       AutoSize = False
       Caption = 'Numarul de citiri / evenimente WSN (mag):'
-      Font.Height = -17
+      Font.Height = -24
       Font.Name = 'Arial'
       Font.Style = [fsBold]
       ParentColor = False
@@ -234,14 +245,14 @@ object frm_Script: Tfrm_Script
       OnClick = Label3Click
     end
     object Label4: TLabel
-      Left = 8
-      Height = 48
-      Top = 120
-      Width = 208
+      Left = 72
+      Height = 80
+      Top = 192
+      Width = 352
       Alignment = taRightJustify
       AutoSize = False
       Caption = 'Numarul de inferente / predictii cu DNN:'
-      Font.Height = -17
+      Font.Height = -24
       Font.Name = 'Arial'
       Font.Style = [fsBold]
       ParentColor = False
@@ -251,53 +262,74 @@ object frm_Script: Tfrm_Script
     end
     object pnl_opt: TPanel
       Left = 232
-      Height = 34
-      Top = 16
+      Height = 50
+      Top = 24
       Width = 96
       BevelInner = bvLowered
       BorderStyle = bsSingle
+      Color = clSilver
+      Font.Height = -32
+      Font.Name = 'Arial Black'
+      Font.Style = [fsBold]
+      ParentColor = False
+      ParentFont = False
       TabOrder = 0
     end
     object pnl_mag: TPanel
       Left = 232
-      Height = 32
-      Top = 72
+      Height = 50
+      Top = 112
       Width = 96
       BevelInner = bvLowered
       BorderStyle = bsSingle
+      Color = clSilver
+      Font.Height = -32
+      Font.Name = 'Arial Black'
+      Font.Style = [fsBold]
+      ParentColor = False
+      ParentFont = False
       TabOrder = 1
     end
     object pnl_dnn: TPanel
-      Left = 232
-      Height = 34
-      Top = 128
+      Left = 440
+      Height = 50
+      Top = 192
       Width = 96
       BevelInner = bvLowered
       BorderStyle = bsSingle
+      Color = clSilver
+      Font.Height = -32
+      Font.Name = 'Arial Black'
+      Font.Style = [fsBold]
+      ParentColor = False
+      ParentFont = False
       TabOrder = 2
     end
     object pnl_err: TPanel
       Left = 656
-      Height = 34
-      Top = 40
+      Height = 50
+      Top = 24
       Width = 96
       BevelInner = bvLowered
       BorderStyle = bsSingle
+      Color = clSilver
       Font.Color = clRed
-      Font.Height = -20
+      Font.Height = -32
+      Font.Name = 'Arial Black'
       Font.Style = [fsBold]
+      ParentColor = False
       ParentFont = False
       TabOrder = 3
     end
     object Label5: TLabel
-      Left = 440
-      Height = 48
-      Top = 32
-      Width = 200
+      Left = 368
+      Height = 64
+      Top = 16
+      Width = 272
       Alignment = taRightJustify
       AutoSize = False
       Caption = 'Numarul de anomalii detectate de sistem:'
-      Font.Height = -17
+      Font.Height = -24
       Font.Name = 'Arial'
       Font.Style = [fsBold]
       ParentColor = False
@@ -305,14 +337,14 @@ object frm_Script: Tfrm_Script
       WordWrap = True
     end
     object Label6: TLabel
-      Left = 368
-      Height = 48
-      Top = 88
+      Left = 360
+      Height = 88
+      Top = 96
       Width = 272
       Alignment = taRightJustify
       AutoSize = False
       Caption = 'Numarul de evenimente validate de catre sistem:'
-      Font.Height = -17
+      Font.Height = -24
       Font.Name = 'Arial'
       Font.Style = [fsBold]
       ParentColor = False
@@ -322,14 +354,15 @@ object frm_Script: Tfrm_Script
     end
     object pnl_act: TPanel
       Left = 656
-      Height = 32
-      Top = 96
+      Height = 50
+      Top = 112
       Width = 96
       BevelInner = bvLowered
       BorderStyle = bsSingle
-      Color = clBtnFace
+      Color = clSilver
       Font.Color = clBlue
-      Font.Height = -20
+      Font.Height = -32
+      Font.Name = 'Arial Black'
       Font.Style = [fsBold]
       ParentColor = False
       ParentFont = False
@@ -339,30 +372,34 @@ object frm_Script: Tfrm_Script
   object ds_csv: TSdfDataSet
     FileMustExist = True
     ReadOnly = False
-    FileName = 'data.csv'
     FieldDefs = <>
     AllowMultiLine = False
     Delimiter = ','
     FirstLineAsSchema = False
     StripTrailingDelimiters = False
-    left = 544
-    top = 40
+    left = 736
+    top = 104
   end
   object tmr_script: TTimer
     Enabled = False
     Interval = 3000
     OnTimer = tmr_scriptTimer
-    left = 544
-    top = 112
+    left = 736
+    top = 192
   end
   object ds_log: TMemDataset
     FieldDefs = <>
-    left = 616
-    top = 40
+    left = 808
+    top = 104
   end
   object dsrc_log: TDataSource
     DataSet = ds_log
-    left = 696
-    top = 40
+    left = 888
+    top = 104
+  end
+  object ds_source: TMemDataset
+    FieldDefs = <>
+    left = 864
+    top = 192
   end
 end

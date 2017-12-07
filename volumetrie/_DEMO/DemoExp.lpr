@@ -7,8 +7,8 @@ uses
   cthreads,
   {$ENDIF}{$ENDIF}
   Interfaces, // this includes the LCL widgetset
-  Forms, sdflaz, u_main, u_script, memdslaz, u_ml, u_config
-  { you can add units after this };
+  Forms, sdflaz, u_main, u_script, memdslaz, runtimetypeinfocontrols, u_ml,
+  u_config, u_info;
 
 {$R *.res}
 
@@ -18,6 +18,7 @@ begin
   Application.CreateForm(Tfrm_Main, frm_Main);
   Application.CreateForm(Tfrm_Script, frm_Script);
   Application.CreateForm(Tfrm_Config, frm_Config);
+  Application.CreateForm(Tfrm_info, frm_info);
   Application.Run;
 end.
 

@@ -31,6 +31,7 @@ type
     BitBtn4: TBitBtn;
     dsrc_log: TDataSource;
     dg_grid: TDBGrid;
+    ds_source: TMemDataset;
     GroupBox1: TGroupBox;
     ds_csv: TSdfDataSet;
     ds_log: TMemDataset;
@@ -55,7 +56,9 @@ type
     procedure BitBtn2Click(Sender: TObject);
     procedure BitBtn3Click(Sender: TObject);
     procedure BitBtn4Click(Sender: TObject);
+    procedure FormClose(Sender: TObject; var CloseAction: TCloseAction);
     procedure FormCreate(Sender: TObject);
+    procedure FormShow(Sender: TObject);
     procedure GroupBox1Click(Sender: TObject);
     procedure GroupBox3Click(Sender: TObject);
     procedure Label3Click(Sender: TObject);
@@ -82,6 +85,9 @@ type
     procedure update_stats;
   public
     { public declarations }
+
+    procedure ClearDataset;
+
   end;
 
 
@@ -118,6 +124,10 @@ implementation
 { Tfrm_Script }
 
 procedure Tfrm_Script.FormCreate(Sender: TObject);
+begin
+end;
+
+procedure Tfrm_Script.FormShow(Sender: TObject);
 var i:integer;
 begin
   i_opt := 0;
@@ -128,8 +138,8 @@ begin
 
   new_start := True;
   in_timer := False;
-  ds_csv.Active := True;
-  ds_log.CopyFromDataset(ds_csv, False);
+
+  ds_log.CopyFromDataset(ds_source, False);
   ds_log.Active := True;
   for i:=0 to dg_grid.Columns.Count-1 do
   begin
@@ -137,6 +147,7 @@ begin
     dg_grid.Columns[i].Title.Caption := fields[i].ColName;
     dg_grid.Columns[i].Alignment:= TAlignment.taRightJustify;
   end;
+
 end;
 
 procedure Tfrm_Script.BitBtn2Click(Sender: TObject);
@@ -172,8 +183,15 @@ end;
 
 procedure Tfrm_Script.BitBtn4Click(Sender: TObject);
 begin
-  tmr_script.Enabled := False;
   Close;
+end;
+
+procedure Tfrm_Script.FormClose(Sender: TObject; var CloseAction: TCloseAction);
+begin
+ tmr_script.Enabled := False;
+ ds_source.Active := False;;
+ ds_log.Active:=False;;
+ lb_log.Items.Clear;
 end;
 
 procedure Tfrm_Script.GroupBox1Click(Sender: TObject);
@@ -256,7 +274,7 @@ begin
  if in_timer or demo_done then
     exit;
  in_timer := True;
- if not ds_csv.EOF then
+ if not ds_source.EOF then
  begin
    if new_start then
    begin
@@ -267,19 +285,19 @@ begin
      new_start := False;
    end;
    ds_log.Append;
-   for i:=0 to ds_csv.Fields.Count-1 do
+   for i:=0 to ds_source.Fields.Count-1 do
    begin
-     src_val := ds_csv.Fields[i].Value;
-     src_name := ds_csv.Fields[i].FieldName;
+     src_val := ds_source.Fields[i].Value;
+     src_name := ds_source.Fields[i].FieldName;
      ds_log.Fields[i].Value := src_val;
    end;
    //
-   str_senzor := ds_csv.FieldByName('Field2').AsString;
-   str_tip_senzor := ds_csv.FieldByName('Field4').AsString;
-   is_error := ds_csv.FieldByName('Field12').AsInteger;
-   str_operator := ds_csv.FieldByName('Field3').AsString;
-   str_time_pred := ds_csv.FieldByName('Field6').AsString;
-   str_time_real := ds_csv.FieldByName('Field7').AsString;
+   str_senzor := ds_source.FieldByName('Field2').AsString;
+   str_tip_senzor := ds_source.FieldByName('Field4').AsString;
+   is_error := ds_source.FieldByName('Field12').AsInteger;
+   str_operator := ds_source.FieldByName('Field3').AsString;
+   str_time_pred := ds_source.FieldByName('Field6').AsString;
+   str_time_real := ds_source.FieldByName('Field7').AsString;
    //
    if UpperCase(str_tip_senzor) = 'M' then
    begin
@@ -315,7 +333,7 @@ begin
 
    add_log(str_log,clr);
    ds_log.Post;
-   ds_csv.Next;
+   ds_source.Next;
  end
  else
  begin
@@ -353,7 +371,7 @@ end;
 
 procedure Tfrm_Script.restart_demo;
 begin
- ds_csv.First;
+ ds_source.First;
  ds_log.Clear(False);
  clear_log;
  new_start := True;
@@ -376,6 +394,15 @@ begin
   pnl_dnn.Caption:= IntTostr(i_dnn);
   pnl_opt.Caption:= IntTostr(i_opt);
   pnl_mag.Caption:= IntTostr(i_mag);
+end;
+
+procedure Tfrm_Script.ClearDataset;
+begin
+  ds_source.First;
+  while NOT ds_source.EOF do
+  begin
+   ds_source.Delete;
+  end;
 end;
 
 end.

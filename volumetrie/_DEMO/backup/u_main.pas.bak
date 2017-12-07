@@ -43,6 +43,11 @@ implementation
 
 procedure Tfrm_Main.FormCreate(Sender: TObject);
 begin
+     If (not FileExists('data.csv'))  then
+     begin
+       ShowMessage('Fisierul de date "data.csv" cu scriptul predefinit lipseste din directorul aplicatiei!');
+       Halt;
+     end;
 end;
 
 procedure Tfrm_Main.Memo1Change(Sender: TObject);
@@ -57,6 +62,8 @@ end;
 
 procedure Tfrm_Main.BitBtn2Click(Sender: TObject);
 begin
+  frm_script.Caption := 'Demonstratie configurata';
+  frm_script.lb_log.Items.Clear;
   frm_Config.ShowModal;
 end;
 
@@ -67,6 +74,15 @@ end;
 
 procedure Tfrm_Main.BitBtn1Click(Sender: TObject);
 begin
+  frm_script.Caption := 'Demonstratie automata predefinita';
+  frm_Script.ds_csv.Active:=False;
+  frm_Script.ds_csv.FileName := 'data.csv';
+  frm_Script.ds_csv.Active := True;
+  frm_Script.ds_source.Active:=False;
+  frm_Script.ds_source.CopyFromDataset(frm_Script.ds_csv, True);;
+  frm_Script.ds_source.First;
+
+  frm_Script.Color:=cl3DLight;
   frm_Script.ShowModal;
 end;
 
